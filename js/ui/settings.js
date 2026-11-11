@@ -18,7 +18,16 @@ const INTRO = [["full", "完整"], ["off", "关闭"]]; // 引擎只支持「有/
 const AUDIO_ROWS = [["音乐", "pokedunk.music", "球场 BGM"], ["音效", "pokedunk.muted", "进球、蜂鸣与碰撞声"], ["解说", "pokedunk.announcer", "比赛语音播报"]];
 
 export function loadSet() {
-  try { return JSON.parse(localStorage.getItem(SET_KEY) || "{}") || {}; } catch { return {}; }
+  try {
+    const c = JSON.parse(localStorage.getItem(SET_KEY) || "{}") || {};
+    // v2.6：防守切换默认改为手动；旧档只迁移一次，之后仍可在设置里选回自动
+    if (!c.__switchManual) {
+      c.autoSwitch = false;
+      c.__switchManual = true;
+      try { localStorage.setItem(SET_KEY, JSON.stringify(c)); } catch {}
+    }
+    return c;
+  } catch { return {}; }
 }
 function saveSet(patch) {
   const c = loadSet();
@@ -51,7 +60,7 @@ function seg(name, opts, cur) {
 }
 function tabMatch(c) {
   return field("自动换人", "体力不足时自动轮换替补", seg("autoSubs", ASW, c.autoSubs === false ? "manual" : "auto")) +
-    field("防守切换", "防守对象自动跟随或手动指定", seg("autoSwitch", ASW, c.autoSwitch === false ? "manual" : "auto")) +
+    field("防守切换", "防守对象自动跟随或手动指定", seg("autoSwitch", ASW, c.autoSwitch === true ? "auto" : "manual")) +
     field("赛前演出", "开局入场与首发阵容展示", seg("introMode", INTRO, c.introMode || "full")) +
     '<p class="pj-mut">难度由赛程决定：越往后的道馆对手越强</p>' +
     '<p class="pj-mut">比赛偏好即时保存，下次开球生效</p>';
@@ -208,7 +217,7 @@ export function openSettings() {
         setTimeout(() => { reset.dataset.arm = ""; reset.textContent = "重置本机设置"; }, 2500);
         return;
       }
-      saveSet({ autoSubs: true, autoSwitch: true, introMode: "full" });
+      saveSet({ autoSubs: true, autoSwitch: false, introMode: "full" });
       renderBody(wrap);
     }
   });

@@ -11,7 +11,7 @@
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER, simulateFullMatch,
 } from "../../engine/readable/play-core.js?v=15";
-import { buildMyRoster } from "./match-screen.js?v=30";
+import { buildMyRoster } from "./match-screen.js?v=33";
 import { teamPower, STAT_KEYS } from "../systems/build.js?v=8";
 import { writeSave } from "../storage.js?v=14";
 
@@ -192,7 +192,7 @@ export function buildDailyMatch(save) {
     },
     difficulty: target >= 90 ? "legend" : target >= 75 ? "allstar" : "pro",
     quarterLen: 180, // 与赛季一致：每节 3 分钟
-    autoSwitch: true,
+    autoSwitch: false,
     userAutoSubs: true,
     seed,
     stamina: true,

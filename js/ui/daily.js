@@ -6,7 +6,7 @@
 import { loadSave, writeSave } from "../storage.js?v=14";
 import {
   dailyPreview, dailyMissionRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=14";
+} from "../journey/daily.js?v=17";
 
 let toastTimer = null;
 function toast(msg, ms = 2400) {

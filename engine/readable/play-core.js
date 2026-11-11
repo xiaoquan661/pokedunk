@@ -1658,7 +1658,7 @@ class MatchEngine {
         .forEach((c, h) => (c.slot = h));
     const t = this.teamPlayers(0).sort((l, c) => l.slot - c.slot),
       s = this.teamPlayers(1).sort((l, c) => l.slot - c.slot),
-      n = (l, c) => Math.abs(e(l) - e(c)) ** 2 * 10 + Math.abs(l.slot - c.slot);
+      n = (l, c) => (!l || !c ? 0 : Math.abs(e(l) - e(c)) ** 2 * 10 + Math.abs(l.slot - c.slot));
     let o = [0, 1, 2, 3, 4],
       r = 1 / 0;
     const i = (l, c) => {

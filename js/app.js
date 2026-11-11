@@ -6,17 +6,19 @@
 import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=14";
 import { renderDex } from "./ui/dex.js?v=18";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=20";
-import { openSettings } from "./ui/settings.js?v=16";
+import { openSettings } from "./ui/settings.js?v=18";
 import { renderBag } from "./ui/bag.js?v=16";
 import { renderTeam } from "./ui/team.js?v=30";
-import { buildGymMatch, mountMatch, simulateCurrentMatch } from "./journey/match-screen.js?v=30";
+import { buildGymMatch, mountMatch, simulateCurrentMatch } from "./journey/match-screen.js?v=33";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=7";
 import { watchRewardedAd } from "./platform/ads.js?v=4";
 import { ensureSeason, currentMatchInfo, myTeamPower, SMALL_NAMES } from "./journey/season.js?v=9";
 import { settleMatchResult } from "./journey/settle.js?v=22";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=14";
-import { openDaily } from "./ui/daily.js?v=15";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=17";
+import { openDaily } from "./ui/daily.js?v=18";
 import { openAchievements } from "./ui/achv-ui.js?v=13";
+import { startTutorial } from "./ui/tutorial.js?v=4";
+import { startOnboarding } from "./ui/onboarding.js?v=1";
 import { openEarn, bumpDaily } from "./ui/earn.js?v=11";
 import { ACHV } from "./systems/achv.js?v=7";
 import { ensureLineupSlots, monPower, mainOVR, bondMultipliers } from "./systems/build.js?v=8";
@@ -93,6 +95,8 @@ const UP_SVG = `<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="tru
 
 /** 每日挑战图标（SVG：日历 + 闪电） */
 const DAILY_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" fill="#f5c542" stroke="#7a5200" stroke-width="1.5"/><path d="M3 9.5h18" stroke="#7a5200" stroke-width="1.5"/><path d="M8 3v4M16 3v4" stroke="#7a5200" stroke-width="1.8" stroke-linecap="round"/><path d="M13.2 11.2l-4.2 5.1h3l-1 4 4.2-5.3h-3z" fill="#7a5200"/></svg>`;
+/** 新手教程图标（SVG：学士帽） */
+const TUTORIAL_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M2.8 9.2 12 4.6l9.2 4.6L12 13.8z" fill="#7a5cf0" stroke="#2a1b52" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 11.3v4.2c0 2 2.7 3.4 6 3.4s6-1.4 6-3.4v-4.2" fill="none" stroke="#c9b8ff" stroke-width="1.6"/><path d="M21.2 9.2v5.2" stroke="#f5c542" stroke-width="1.6" stroke-linecap="round"/><circle cx="21.2" cy="16.1" r="1.4" fill="#f5c542"/></svg>`;
 
 /* ================= 场景一：开始界面 ================= */
 function showStart() {
@@ -248,7 +252,6 @@ function showHome(save, justStarted = false) {
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
         <div class="badge-chip">${BADGE_SVG} <b>${badge}</b>/8</div>
         <div class="spacer"></div>
-        <button class="achv-chip" id="achv-chip" title="成就">${ICON.trophy} <b>${achvDone}</b></button>
         <div class="coin-chip plain">${save.coach.name}</div>
       </div>
       <div class="menu-in">
@@ -267,6 +270,8 @@ function showHome(save, justStarted = false) {
           <div class="mi-grid">
             <button class="mi mi-hot" data-go="match"><span class="mi-ico">${ICON.ball}</span><span class="mi-txt"><b class="mi-t">开始比赛</b><small class="mi-s">${stageLabel}</small></span></button>
             <button class="mi mi-daily" data-go="daily"><span class="mi-ico">${DAILY_SVG}</span><span class="mi-txt"><b class="mi-t">每日挑战</b><small class="mi-s">今日 ${daily.mod.name} · 最高分 ${daily.best || "未挑战"}</small></span></button>
+            <button class="mi" data-go="achv"><span class="mi-ico">${ICON.trophy}</span><span class="mi-txt"><b class="mi-t">成就</b><small class="mi-s">${achvDone} / 16 · 里程碑</small></span></button>
+            <button class="mi" data-go="tutorial"><span class="mi-ico">${TUTORIAL_SVG}</span><span class="mi-txt"><b class="mi-t">新手教程</b><small class="mi-s">操作 · 规则 · 训练</small></span></button>
             <button class="mi" data-go="dex"><span class="mi-ico">${ICON.book}</span><span class="mi-txt"><b class="mi-t">图鉴</b><small class="mi-s">${Object.keys(save.dex).length} / 291 已结缘</small></span></button>
             <button class="mi" data-go="team"><span class="mi-ico">${ICON.team}</span><span class="mi-txt"><b class="mi-t">队伍</b><small class="mi-s">${save.team.length}/10 · 仓库 ${save.box.length}</small></span></button>
             <button class="mi" data-go="shop"><span class="mi-ico">${ICON.shop}</span><span class="mi-txt"><b class="mi-t">每日商店</b><small class="mi-s">精灵 · 蛋 · 树果</small></span></button>
@@ -334,13 +339,13 @@ function showHome(save, justStarted = false) {
       if (coinB) coinB.textContent = save.coins;
     });
   });
-  sc.querySelector("#achv-chip").addEventListener("click", () => openAchievements());
-
   sc.querySelectorAll("[data-go]").forEach((b) =>
     b.addEventListener("click", () => {
       const go = b.dataset.go;
       if (go === "match") { sc.__stopBg?.(); openSeasonBoard(save); }
       else if (go === "daily") { sc.__stopBg?.(); openDaily(save, { onStart: () => startDaily(loadSave() || save) }); }
+      else if (go === "achv") { openAchievements(); }
+      else if (go === "tutorial") { sc.__stopBg?.(); startTutorial(app, loadSave() || save, { onExit: () => showHome(loadSave() || save) }); }
       else if (go === "dex") { sc.__stopBg?.(); showDex(save); }
       else if (go === "shop") { sc.__stopBg?.(); bumpDaily("visit"); showSub(renderShop, save); }
       else if (go === "egg") { sc.__stopBg?.(); bumpDaily("visit"); showSub(renderEgg, save); }
@@ -349,6 +354,16 @@ function showHome(save, justStarted = false) {
       else if (go === "settings") { sc.__stopBg?.(); openSettings(); }
     })
   );
+
+  if (!save.onboarded) {
+    setTimeout(() => startOnboarding(sc, save, {
+      onFinish: () => {
+        const cur = loadSave() || save;
+        cur.onboarded = true;
+        writeSave(cur);
+      },
+    }), 420);
+  }
 }
 
 /* ================= 赛季赛程弹窗（8 馆 × 4 小关 + 四天王） ================= */
@@ -521,6 +536,10 @@ function showPreMatch(save) {
       <img src="./sprites/${m.dex}.png" alt=""><b>${b.name}</b><small>${label}</small>
     </div>`;
   };
+  const miniPlayer = (p) => `<div class="pms-mon" style="--tc:${TYPE_COLORS[p.types?.[0]] || "#5a6a92"}">
+    <span class="pms-ovr">${p.ovr}</span>
+    <img src="./sprites/${p.dex}.png" alt=""><b>${getPokemon(p.dex).name}</b><small>${p.pos}</small>
+  </div>`;
 
   const page = el(`<div class="sub-page screen-match prematch-screen"></div>`);
   app.replaceChildren(page);
@@ -550,7 +569,8 @@ function showPreMatch(save) {
         <p class="pth-note">克制影响抢位推撞成功率，以及地震/冰冻类必杀的击退与减速；不影响投篮基础命中。</p>
       </div>
       <div class="pms-head"><b>我方阵容</b></div>
-      <div class="pms-start">${starters.map((id) => mini(id, "start")).join("")}</div>
+      <div class="pms-start">${cfg.home.roster.slice(0, 5).map(miniPlayer).join("")}</div>
+      ${starters.length < 5 ? `<p class="pms-short">队伍不足 5 人：按现有队伍人数开赛，不补训练生。</p>` : ""}
       ${bench.length ? `<div class="pms-benchrow"><span>替补</span><div class="pms-bench">${bench.map((id) => mini(id, "bench")).join("")}</div></div>` : ""}
       <div class="pms-actions"><button class="pk-btn-gold" id="pms-go">继 续</button><button class="pk-btn-gold pm-ghost" data-pms-back>返 回</button></div>
     </div>`;

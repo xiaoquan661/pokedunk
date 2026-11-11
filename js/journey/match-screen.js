@@ -8,17 +8,18 @@
  *   - 小决赛：原版馆主队（我方获得 3-0 常规赛的 +1%~+3% 属性加成）
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { buildPlayer, calcOVR } from "../../engine/readable/play-core.js?v=15";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=15";
-import { loadSet } from "../ui/settings.js?v=10";
+import { calcOVR } from "../../engine/readable/play-core.js?v=16";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=16";
+import { loadSet } from "../ui/settings.js?v=18";
 import { STAT_KEYS } from "./gyms.js?v=5";
 import { currentMatchInfo, buildRegularOpponent, matchSeed } from "./season.js?v=9";
 import { buildMatchPlayer, bondMultipliers } from "../systems/build.js?v=8";
 
-/** 由存档构建我方阵容：队伍优先，不足用仓库，再不足用训练师学员补齐（保底可玩）
+/** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
 export function buildMyRoster(save, mult = 1) {
-  const ids = [...save.team, ...save.box];
+  // 只用队伍内实际精灵：不足 5 人按实际人数开赛，不从仓库/训练生补位
+  const ids = save.team.filter((id) => save.mons[id]);
   const bonds = bondMultipliers(save); // 首发 5 人羁绊加成
   const roster = ids.map((id) => {
     const p = buildMatchPlayer(save, id, bonds);
@@ -28,7 +29,6 @@ export function buildMyRoster(save, mult = 1) {
     }
     return p;
   });
-  while (roster.length < 5) roster.push(buildPlayer(133, {}));
   return roster.slice(0, 5);
 }
 
@@ -45,7 +45,7 @@ export function diffOfStage(stage) {
 export function buildGymMatch(save) {
   const set = loadSet();
   const quarterLen = 180; // 固定每节 3 分钟（设置项已移除）
-  const prefs = { autoSwitch: set.autoSwitch !== false, userAutoSubs: set.autoSubs !== false };
+  const prefs = { autoSwitch: set.autoSwitch === true, userAutoSubs: set.autoSubs !== false };
   const info = currentMatchInfo(save);
 
   const awayRoster = info.kind === "regular" ? buildRegularOpponent(info) : info.leaderRoster;
