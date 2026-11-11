@@ -4,6 +4,7 @@
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
 import { loadSave, writeSave } from "../storage.js?v=14";
+import { gameAudio } from "../platform/audio.js?v=8";
 import {
   dailyPreview, dailyMissionRows, claimDailyMission, ensureDaily,
 } from "../journey/daily.js?v=17";
@@ -110,6 +111,7 @@ export function openDaily(save, actions = {}) {
       const r = claimDailyMission(save, mb.dataset.mission);
       if (!r.ok) return toast(r.error);
       writeSave(save);
+      gameAudio.play("coin");
       toast(`任务完成：+${r.coin} 币`);
       render();
       return;

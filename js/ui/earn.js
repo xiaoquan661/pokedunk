@@ -7,6 +7,7 @@
  */
 import { writeSave } from "../storage.js?v=14";
 import { watchRewardedAd } from "../platform/ads.js?v=4";
+import { gameAudio } from "../platform/audio.js?v=8";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 60;      // 每次看广告奖励（S13 待定案）
@@ -108,6 +109,7 @@ export function openEarn(save, onCoins) {
         persistDaily(d);
         save.coins += AD_COINS;
         writeSave(save);
+        gameAudio.play("coin");
         onCoins?.();
         render();
       } else {
@@ -125,6 +127,7 @@ export function openEarn(save, onCoins) {
       persistDaily(d);
       save.coins += t.coin;
       writeSave(save);
+      gameAudio.play("coin");
       onCoins?.();
       render();
     }

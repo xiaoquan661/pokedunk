@@ -8,8 +8,8 @@
  *   - 小决赛：原版馆主队（我方获得 3-0 常规赛的 +1%~+3% 属性加成）
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=16";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=16";
+import { calcOVR } from "../../engine/readable/play-core.js?v=18";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=18";
 import { loadSet } from "../ui/settings.js?v=18";
 import { STAT_KEYS } from "./gyms.js?v=5";
 import { currentMatchInfo, buildRegularOpponent, matchSeed } from "./season.js?v=9";

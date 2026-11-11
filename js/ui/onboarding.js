@@ -9,7 +9,7 @@ const STEPS = [
   { sel: '[data-go="match"]', title: "开始比赛", text: "进入赛季赛程：8 个道馆 × 4 小关，最后挑战四天王。" },
   { sel: '[data-go="daily"]', title: "每日挑战", text: "每天一套规则和全明星对手，手动比赛，只记最高分。" },
   { sel: '[data-go="achv"]', title: "成就", text: "完成里程碑领金币；旁边「新手教程」可以随时复习操作。" },
-  { sel: '[data-go="team"]', title: "队伍", text: "拖动卡片调整首发位置。队伍不足 5 人也能开赛，不会补训练生。" },
+  { sel: '[data-go="team"]', title: "队伍", text: "拖动卡片调整首发位置，点击卡片查看能力和推荐位置。" },
   { sel: '[data-go="settings"]', title: "设置", text: "声音、防守切换、存档都在这里。" },
 ];
 

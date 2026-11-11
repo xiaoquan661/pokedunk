@@ -6,6 +6,7 @@
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
 import { loadSave, writeSave } from "../storage.js?v=14";
+import { gameAudio } from "../platform/audio.js?v=8";
 import { getPokemon } from "../../engine/readable/play-core.js?v=15";
 import { openDetail } from "./detail.js?v=19";
 import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=7";
@@ -153,6 +154,7 @@ export function renderDex(root) {
       const r = claimMilestone(fresh, Number(msBtn.dataset.ms));
       if (!r.ok) return toast(r.error);
       writeSave(fresh);
+      gameAudio.play("coin");
       toast(`里程碑达成：${r.text}`);
       renderDex(root);
       return;

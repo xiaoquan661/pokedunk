@@ -4,22 +4,23 @@
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
 import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=14";
-import { renderDex } from "./ui/dex.js?v=18";
+import { renderDex } from "./ui/dex.js?v=19";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=20";
 import { openSettings } from "./ui/settings.js?v=18";
 import { renderBag } from "./ui/bag.js?v=16";
 import { renderTeam } from "./ui/team.js?v=30";
-import { buildGymMatch, mountMatch, simulateCurrentMatch } from "./journey/match-screen.js?v=33";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=7";
+import { buildGymMatch, mountMatch, simulateCurrentMatch } from "./journey/match-screen.js?v=35";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=8";
 import { watchRewardedAd } from "./platform/ads.js?v=4";
 import { ensureSeason, currentMatchInfo, myTeamPower, SMALL_NAMES } from "./journey/season.js?v=9";
 import { settleMatchResult } from "./journey/settle.js?v=22";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=17";
-import { openDaily } from "./ui/daily.js?v=18";
+import { openDaily } from "./ui/daily.js?v=19";
 import { openAchievements } from "./ui/achv-ui.js?v=13";
-import { startTutorial } from "./ui/tutorial.js?v=4";
+import { startTutorial } from "./ui/tutorial.js?v=6";
 import { startOnboarding } from "./ui/onboarding.js?v=1";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=11";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=2";
+import { openEarn, bumpDaily } from "./ui/earn.js?v=12";
 import { ACHV } from "./systems/achv.js?v=7";
 import { ensureLineupSlots, monPower, mainOVR, bondMultipliers } from "./systems/build.js?v=8";
 import { playEvolve } from "./ui/anim.js?v=10";
@@ -250,7 +251,7 @@ function showHome(save, justStarted = false) {
         <div class="attract"><canvas class="attract-canvas"></canvas><div class="attract-dim"></div></div>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
-        <div class="badge-chip">${BADGE_SVG} <b>${badge}</b>/8</div>
+        <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>${badge}</b>/8</button>
         <div class="spacer"></div>
         <div class="coin-chip plain">${save.coach.name}</div>
       </div>
@@ -332,6 +333,9 @@ function showHome(save, justStarted = false) {
     document.body.appendChild(wrap);
   });
 
+  sc.querySelector("#home-badges")?.addEventListener("click", () => {
+    openBadgeDetail(loadSave() || save);
+  });
   // 金币"+"获取面板 / 成就面板
   sc.querySelector("#earn-add").addEventListener("click", () => {
     openEarn(save, () => {
@@ -392,7 +396,7 @@ function openSeasonBoard(save) {
     const res = resultFor(v, sm);
     const mark = st === "cur" ? "●" : st === "done" ? (res && !res.win ? "✗" : "✓") : `<span class="stage-lock">${LOCK_SVG}</span>`;
     const score = res ? ` ${res.myScore}:${res.oppScore}${res.sim ? " 模拟" : ""}` : "";
-    return `<div class="season-stage ${st}"><span>${v + 1}-${sm + 1} ${SMALL_NAMES[sm]}</span><b>${mark}${score}</b></div>`;
+    return `<div class="season-stage ${st}"><span>${SMALL_NAMES[sm]}</span><b>${mark}${score}</b></div>`;
   };
 
   let rows = "";
@@ -409,24 +413,24 @@ function openSeasonBoard(save) {
     const gotBadge = s.badges.includes(gym.badge);
     if (vs === "lock") {
       rows += `<div class="season-venue locked compact">
-        <div class="season-vhead"><span>大关 ${v + 1} · ${VENUE_CN[v]}</span><small>${LOCK_SVG} 未解锁</small></div>
+        <div class="season-vhead"><span><i class="sv-no">${v + 1}</i>${VENUE_CN[v]}</span><small>${LOCK_SVG} 未解锁</small></div>
       </div>`;
       continue;
     }
     const isCur = vs === "cur";
     const vlabel = gotBadge ? `<span class="badge-label">${BADGE_SVG} 已获徽章</span>` : isCur ? `进行中 · ${Math.min(3, s.small)}/4` : "已完成 · 4/4";
     rows += `<div class="season-venue ${isCur ? "open" : ""}">
-      <button class="season-vhead" data-vtoggle="${v}"><span>大关 ${v + 1} · ${VENUE_CN[v]}</span><small>${vlabel}<i class="chev">›</i></small></button>
+      <button class="season-vhead" data-vtoggle="${v}"><span><i class="sv-no">${v + 1}</i>${VENUE_CN[v]}</span><small>${vlabel}<i class="chev">›</i></small></button>
       ${isCur ? `<div class="season-stages">${[0, 1, 2, 3].map((sm) => stageCell(v, sm)).join("")}</div>` : stagesGrid(v)}
     </div>`;
   }
   const finalSt = s.phase === "final" || s.venue >= 8 ? "cur" : "lock";
   const finalRes = resultFor(8, 3);
   rows += finalSt === "lock"
-    ? `<div class="season-venue locked compact"><div class="season-vhead"><span>终关 · 四天王联队</span><small>${LOCK_SVG} 未解锁</small></div></div>`
+    ? `<div class="season-venue locked compact"><div class="season-vhead"><span>四天王联队</span><small>${LOCK_SVG} 未解锁</small></div></div>`
     : `<div class="season-venue open">
-        <button class="season-vhead" data-vtoggle="final"><span>终关 · 四天王联队</span><small>冠军战<i class="chev">›</i></small></button>
-        <div class="season-stages"><div class="season-stage ${finalSt}"><span>冠军战 · 四天王</span><b>${finalSt === "cur" ? "●" : ""}${finalRes ? ` ${finalRes.myScore}:${finalRes.oppScore}` : ""}</b></div></div>
+        <button class="season-vhead" data-vtoggle="final"><span>四天王联队</span><small>冠军战<i class="chev">›</i></small></button>
+        <div class="season-stages"><div class="season-stage ${finalSt}"><span>冠军战</span><b>${finalSt === "cur" ? "●" : ""}${finalRes ? ` ${finalRes.myScore}:${finalRes.oppScore}` : ""}</b></div></div>
       </div>`;
 
   const wrap = document.createElement("div");
@@ -434,7 +438,7 @@ function openSeasonBoard(save) {
   wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `
     <div class="pj-page-card"><div class="sub-page pj-page-body">
-      <div class="page-head"><button class="back" data-back>‹</button><h2>赛季赛程</h2><span class="count">第 ${s.no} 赛季 · ${s.badges.filter((b) => b !== "champion").length}/8 徽章</span></div>
+      <div class="page-head"><button class="back" data-back>‹</button><h2>赛季赛程</h2><button class="count badge-count" type="button" id="season-badges">第 ${s.no} 赛季 · ${s.badges.filter((b) => b !== "champion").length}/8 徽章 ›</button></div>
       <p class="page-sub">当前：${info.smallName} · 推荐 ${info.targetPower} · 我的 ${teamPower} · 胜率 ${winP}%</p>
       ${legendPending ? `<button class="legend-pending" id="season-legend">
         <b>✦ 冠军传说待领取</b>
@@ -459,6 +463,9 @@ function openSeasonBoard(save) {
         box.classList.toggle("open", !stages.hidden);
       }
     }
+  });
+  wrap.querySelector("#season-badges")?.addEventListener("click", () => {
+    openBadgeDetail(loadSave() || save);
   });
   wrap.querySelector("#season-legend")?.addEventListener("click", () => {
     const fresh = loadSave() || save;
@@ -570,7 +577,6 @@ function showPreMatch(save) {
       </div>
       <div class="pms-head"><b>我方阵容</b></div>
       <div class="pms-start">${cfg.home.roster.slice(0, 5).map(miniPlayer).join("")}</div>
-      ${starters.length < 5 ? `<p class="pms-short">队伍不足 5 人：按现有队伍人数开赛，不补训练生。</p>` : ""}
       ${bench.length ? `<div class="pms-benchrow"><span>替补</span><div class="pms-bench">${bench.map((id) => mini(id, "bench")).join("")}</div></div>` : ""}
       <div class="pms-actions"><button class="pk-btn-gold" id="pms-go">继 续</button><button class="pk-btn-gold pm-ghost" data-pms-back>返 回</button></div>
     </div>`;
@@ -753,6 +759,12 @@ function showResult(save, engine, quit, gym, simulated = false, spectate = false
         <button class="pk-btn-gold pm-ghost" id="res-home">回 主 界 面</button>
       </div>
     </div>`;
+  if (r.badgeGained) {
+    playBadgeGrant(r.badgeGained, {
+      delay: 520,
+      onShow: () => gameAudio.play("special"),
+    });
+  }
   page.querySelector("#res-ad")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     btn.disabled = true;

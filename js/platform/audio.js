@@ -192,6 +192,10 @@ class AudioController {
         [523, 659, 784, 1047].forEach((f, i) => this.tone("square", f, f, 0.12, 0.1, i * 0.08));
         this.noise(0.8, 0.2, 600, "lowpass"); this.cheer(1.5);
         break;
+      case "coin":
+        [988, 1319, 1760].forEach((f, i) => this.tone("triangle", f, f, 0.09, 0.12, i * 0.055));
+        this.tone("sine", 2637, 2637, 0.16, 0.06, 0.16);
+        break;
       case "special":
         [392, 523, 659, 784, 1047].forEach((f, i) => this.tone("square", f, f * 1.01, 0.09, 0.09, i * 0.05));
         break;

@@ -5,7 +5,7 @@
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=7";
+import { gameAudio } from "../platform/audio.js?v=8";
 import { BONDS } from "../systems/build.js?v=8";
 import { EGG_TIERS } from "../systems/shop.js?v=12";
 import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=15";

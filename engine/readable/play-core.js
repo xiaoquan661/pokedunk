@@ -1935,7 +1935,7 @@ class MatchEngine {
       d = h(0) >= h(1) ? 0 : 1,
       f = t.jumpers[d],
       u = this.teamPlayers(d).filter((p) => p !== f);
-    ((t.to = (m = u.find((p) => p.slot === 0)) != null ? m : u[0]),
+    ((t.to = (m = u.find((p) => p.slot === 0)) != null ? m : u[0] || f),
       (t.fly = 0),
       (s.x = (t.jumpers[0].x + t.jumpers[1].x) / 2 + (d === 0 ? -0.5 : 0.5)),
       this.sfx.push("block"),
@@ -2010,12 +2010,8 @@ class MatchEngine {
     c !== s && this.setUser(e, c);
   }
   userIntent(e, t) {
-    const s = this.inputs[e.team],
-      n = this.ball,
-      o = n.owner ? n.owner.team !== e.team : n.mode !== "held";
-    if (!this.vsCpu || !this.diff.assist || !o || Math.hypot(s.mx, s.my) > 0.15 || e.state !== "free") return s;
-    const r = Ms(this, e, t);
-    return { ...s, mx: r.mx, my: r.my, turbo: s.turbo || r.turbo };
+    // 人类控制的球员只读取玩家输入：不做无球/防守自动跑位，避免“精灵自己移动”。
+    return this.inputs[e.team];
   }
   update(e) {
     var o;
@@ -7946,17 +7942,29 @@ class lr {
     const c = 46;
     (s.addEventListener("pointerdown", (d) => {
       (d.preventDefault(), (r = d.pointerId), s.setPointerCapture(r));
-      const f = s.getBoundingClientRect();
-      ((i = d.clientX),
-        (l = d.clientY),
-        (n.style.left = "".concat(i - f.left, "px")),
-        (n.style.top = "".concat(l - f.top, "px")),
-        n.classList.add("on"));
+      const f = s.getBoundingClientRect(),
+        rot = e.classList.contains("rot"),
+        cx = f.left + f.width / 2,
+        cy = f.top + f.height / 2;
+      let bx, by;
+      if (rot) {
+        // .game 被 rotate(90deg) 时，屏幕坐标要换算回容器本地坐标
+        bx = s.offsetWidth / 2 + (d.clientY - cy);
+        by = s.offsetHeight / 2 - (d.clientX - cx);
+      } else {
+        bx = d.clientX - f.left;
+        by = d.clientY - f.top;
+      }
+      ((i = d.clientX), (l = d.clientY), (n.style.left = "".concat(bx, "px")), (n.style.top = "".concat(by, "px")), n.classList.add("on"));
     }),
       s.addEventListener("pointermove", (d) => {
         if (d.pointerId !== r) return;
         let f = d.clientX - i,
           u = d.clientY - l;
+        if (e.classList.contains("rot")) {
+          const y = f;
+          ((f = u), (u = -y));
+        }
         const m = Math.hypot(f, u);
         (m > c && ((f = (f / m) * c), (u = (u / m) * c)),
           (o.style.transform = "translate(".concat(f, "px, ").concat(u, "px)")));
