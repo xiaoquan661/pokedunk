@@ -1,0 +1,54 @@
+/* ============================================================
+   比赛屏覆盖层（pokedunk-v2）——加载于 original.css 之后
+   原版 .game/.stage/.court/.s5 等样式一律以 original.css 为准，
+   本文件只追加 v2 自有按钮与横竖屏兜底。
+   ============================================================ */
+
+/* 一键模拟 + 横竖屏切换：收进右上角，在暂停键下方竖排（竖屏顶部不再与记分板堆叠） */
+.game .sim-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#f5c542;font-size:12px}
+.game .sim-btn[disabled]{color:var(--text-dim);opacity:.7}
+.game .rot-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 94px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#fff;font-size:12px}
+
+/* 竖屏窄屏（样机 390×844）：角色卡第一行左，计分板独占第二行通栏居中，
+   模拟/横屏按钮下移到计分板下方，避免挤占计分板宽度 */
+@media (max-width:700px){
+  .game.has-touch .pcard{top:max(6px,env(safe-area-inset-top,0px))}
+  .game.has-touch .bug{top:calc(max(8px,env(safe-area-inset-top,0px)) + 70px);max-width:calc(100vw - 24px)}
+  .game .sim-btn{top:calc(env(safe-area-inset-top,0px) + 112px)}
+  .game .rot-btn{top:calc(env(safe-area-inset-top,0px) + 152px)}
+}
+
+/* 竖屏战斗：左上角当前精灵状态卡放大（原版 200px + scale(.85) 过小） */
+@media (orientation:portrait) and (max-width:700px){
+  .game.has-touch .pcard{width:260px;transform:none;transform-origin:top left;gap:8px;padding:6px 10px 7px 5px}
+  .game.has-touch .pcard img{width:56px;height:56px}
+  .game.has-touch .pcard .pinfo{gap:4px}
+  .game.has-touch .pcard .pname{font-size:.88rem;line-height:1.1}
+  .game.has-touch .pcard .povr{font-size:.66rem}
+  .game.has-touch .pcard .bar{height:9px}
+  .game.has-touch .pcard .bar b{font-size:.44rem;line-height:9px;padding-left:5px}
+  .game.has-touch .bug{top:calc(max(8px,env(safe-area-inset-top,0px)) + 84px)}
+  .game .sim-btn{top:calc(env(safe-area-inset-top,0px) + 126px)}
+  .game .rot-btn{top:calc(env(safe-area-inset-top,0px) + 166px)}
+}
+
+/* —— 横屏 CSS 兜底（方向锁不可用时）：旋转整个 .game 容器 ——
+   触屏摇杆/按键是 .game 的子元素，随容器一起旋转。
+   container-type:size 让内部 .stage 用 cqw/cqh 取"旋转后的视口"：
+   cqw=原视口高（横屏宽），cqh=原视口宽（横屏高）。 */
+.game.rot{container-type:size;top:0;left:100vw;width:100dvh;height:100vw;transform:rotate(90deg);transform-origin:0 0;background:#05060f}
+.game.rot .stage{width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;position:relative}
+.game.rot .stage canvas.court{width:100%;height:100%}
+
+/* —— 详情页能力条：original.css 在 main.css 之后加载会覆盖 .rt，
+   这里（最后加载）重新定稿：金色渐变填充 —— */
+.ratings .rt i{height:7px;background:rgba(0,0,0,.35);border-radius:3px;border:1px solid rgba(245,197,66,.35)}
+.ratings .rt i:after{width:var(--v);background:linear-gradient(90deg,#e3a80c,#ffcb05);box-shadow:0 0 6px rgba(255,203,5,.55)}
+
+/* —— 详情页能力条文字：original.css 的 .rt{font-size:.92rem} 与 b{color:var(--tier2)} 会覆盖，
+   这里恢复 v2 的 11px + 金色数值 —— */
+.detail-box .ratings .rt{font-size:11px;gap:0 6px}
+.detail-box .ratings .rt b{color:var(--gold)}
+
+/* —— 全局禁用态统一（各页按钮不再各自漂移） —— */
+button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}

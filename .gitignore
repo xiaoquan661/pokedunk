@@ -1,0 +1,7 @@
+# Local credentials — never commit
+.lamps/auth-key
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
