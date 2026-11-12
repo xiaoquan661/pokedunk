@@ -18,7 +18,7 @@ import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v
 import { openDaily } from "./ui/daily.js?v=19";
 import { openAchievements } from "./ui/achv-ui.js?v=13";
 import { startTutorial } from "./ui/tutorial.js?v=6";
-import { startOnboarding } from "./ui/onboarding.js?v=4";
+import { startOnboarding } from "./ui/onboarding.js?v=5";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=2";
 import { openEarn, bumpDaily } from "./ui/earn.js?v=12";
 import { ACHV } from "./systems/achv.js?v=7";
