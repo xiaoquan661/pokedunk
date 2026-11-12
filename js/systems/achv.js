@@ -22,7 +22,6 @@ function hasChampion(save) {
   return !!j.gymBadges?.includes("champion")
     || !!j.season?.champion
     || (j.season?.history || []).some((h) => h.champion)
-    || (typeof j.season?.no === "number" && j.season.no > 1)
     || j.stage === "tour";
 }
 
@@ -84,7 +83,7 @@ const defs = [
   { id: "stage1",  name: "初出茅庐", desc: "击败道馆馆主，拿下第一枚徽章", check: (s) => s.journey.gymBadges.length >= 1 },
   { id: "badges4", name: "四方来朝", desc: "集齐 4 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 4 },
   { id: "badges8", name: "八方来朝", desc: "集齐 8 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 8 },
-  { id: "champion", name: "联盟之王", desc: "通关四天王，赢得冠军",        check: (s) => s.journey.gymBadges.includes("champion") },
+  { id: "champion", name: "联盟之王", desc: "赢得赛季总冠军",              check: (s) => hasChampion(s) },
   { id: "tour1",   name: "巡回骑士", desc: "进入巡回赛，踏上无尽挑战",      check: (s) => s.journey.stage === "tour" || s.journey.gymBadges.includes("champion") },
   { id: "evo1",    name: "进化之光", desc: "拥有一只进化后的精灵",          check: (s) => evolvedCount(s) >= 1 },
   { id: "evo5",    name: "养成大师", desc: "进化精灵达到 5 只",            check: (s) => evolvedCount(s) >= 5 },

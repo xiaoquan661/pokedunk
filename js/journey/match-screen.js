@@ -3,16 +3,17 @@
  * 复用引擎 startMatchLoop(wi)：自带比赛模板/记分板/触屏输入/暂停/解说/回放。
  * 我们只提供：比赛配置（赛季对手/我方阵容）、音频适配器（静音占位）、结算回调。
  *
- * 赛季结构（docs/09 v2.4）：8 馆 × 4 小关 + 四天王 = 33 场，见 journey/season.js。
- *   - 常规赛（新秀/主力/王牌）：同系队伍，目标战力馆主-6/-4/-2，软保底
- *   - 小决赛：原版馆主队（我方获得 3-0 常规赛的 +1%~+3% 属性加成）
+ * 赛季结构（docs/09 v3.1）：9 队单循环 9 轮 + 季后赛 + 四天王，见 journey/season.js。
+ *   - 常规赛：9 轮，每轮 4 场 + 1 队轮空；玩家 8 场 + 1 轮轮空
+ *   - 季后赛：前 4，半决赛 1v4 / 2v3 → 总决赛
+ *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
 import { calcOVR } from "../../engine/readable/play-core.js?v=18";
 import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=18";
 import { loadSet } from "../ui/settings.js?v=18";
 import { STAT_KEYS } from "./gyms.js?v=5";
-import { currentMatchInfo, buildRegularOpponent, matchSeed } from "./season.js?v=9";
+import { currentMatchInfo, matchSeed } from "./season.js?v=14";
 import { buildMatchPlayer, bondMultipliers } from "../systems/build.js?v=8";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
@@ -32,50 +33,52 @@ export function buildMyRoster(save, mult = 1) {
   return roster.slice(0, 5);
 }
 
-/** 难度由赛程隐性递增：馆 1-2 rookie、3-4 pro、5-7 allstar、8/四天王 legend */
-export function diffOfStage(stage) {
-  const n = stage === "elite" || stage === "tour" ? 9 : Number(String(stage).replace("gym", "")) || 1;
+/** 难度随道馆序号递增：1-2 rookie、3-5 pro、6-8 allstar */
+export function diffOfRound(i) {
+  const n = Number(i) + 1;
   if (n <= 2) return "rookie";
-  if (n <= 4) return "pro";
-  if (n <= 7) return "allstar";
-  return "legend";
+  if (n <= 5) return "pro";
+  return "allstar";
 }
 
 /** 组一场赛季比赛配置（节长/换人/防守偏好取自设置页） */
-export function buildGymMatch(save) {
+export function buildGymMatch(save, mode = "league") {
   const set = loadSet();
   const quarterLen = 180; // 固定每节 3 分钟（设置项已移除）
   const prefs = { autoSwitch: set.autoSwitch === true, userAutoSubs: set.autoSubs !== false };
-  const info = currentMatchInfo(save);
+  const info = currentMatchInfo(save, mode);
+  if (!info || info.kind === "bye" || info.kind === "done") return null;
 
-  const awayRoster = info.kind === "regular" ? buildRegularOpponent(info) : info.leaderRoster;
-  const gym =
-    info.kind === "elite"
-      ? { ...info.gym, elite: true, gym: 9, badge: "champion" }
-      : { ...info.gym, elite: false };
-  const awayName = info.kind === "regular" ? `${gym.name} · ${info.styleName}` : gym.name;
-  const away = { name: awayName, abbr: gym.abbr, color: gym.color, color2: gym.color2, roster: awayRoster, bench: [], human: false, boost: 0 };
-
-  // 小决赛：3 场常规赛每赢 1 场，全队有效属性 +1%（最多 +3%）
-  const buff = info.kind === "final" ? 1 + Math.min(3, info.regularWins) * 0.01 : 1;
+  const gym = info.kind === "elite"
+    ? { ...info.gym, elite: true, gym: 9 }
+    : { ...info.gym, elite: false };
+  const away = {
+    name: gym.name, abbr: gym.abbr, color: gym.color, color2: gym.color2,
+    roster: info.leaderRoster, bench: [], human: false, boost: 0,
+  };
   const home = {
     name: (save.coach.name || "ME") + "队",
     abbr: (save.coach.name || "ME").slice(0, 3).toUpperCase(),
     color: "#3b6fd8",
     color2: "#16224a",
-    roster: buildMyRoster(save, buff),
+    roster: buildMyRoster(save, 1),
     bench: [],
     human: true,
     boost: 0,
   };
 
-  const difficulty = info.kind === "elite" ? "legend" : diffOfStage(`gym${info.venue + 1}`);
-  return { home, away, difficulty, quarterLen, ...prefs, seed: matchSeed(save, info), gym, stamina: true };
+  const difficulty = info.kind === "elite"
+    ? "legend"
+    : info.kind === "playoff"
+      ? (info.playoffRound === "final" ? "legend" : "allstar")
+      : diffOfRound(info.venue);
+  return { home, away, difficulty, quarterLen, ...prefs, seed: matchSeed(save, info), gym, mode, info, stamina: true };
 }
 
-/** 直接无头模拟当前关卡（赛季页「一键模拟」用），返回 { engine, cfg } */
-export async function simulateCurrentMatch(save) {
-  const cfg = buildGymMatch(save);
+/** 直接无头模拟当前比赛（赛季页「一键模拟」用），返回 { engine, cfg } */
+export async function simulateCurrentMatch(save, mode = "league") {
+  const cfg = buildGymMatch(save, mode);
+  if (!cfg) return { engine: null, cfg: null };
   const simCfg = { ...cfg, home: { ...cfg.home, human: false }, away: { ...cfg.away, human: false } };
   const engine = await simulateFullMatch(simCfg);
   return { engine, cfg };

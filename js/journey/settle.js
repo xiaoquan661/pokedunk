@@ -13,16 +13,15 @@ import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-cor
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=14";
 import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=12";
-import { ACHV } from "../systems/achv.js?v=7";
+import { ACHV } from "../systems/achv.js?v=8";
 import { bumpDaily } from "../ui/earn.js?v=10";
-import { currentMatchInfo, recordResult, priorWins } from "./season.js?v=9";
+import { currentMatchInfo, recordResult } from "./season.js?v=14";
 import { activeBonds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=8";
-import { offerLegendReward } from "./legend.js?v=2";
+import { offerLegendReward } from "./legend.js?v=4";
 
 const SIGN_CHANCE = 0.25;
-const KIND_COIN = { regular: 0.4, final: 1.5, elite: 3.0 };
-const KIND_XP = { regular: 0.4, final: 1.0, elite: 2.0 };
-const DECAY = [1, 0.5, 0.25, 0.1];
+const KIND_COIN = { league: 0.4, playoff: 1.0, final: 1.5, elite: 3.0 };
+const KIND_XP = { league: 0.4, playoff: 1.0, final: 1.5, elite: 2.0 };
 
 /** 战胜签约：胜利后概率收服对手一名上场精灵 */
 function trySign(save, engine) {
@@ -73,16 +72,20 @@ function grantXp(save, monId, mon, amount, anims) {
  * @param quit 中途退出（判负，0 奖励）
  * @param simulated 一键模拟（奖励 80%，无首通）
  */
-export function settleMatchResult(save, engine, gym, quit = false, simulated = false) {
+export function settleMatchResult(save, engine, gym, quit = false, simulated = false, mode = "league") {
   const myScore = engine ? engine.score[0] : 0;
   const oppScore = engine ? engine.score[1] : 0;
   const won = !quit && engine ? myScore > oppScore : false;
   const margin = Math.min(10, Math.abs(myScore - oppScore));
 
-  // 赛季信息（推进前读取）
-  const info = currentMatchInfo(save);
-  const prior = priorWins(save.journey.season, info.venue, info.small);
-  const decay = DECAY[Math.min(prior, 3)];
+  // 赛前信息（推进前读取）
+  const info = currentMatchInfo(save, mode) || {
+    kind: mode === "elite" ? "elite" : "league",
+    season: save.journey?.season?.no || 1,
+    smallName: mode === "elite" ? "四天王挑战" : "常规赛",
+    targetPower: 60,
+    gym,
+  };
 
   // 1. 战绩
   if (won) save.stats.w++; else save.stats.l++;
@@ -90,27 +93,28 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   // 2. 奖励
   const oppOvr = engine
     ? Math.round(engine.teams[1].roster.reduce((a, p) => a + p.ovr, 0) / engine.teams[1].roster.length)
-    : info.targetPower;
+    : (info.targetPower || 60);
   const baseCoins = 20 + Math.round(oppOvr * 0.5);
-  const coinMult = KIND_COIN[info.kind] ?? 0.4;
-  const xpMult = KIND_XP[info.kind] ?? 0.4;
+  const coinMult = info.kind === "playoff"
+    ? (info.playoffRound === "final" ? 1.5 : 1.0)
+    : (KIND_COIN[info.kind] ?? 0.4);
+  const xpMult = info.kind === "playoff"
+    ? (info.playoffRound === "final" ? 1.5 : 1.0)
+    : (KIND_XP[info.kind] ?? 0.4);
 
   let coins = 0;
   let xp = 0;
   if (!quit && won) {
-    coins = baseCoins * coinMult * decay;
-    xp = (12 + margin) * xpMult * decay;
+    coins = baseCoins * coinMult;
+    xp = (12 + margin) * xpMult;
     if (simulated) {
       coins *= 0.8;
       xp *= 0.8;
-    } else if (prior === 0) {
-      coins += baseCoins * coinMult * 0.5; // 首通（仅手动、仅第一次）
     }
-    if (info.kind === "final" && info.regularWins >= 3) coins *= simulated ? 1.05 : 1.1;
-    if (info.kind === "elite") coins += 300; // 冠军奖励
+    if (info.kind === "elite") coins += 300;
   } else if (!quit) {
     const n = bumpDaily("loss");
-    coins = n <= 3 ? baseCoins * 0.2 : 0; // 每日前 3 次安慰奖
+    coins = n <= 3 ? baseCoins * 0.2 : 0;
     xp = simulated ? 0 : 5;
     if (simulated) coins = n <= 3 ? coins * 0.8 : 0;
   }
@@ -125,29 +129,30 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   const anims = [];
   save.team.slice(0, 5).forEach((id) => {
     const mon = save.mons[id];
-    if (mon) xpEvents.push(...grantXp(save, id, mon, won ? xp : xp, anims));
+    if (mon) xpEvents.push(...grantXp(save, id, mon, xp, anims));
   });
 
   // 4. 战胜签约
   const sign = won && engine?.teams?.[1]?.roster ? trySign(save, engine) : null;
 
-  // 5. 赛程推进（赛季状态机）；冠军前记住本赛季编号
-  const clearedSeason = info.season;
+  // 5. 赛程推进（联赛/季后赛/四天王），再发传说/道具
+  const seasonNo = info.season || save.journey?.season?.no || 1;
   const advance = recordResult(save, info, { won, myScore, oppScore, sim: simulated });
-  const legendReward = advance.champion ? offerLegendReward(save, clearedSeason) : null;
-  // 徽章/冠军发道具（赛季来源）
+  if (advance.champion) {
+    coins += 300;
+    save.coins += 300; // 联赛总冠军奖励
+  }
+  const legendReward = advance.legendTrack ? offerLegendReward(save, seasonNo, advance.legendTrack) : null;
+
+  // 徽章/冠军/四天王发道具
   let itemGained = null;
-  if (advance.badgeGained || advance.champion) {
+  if (advance.badgeGained || advance.champion || (advance.fourKings && advance.legendTrack)) {
     save.bag.items ||= {};
     const keys = Object.keys(ITEM_TYPES);
     itemGained = keys[Math.floor(Math.random() * keys.length)];
     save.bag.items[itemGained] = (save.bag.items[itemGained] || 0) + 1;
-    if (advance.champion) {
-      const extra = keys[Math.floor(Math.random() * keys.length)];
-      save.bag.items[extra] = (save.bag.items[extra] || 0) + 1;
-    }
   }
-  const after = currentMatchInfo(save);
+  const after = currentMatchInfo(save, mode);
 
   // 6. 每日活跃 / 成就
   bumpDaily("match");
@@ -167,9 +172,10 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     badgeGained: advance.badgeGained,
     badgeName: info.gym?.name,
     champion: advance.champion,
+    fourKings: !!advance.fourKings,
     seasonEnded: advance.seasonEnded,
     legendReward,
-    nextLabel: after.label,
+    nextLabel: after ? after.label : (mode === "elite" ? "四天王已通关" : "赛季结束"),
     sign,
     simulated,
     levelKind: info.kind,

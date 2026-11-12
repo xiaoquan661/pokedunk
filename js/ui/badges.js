@@ -80,7 +80,7 @@ function ensureCss() {
 ensureCss();
 
 function badgeRecord(s, venue) {
-  const list = (s.results || []).filter((r) => r.venue === venue && r.small === 3 && r.win);
+  const list = (s.results || []).filter((r) => r.venue === venue && r.win);
   return list[list.length - 1] || null;
 }
 

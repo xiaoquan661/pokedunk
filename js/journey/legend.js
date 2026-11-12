@@ -1,10 +1,14 @@
 /**
- * journey/legend.js —— 冠军传说自选（v2.5）
- * 规则：
- *   - 每个赛季首通四天王 → 解锁该赛季 3 只传说自选，必得 1 只
- *   - 每赛季轮换 3 只，按 LEGENDARY_DEX 顺序覆盖全部传说
- *   - 未领取会保留在 journey.legend.pending，可在赛季页补领
- *   - 已拥有 → 折算 200 篮球币（避免重复传说只值 25 币）
+ * journey/legend.js —— 赛季传说奖励（v3）
+ *
+ * 规则（docs/09 v3.1）：
+ *   - 当前实际传说池 16 只，每赛季 2 只，8 个赛季轮换，循环不永久绝版。
+ *   - 联赛总冠军、四天王挑战共享同一个赛季池：
+ *       先完成的一条线 → 2 选 1；
+ *       后完成的另一条线 → 拿剩下的 1 只；
+ *       两条都完成 → 当季 2 只全拿。
+ *   - 只完成一条时，另一只不会消失；等另一条完成后可继续领。
+ *   - 传说直接进队伍；队伍满 10 只进仓库；重复折算 200 币。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
 import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=15";
@@ -14,23 +18,21 @@ import { LEGENDARY_DEX } from "../systems/build.js?v=8";
 export const LEGEND_DUPE_COINS = 200;
 const DEXES = new Set(POKEMON_LIST.map((p) => p.dex));
 
-/** 中文名优先取 dex 数据表，回退到引擎名 */
 export function dexName(dex) {
   const row = (window.__PJ_DEX_ROWS || []).find((r) => r[0] === dex);
   return row ? String(row[1]).replace(/#\d+$/, "") : getPokemon(dex).name;
 }
 
-/** 只保留游戏中实际存在的传说 dex，按图鉴顺序轮换 */
 export const LEGEND_ROTATION = [...LEGENDARY_DEX]
   .filter((dex) => DEXES.has(dex))
   .sort((a, b) => a - b);
 
-/** 该赛季的 3 只候选传说 */
+/** 该赛季的 2 只候选传说 */
 export function legendChoicesForSeason(seasonNo) {
   const list = LEGEND_ROTATION.length ? LEGEND_ROTATION : [150, 151, 249];
   const no = Math.max(1, Number(seasonNo) || 1);
-  const start = ((no - 1) * 3) % list.length;
-  return [0, 1, 2].map((i) => list[(start + i) % list.length]);
+  const start = ((no - 1) * 2) % list.length;
+  return [0, 1].map((i) => list[(start + i) % list.length]);
 }
 
 export function ensureLegend(save) {
@@ -39,49 +41,73 @@ export function ensureLegend(save) {
   j.legend ||= {};
   const l = j.legend;
   l.claimed = Array.isArray(l.claimed) ? l.claimed : [];
-  if (!Array.isArray(l.pending)) l.pending = l.pending ? [l.pending] : [];
+  l.pending = Array.isArray(l.pending) ? l.pending : [];
+  l.taken = l.taken && typeof l.taken === "object" ? l.taken : {};
+  l.tracks = l.tracks && typeof l.tracks === "object" ? l.tracks : {};
   return l;
 }
 
-/** 冠军后解锁本期自选；每赛季只解锁一次 */
-export function offerLegendReward(save, seasonNo) {
+/**
+ * 某条获取线完成时调用。
+ * @param track "champion" | "fourKings"
+ * @returns 待领取项；同一条线重复完成不会重复给奖励
+ */
+export function offerLegendReward(save, seasonNo, track) {
   const l = ensureLegend(save);
   const no = Number(seasonNo) || 1;
-  if (l.claimed.includes(no)) return null;
-  const old = l.pending.find((p) => p.season === no);
-  if (old) return old;
-  const item = { season: no, choices: legendChoicesForSeason(no), at: Date.now() };
-  l.pending.push(item);
+  if (!track) return null;
+  l.tracks[no] ||= [];
+  if (l.tracks[no].includes(track)) {
+    return l.pending.find((p) => p.season === no) || null;
+  }
+  l.tracks[no].push(track);
+
+  const taken = l.taken[no] ||= [];
+  const choices = legendChoicesForSeason(no).filter((d) => !taken.includes(d));
+  if (!choices.length) return null;
+
+  let item = l.pending.find((p) => p.season === no);
+  if (item) {
+    item.choices = choices;
+    item.claims = Math.min(2, (item.claims || 1) + 1);
+  } else {
+    item = { season: no, choices, claims: 1, at: Date.now() };
+    l.pending.push(item);
+  }
   return item;
 }
 
-/** 当前待领取的冠军传说（最早一条） */
+/** 当前最早一条待领取 */
 export function pendingLegend(save) {
   const l = ensureLegend(save);
   return l.pending[0] || null;
 }
 
 /**
- * 领取冠军传说。
+ * 领取一个传说。每次消耗 1 个 claims。
  * 返回 { ok, dex, name, placed, first } 或 { ok, dup, dex, name, coin }。
  */
 export function claimLegendReward(save, seasonNo, dex) {
   const l = ensureLegend(save);
-  const idx = l.pending.findIndex((p) => p.season === Number(seasonNo));
-  if (idx < 0) return { ok: false, error: "没有待领取的冠军传说" };
+  const no = Number(seasonNo) || 1;
+  const idx = l.pending.findIndex((p) => p.season === no);
+  if (idx < 0) return { ok: false, error: "没有待领取的赛季传说" };
   const item = l.pending[idx];
   if (!item.choices.includes(dex)) return { ok: false, error: "这只传说不在本期可选范围" };
 
   const r = addMon(save, dex, { from: "legend" });
+  const taken = l.taken[no] ||= [];
+  if (!taken.includes(dex)) taken.push(dex);
+  item.claims = Math.max(0, (item.claims || 1) - 1);
+  item.choices = item.choices.filter((d) => d !== dex);
+  if (item.claims <= 0 || !item.choices.length) l.pending.splice(idx, 1);
+  if (taken.length >= 2 && !l.claimed.includes(no)) l.claimed.push(no);
+
   if (r.ok) {
-    l.pending.splice(idx, 1);
-    l.claimed.push(Number(seasonNo));
     return { ok: true, dex, name: dexName(dex), placed: r.movedTo, first: r.isNewDex };
   }
 
-  // 已拥有：折算篮球币，仍然消耗本期领取资格
+  // 已拥有：折算篮球币，仍然消耗本次领取资格
   save.coins += LEGEND_DUPE_COINS;
-  l.pending.splice(idx, 1);
-  l.claimed.push(Number(seasonNo));
   return { ok: true, dup: true, dex, name: dexName(dex), coin: LEGEND_DUPE_COINS };
 }

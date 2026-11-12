@@ -1,10 +1,10 @@
 /**
- * ui/legend.js —— 冠军传说三选一弹窗（v2.5）
- * 首通四天王后由结算页/赛季页打开；领取后立即写入存档。
+ * ui/legend.js —— 赛季传说 2 选 1 弹窗（v3）
+ * 联赛总冠军 / 四天王挑战共享本赛季传说池；领取后立即写入存档。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
 import { loadSave, writeSave } from "../storage.js?v=14";
-import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=2";
+import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=4";
 import { ICON } from "./icons.js?v=8";
 
 const TYPE_ZH = {
@@ -51,12 +51,12 @@ export function openLegendPicker(save, pending, opts = {}) {
     card.innerHTML = `<div class="sub-page pj-page-body">
       <div class="page-head">
         <button class="back" data-legend-close>‹</button>
-        <h2>冠军传说</h2>
-        <span class="count">S${pending.season} · 3 选 1</span>
+        <h2>赛季传说</h2>
+        <span class="count">S${pending.season} · ${pending.choices.length} 选 1</span>
       </div>
-      <p class="page-sub">首通四天王奖励 · 选择一只传说精灵加入球队</p>
+      <p class="page-sub">联赛总冠军 / 四天王挑战共享本赛季传说池 · 选择一只加入球队</p>
       <div class="legend-choice-grid">${pending.choices.map((dex) => choiceCard(save, dex)).join("")}</div>
-      <p class="legend-pick-note">每个赛季只能领取一次；未领取的奖励会保留在赛季页。</p>
+      <p class="legend-pick-note">本赛季还可领取 ${pending.claims || 1} 只；未领取的奖励会保留在赛季页。</p>
     </div>`;
   };
 
@@ -75,13 +75,16 @@ export function openLegendPicker(save, pending, opts = {}) {
         <p>${r.dup
           ? `已拥有该传说 · 折算 <b>${ICON.coin}${r.coin}</b> 篮球币`
           : `已加入${r.placed === "box" ? "仓库" : "队伍"} · 图鉴点亮`}</p>
-        <button class="pk-btn-gold legend-done" data-legend-close>确 定</button>
+        ${pending.claims > 0 && pending.choices.length
+          ? `<button class="pk-btn-gold legend-done" data-legend-next>继续领取（剩 ${pending.claims} 只）</button>`
+          : `<button class="pk-btn-gold legend-done" data-legend-close>确 定</button>`}
       </div>
     </div>`;
   };
 
   wrap.addEventListener("click", (e) => {
     if (e.target === wrap || e.target.closest("[data-legend-close]")) { close(); return; }
+    if (e.target.closest("[data-legend-next]")) { renderPick(); return; }
     const btn = e.target.closest("[data-legend-pick]");
     if (!btn || btn.disabled) return;
     const dex = Number(btn.dataset.legendPick);
