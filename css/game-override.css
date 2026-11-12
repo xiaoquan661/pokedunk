@@ -4,6 +4,11 @@
    本文件只追加 v2 自有按钮与横竖屏兜底。
    ============================================================ */
 
+/* 新手教程：原版把舞台贴顶并留出 --tut-hud 的顶部偏移；教程页改为在竖屏内垂直居中 */
+@media (orientation:portrait){
+  .game.tut-on .stage{margin-top:auto;margin-bottom:auto}
+}
+
 /* 一键模拟 + 横竖屏切换：收进右上角，在暂停键下方竖排（竖屏顶部不再与记分板堆叠） */
 .game .sim-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#f5c542;font-size:12px}
 .game .sim-btn[disabled]{color:var(--text-dim);opacity:.7}
