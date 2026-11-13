@@ -1,0 +1,100 @@
+/* ============================================================
+   battle-ui.css —— 比赛内统一黑色 UI（不随主题变化）
+   在所有主题样式之后加载：暂停面板、球员卡数值条等。
+   ============================================================ */
+
+/* 球员卡数值条：放大标签，保证黑底与彩色条上都清晰 */
+.game .pcard .bar,
+.game.has-touch .pcard .bar {
+  height: 12px;
+  border-radius: 3px;
+  background: #1b1b1b;
+  border: 1px solid #2a2a2a;
+}
+.game .pcard .bar b,
+.game.has-touch .pcard .bar b {
+  font: 700 8px/12px var(--pixel);
+  color: #ffffff;
+  padding-left: 5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+.game .pcard .bar.spec b { color: #ffffff; }
+
+/* 暂停面板：黑底 + 荧光绿强调 */
+.game .pause-menu {
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.game .pause-menu .panel {
+  background: #0a0a0a;
+  border: 2px solid #2f2f2f;
+  border-left: 6px solid #b8e63c;
+  border-radius: 3px;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6), 0 0 30px rgba(184, 230, 60, 0.12);
+}
+.game .pause-menu h2 {
+  margin: 0 0 14px;
+  padding: 0 0 10px;
+  border-bottom: 2px solid #b8e63c;
+  color: #f2f2f2;
+  font: 700 22px var(--sport);
+  letter-spacing: 0.22em;
+  text-align: left;
+  text-shadow: 0 0 18px rgba(184, 230, 60, 0.35);
+}
+.game .pause-menu .btn {
+  padding: 9px 15px;
+  border-radius: 3px;
+  border: 2px solid #3a3a3a;
+  background: #121212;
+  color: #f2f2f2;
+  font: 700 12px var(--sport);
+  letter-spacing: 0.03em;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  text-shadow: none;
+}
+.game .pause-menu .btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+.game .pause-menu .btn.primary {
+  background: #b8e63c;
+  border-color: #b8e63c;
+  color: #101010;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6), 0 0 18px rgba(184, 230, 60, 0.3);
+}
+.game .pause-menu .btn.ghost {
+  border-color: #262626;
+  background: #0d0d0d;
+  color: #9a9a9a;
+}
+.game .pause-menu .controls {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #242424;
+}
+.game .pause-menu .controls h3 {
+  color: #b0b0b0;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+}
+.game .pause-menu .touch-help li {
+  color: #e0e0e0;
+  border-bottom-color: #242424;
+}
+.game .pause-menu .touch-help li b { color: #b8e63c; }
+
+/* 换人面板 */
+.game .pause-menu .sub-row {
+  background: #121212;
+  border-color: #2a2a2a;
+}
+.game .pause-menu .sub-row.sel {
+  border-color: #b8e63c;
+  box-shadow: 0 0 0 1px #b8e63c, 0 0 14px rgba(184, 230, 60, 0.18);
+}
+.game .pause-menu .subs-panel {
+  background: #0d0d0d;
+  border-color: #2a2a2a;
+}

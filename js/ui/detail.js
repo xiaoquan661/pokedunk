@@ -5,17 +5,17 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=15";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=27";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=8";
-import { loadSave, writeSave, moveMon } from "../storage.js?v=14";
-import { BERRY_XP } from "../systems/shop.js?v=8";
+} from "../systems/build.js?v=21";
+import { loadSave, writeSave, moveMon } from "../storage.js?v=26";
+import { BERRY_XP } from "../systems/shop.js?v=28";
 import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=6";
-import { ICON } from "./icons.js?v=8";
+import { playEvolve } from "./anim.js?v=18";
+import { ICON } from "./icons.js?v=20";
 import { xpToNext } from "../../engine/growth.js";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
@@ -76,6 +76,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const berries = save.bag;
   const maxed = mon ? mon.level >= 99 : true;
   const feedN = !mon || maxed || (berries.berryNormal || 0) <= 0;
+  const feedP = !mon || maxed || (berries.berryPremium || 0) <= 0;
   const evo = EVOLUTIONS[dexNo];
 
   const xpHtml = mon
@@ -84,13 +85,13 @@ export function openDetail(dexNo, monId = null, onClose = null) {
     : `<div class="detail-xp"><div class="row"><span>尚未结缘 —— 在商店 / 孵蛋 / 比赛签约中与它相遇</span></div></div>`;
 
   // 训练 / 道具（构筑系统）：两块收进页签，首屏只显示一块
-  const trainCap = mon ? Math.min(TRAIN_MAX, Math.floor(mon.level / 2)) : 0;
+  const trainCap = mon ? Math.min(TRAIN_MAX, 4 + Math.floor(mon.level / 2)) : 0;
   const tr = mon?.train || { points: 0, stats: {} };
   const seenTab = ["train", "item"].includes(buildTab) ? buildTab : "train";
   const trainBody = mon
     ? `<div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
       <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + 5} 币` : ""}。</p>
-      <p class="note">${tr.points >= trainCap ? `已达当前等级上限：Lv.${mon.level} 最多训练 ${trainCap} 点，升级后可继续。` : `每只精灵最多训练 ${TRAIN_MAX} 点，且不超过等级÷2（当前 Lv.${mon.level} → 上限 ${trainCap} 点）。`}</p>
+      <p class="note">${tr.points >= trainCap ? `已达当前等级上限：Lv.${mon.level} 最多训练 ${trainCap} 点，升级后可继续。` : `每只精灵最多训练 ${TRAIN_MAX} 点，当前上限 = 4 + 等级÷2（Lv.${mon.level} → ${trainCap} 点）。`}</p>
       <p class="note">重置返还 80% 训练点，返还点优先使用且不扣币；已花费的篮球币不退。</p>
       <button class="dbtn b" data-trainreset>重置训练（返还 80% 点数，不退币）</button>`
     : "";
@@ -133,9 +134,10 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       ${buildHtml}
       ${mon ? `<div class="dsec">养成与调动</div>
       <div class="dact-row">
-        <button class="dbtn b" data-feed="normal"${feedN ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>投喂树果 +${BERRY_XP.normal} XP（×${berries.berryNormal || 0}）</button>
-        ${moveHtml}
+        <button class="dbtn b" data-feed="normal"${feedN ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>普通树果 +${BERRY_XP.normal} XP（×${berries.berryNormal || 0}）</button>
+        <button class="dbtn b" data-feed="premium"${feedP ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>高级树果 +${BERRY_XP.premium} XP（×${berries.berryPremium || 0}）</button>
       </div>
+      <div class="dact-row">${moveHtml}</div>
       ${evo ? `<p class="note">Lv${evo.level} 可进化 → ${evo.to.map(monName).join(" / ")}</p>` : ""}` : ""}
     </div>`;
 

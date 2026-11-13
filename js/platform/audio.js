@@ -4,7 +4,7 @@
  * - music.js：原版程序化 BGM（菜单轮播 / 比赛静音）
  * - 偏好键沿用本项目：pokedunk.muted / pokedunk.music / pokedunk.announcer
  */
-import { MusicManager } from "./music.js?v=5";
+import { MusicManager } from "./music.js?v=17";
 
 const SFX_KEY = "pokedunk.muted";
 const MUSIC_KEY = "pokedunk.music";
@@ -196,9 +196,19 @@ class AudioController {
         [988, 1319, 1760].forEach((f, i) => this.tone("triangle", f, f, 0.09, 0.12, i * 0.055));
         this.tone("sine", 2637, 2637, 0.16, 0.06, 0.16);
         break;
-      case "special":
-        [392, 523, 659, 784, 1047].forEach((f, i) => this.tone("square", f, f * 1.01, 0.09, 0.09, i * 0.05));
+      case "special": {
+        // 必杀专用音效：能量蓄力 → 重击命中 → 高频尾音，配合 2 秒特写
+        this.tone("triangle", 180, 760, 0.34, 0.16);
+        this.tone("sine", 92, 360, 0.4, 0.12);
+        this.noise(0.34, 0.16, 1200, "bandpass");
+        this.tone("sine", 130, 38, 0.5, 0.55, 0.3);
+        this.noise(0.38, 0.42, 420, "lowpass", 0.3);
+        this.tone("square", 880, 880, 0.12, 0.09, 0.3);
+        this.tone("triangle", 1320, 1320, 0.18, 0.07, 0.38);
+        [523, 659, 784, 1047].forEach((f, i) => this.tone("square", f, f * 1.01, 0.1, 0.08, 0.48 + i * 0.06));
+        this.cheer(1.6);
         break;
+      }
     }
   }
 

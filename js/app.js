@@ -1,34 +1,37 @@
 /**
  * app.js —— 应用入口与路由（pokedunk-v2）
- * 场景流：开始界面 →（点击开始）→ 御三家三选一 → 主界面（图二布局）
+ * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=14";
-import { renderDex } from "./ui/dex.js?v=19";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=20";
-import { openSettings } from "./ui/settings.js?v=19";
-import { renderBag } from "./ui/bag.js?v=16";
-import { renderTeam } from "./ui/team.js?v=30";
-import { buildGymMatch, mountMatch, simulateCurrentMatch } from "./journey/match-screen.js?v=40";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=8";
-import { watchRewardedAd } from "./platform/ads.js?v=4";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=14";
-import { settleMatchResult } from "./journey/settle.js?v=28";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=17";
-import { openDaily } from "./ui/daily.js?v=19";
-import { openAchievements } from "./ui/achv-ui.js?v=13";
-import { startTutorial } from "./ui/tutorial.js?v=6";
-import { startOnboarding } from "./ui/onboarding.js?v=6";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=3";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=12";
-import { ACHV } from "./systems/achv.js?v=8";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers } from "./systems/build.js?v=8";
-import { playEvolve } from "./ui/anim.js?v=10";
-import { ICON } from "./ui/icons.js?v=8";
-import { pendingLegend } from "./journey/legend.js?v=4";
-import { openLegendPicker } from "./ui/legend.js?v=5";
+import "./systems/evo-rules.js?v=13"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=27";
+import { renderDex } from "./ui/dex.js?v=34";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=42";
+import { openSettings } from "./ui/settings.js?v=65";
+import { renderBag } from "./ui/bag.js?v=29";
+import { renderTeam } from "./ui/team.js?v=46";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=89";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=21";
+import { watchRewardedAd } from "./platform/ads.js?v=16";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=26";
+import { settleMatchResult } from "./journey/settle.js?v=49";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=30";
+import { openDaily } from "./ui/daily.js?v=33";
+import { openAchievements } from "./ui/achv-ui.js?v=25";
+import { startTutorial } from "./ui/tutorial.js?v=20";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=28";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=15";
+import { openEarn, bumpDaily } from "./ui/earn.js?v=30";
+import { ACHV } from "./systems/achv.js?v=20";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR } from "./systems/build.js?v=20";
+import { playEvolve } from "./ui/anim.js?v=22";
+import { ICON } from "./ui/icons.js?v=20";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=13";
+import { pendingLegend } from "./journey/legend.js?v=16";
+import { openLegendPicker } from "./ui/legend.js?v=17";
 import {
   getPokemon,
+  calcOVR,
   MatchEngine,
   Renderer,
   demoMatch,
@@ -41,7 +44,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=15";
+} from "../engine/readable/play-core.js?v=27";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -49,8 +52,6 @@ const el = (html) => {
   t.innerHTML = html.trim();
   return t.content.firstElementChild;
 };
-const TYPE_CN = { Grass: "草", Fire: "火", Water: "水", Electric: "电", Normal: "一般" };
-const typeCn = (t) => TYPE_CN[t] ?? t;
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 
 /** 单属性进攻倍率（与引擎 Xt 等价） */
@@ -81,8 +82,8 @@ function bestTypeMult(atkTypes, defTypes) {
   return best;
 }
 
-/** 篮球币图标（金色硬币 + 篮球纹路） */
-const COIN_SVG = ICON.coin;
+/** 篮球币图标 */
+const COIN_SVG = LINE_ICON.coin;
 /** 徽章图标（SVG：银灰奖牌） */
 const BADGE_SVG = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="9" r="6" fill="#c9d3e8" stroke="#5a6a92" stroke-width="1.5"/><text x="12" y="12" text-anchor="middle" font-size="7" font-weight="bold" fill="#5a6a92" font-family="monospace">★</text><path d="M8 14 L6.5 21 L12 17.5 L17.5 21 L16 14" fill="#c9d3e8" stroke="#5a6a92" stroke-width="1.5"/></svg>`;
 /** 观战图标（SVG 眼睛） */
@@ -94,11 +95,6 @@ const GIFT_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="t
 const SIGN_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="flex-shrink:0"><path d="M3 12h4l2-3 3 6 2-3h7" fill="none" stroke="#21d07a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="12" r="1.6" fill="#21d07a"/></svg>`;
 const UP_SVG = `<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" style="flex-shrink:0"><path d="M12 20V5M6 11l6-6 6 6" fill="none" stroke="#f5c542" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-/** 每日挑战图标（SVG：日历 + 闪电） */
-const DAILY_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" fill="#f5c542" stroke="#7a5200" stroke-width="1.5"/><path d="M3 9.5h18" stroke="#7a5200" stroke-width="1.5"/><path d="M8 3v4M16 3v4" stroke="#7a5200" stroke-width="1.8" stroke-linecap="round"/><path d="M13.2 11.2l-4.2 5.1h3l-1 4 4.2-5.3h-3z" fill="#7a5200"/></svg>`;
-/** 新手教程图标（SVG：学士帽） */
-const TUTORIAL_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M2.8 9.2 12 4.6l9.2 4.6L12 13.8z" fill="#7a5cf0" stroke="#2a1b52" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 11.3v4.2c0 2 2.7 3.4 6 3.4s6-1.4 6-3.4v-4.2" fill="none" stroke="#c9b8ff" stroke-width="1.6"/><path d="M21.2 9.2v5.2" stroke="#f5c542" stroke-width="1.6" stroke-linecap="round"/><circle cx="21.2" cy="16.1" r="1.4" fill="#f5c542"/></svg>`;
-
 /* ================= 场景一：开始界面 ================= */
 function showStart() {
   app.replaceChildren();
@@ -107,7 +103,7 @@ function showStart() {
       <div class="start-bg"><canvas></canvas></div>
       <div class="start-dim"></div>
       <div class="start-title">
-        <h1>口袋灌篮高手</h1>
+        <h1>口袋灌篮</h1>
         <p>与宝可梦伙伴一起，征服街头篮球场</p>
         <button class="start-hint">点 击 开 始</button>
       </div>
@@ -161,10 +157,16 @@ function attractLoopFor(canvas, demo, renderer) {
 
 /* ================= 场景二：御三家三选一 ================= */
 const STARTERS = [
-  { dex: 1, en: "Bulbasaur", cn: "妙蛙种子", type: "Grass" },
-  { dex: 4, en: "Charmander", cn: "小火龙", type: "Fire" },
-  { dex: 7, en: "Squirtle", cn: "杰尼龟", type: "Water" },
+  { pos: "PG", dex: 7, cn: "杰尼龟", type: "Water" },
+  { pos: "SG", dex: 4, cn: "小火龙", type: "Fire" },
+  { pos: "SF", dex: 1, cn: "妙蛙种子", type: "Grass" },
+  { pos: "PF", dex: 66, cn: "腕力", type: "Fighting" },
+  { pos: "C", dex: 74, cn: "小拳石", type: "Rock" },
 ];
+const rarityTag = (dex, size = 10) => {
+  const r = rarityOf(dex);
+  return `<i data-rar="${r}" style="font-style:normal;font-weight:700;font-size:${size}px;color:${RARITY_COLOR[r]}">${r}</i>`;
+};
 
 function showStarter(save) {
   app.replaceChildren();
@@ -174,24 +176,25 @@ function showStarter(save) {
       <div class="starter-bg"><canvas></canvas></div>
       <div class="starter-dim"></div>
       <div class="starter-head">
-        <span class="starter-kicker">第一步 · 选择伙伴</span>
-        <h2>选择你的初始伙伴</h2>
-        <p>它将与你一起，踏上灌篮高手之路</p>
+        <span class="starter-kicker">第一步 · 选择位置</span>
+        <h2>选择位置与初始伙伴</h2>
+        <p>每个位置一名伙伴 · 位置可在队伍页调整</p>
       </div>
       <div class="starter-cards">
         ${STARTERS.map(
           (s, i) => `
         <button class="starter-card pk-panel" data-i="${i}" style="--tc:${TYPE_COLORS[s.type] || "#7ac74c"}">
           <span class="starter-check">✓</span>
+          <span class="starter-ovr no-zh">OVR ${calcOVR(s.pos, getPokemon(s.dex).r)} · ${rarityTag(s.dex)}</span>
           <img src="./sprites/${s.dex}.png" alt="${s.cn}" />
           <span class="name">${s.cn}</span>
-          <span class="tag">${typeCn(s.type)}属性</span>
+          <span class="tag no-zh">${s.pos}</span>
         </button>`
         ).join("")}
       </div>
       <div class="starter-actions">
-        <button class="pk-btn-gold" disabled>确 定</button>
-        <p class="starter-note">开局赠送 300 篮球币 · 选择后可随时调整首发</p>
+        <button class="pk-btn-gold no-zh" disabled>确 定</button>
+        <p class="starter-note">开局赠送 300 篮球币 · 选择后可在队伍页调整位置与首发</p>
       </div>
     </div>`);
   app.append(sc);
@@ -212,11 +215,11 @@ function showStarter(save) {
       selected = Number(c.dataset.i);
       cards.forEach((x) => x.classList.toggle("sel", x === c));
       btn.disabled = false;
-      btn.textContent = `确定 · ${STARTERS[selected].cn}`;
+      btn.textContent = `确定 · ${STARTERS[selected].pos} ${STARTERS[selected].cn}`;
     })
   );
   btn.addEventListener("click", () => {
-    const r = startJourney(save, STARTERS[selected].dex, "小智");
+    const r = startJourney(save, STARTERS[selected].dex, "小智", STARTERS[selected].pos);
     if (!r.ok) return;
     sc.__stopBg?.();
     save.coins = 300; // 开局启动资金（S13 待最终数值，先给可玩额度）
@@ -252,33 +255,65 @@ function showHome(save, justStarted = false) {
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
         <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>${badge}</b>/8</button>
+        <button class="guide-chip" id="home-guide" type="button" title="新手指引">导引</button>
         <div class="spacer"></div>
         <div class="coin-chip plain">${save.coach.name}</div>
       </div>
       <div class="menu-in">
         <header class="title">
-          <h1 class="logo"><span class="logo-poke">口袋</span><span class="logo-jam">灌篮高手</span></h1>
+          <h1 class="logo"><span class="logo-poke">口袋</span><span class="logo-jam">灌篮</span></h1>
           <p class="tag">与宝可梦伙伴一起，征服街头篮球场</p>
         </header>
         <div class="team-card showcase">
           <button type="button" class="team-preset" id="mon-swap">
             <span class="tc-swap">更换</span>
             <img class="tc-sprite" src="./sprites/${mon.dex}.png" alt="" draggable="false">
-            <span class="tc-meta"><i class="tc-type" style="--tc:${TYPE_COLORS[base.types[0]] || "#7ac74c"}">${TYPE_ZH[base.types[0]] || base.types[0]}</i><b class="tc-name">Lv.${mon.level} ${base.name}</b></span>
+            <span class="tc-meta"><i class="tc-type" style="--tc:${TYPE_COLORS[base.types[0]] || "#7ac74c"}">${TYPE_ZH[base.types[0]] || base.types[0]}</i><b class="tc-name">Lv.${mon.level} ${base.name} · ${rarityTag(mon.dex, 9)}</b></span>
           </button>
         </div>
-        <div class="menu-panel">
-          <div class="mi-grid">
-            <button class="mi mi-hot" data-go="match"><span class="mi-ico">${ICON.ball}</span><span class="mi-txt"><b class="mi-t">开始比赛</b><small class="mi-s">${stageLabel}</small></span></button>
-            <button class="mi mi-daily" data-go="daily"><span class="mi-ico">${DAILY_SVG}</span><span class="mi-txt"><b class="mi-t">每日挑战</b><small class="mi-s">今日 ${daily.mod.name} · 最高分 ${daily.best || "未挑战"}</small></span></button>
-            <button class="mi" data-go="achv"><span class="mi-ico">${ICON.trophy}</span><span class="mi-txt"><b class="mi-t">成就</b><small class="mi-s">${achvDone} / 16 · 里程碑</small></span></button>
-            <button class="mi" data-go="tutorial"><span class="mi-ico">${TUTORIAL_SVG}</span><span class="mi-txt"><b class="mi-t">新手教程</b><small class="mi-s">操作 · 规则 · 训练</small></span></button>
-            <button class="mi" data-go="dex"><span class="mi-ico">${ICON.book}</span><span class="mi-txt"><b class="mi-t">图鉴</b><small class="mi-s">${Object.keys(save.dex).length} / 291 已结缘</small></span></button>
-            <button class="mi" data-go="team"><span class="mi-ico">${ICON.team}</span><span class="mi-txt"><b class="mi-t">队伍</b><small class="mi-s">${save.team.length}/10 · 仓库 ${save.box.length}</small></span></button>
-            <button class="mi" data-go="shop"><span class="mi-ico">${ICON.shop}</span><span class="mi-txt"><b class="mi-t">每日商店</b><small class="mi-s">精灵 · 蛋 · 树果</small></span></button>
-            <button class="mi" data-go="egg"><span class="mi-ico">${ICON.egg}</span><span class="mi-txt"><b class="mi-t">孵蛋</b><small class="mi-s">${save.eggs.slots.filter(Boolean).length}/${save.eggs.unlockedSlots} 槽</small></span></button>
-            <button class="mi" data-go="bag"><span class="mi-ico">${ICON.bag}</span><span class="mi-txt"><b class="mi-t">背包</b><small class="mi-s">树果 ×${save.bag.berryNormal}</small></span></button>
-            <button class="mi" data-go="settings"><span class="mi-ico">${ICON.gear}</span><span class="mi-txt"><b class="mi-t">设置</b><small class="mi-s">难度 · 声音 · 存档</small></span></button>
+        <div class="menu-panel home-menu">
+          <button class="hm-hero" data-go="match">
+            <span class="hm-ico">${LINE_ICON.ball}</span>
+            <span class="hm-txt"><b>开始比赛</b><small>${stageLabel}</small></span>
+          </button>
+          <button class="hm-sub" data-go="daily">
+            <span class="hm-ico">${LINE_ICON.daily}</span>
+            <span class="hm-txt"><b>每日挑战</b><small>今日 ${daily.mod.name} · 最高分 ${daily.best || "未挑战"}</small></span>
+          </button>
+
+          <div class="hm-grid">
+            <button class="hm-item" data-go="achv">
+              <span class="hm-ico">${LINE_ICON.trophy}</span>
+              <span class="hm-txt"><b>成就</b><small>${achvDone} / 16 · 里程碑</small></span>
+            </button>
+            <button class="hm-item" data-go="tutorial">
+              <span class="hm-ico">${LINE_ICON.tutorial}</span>
+              <span class="hm-txt"><b>新手教程</b><small>操作 · 规则 · 训练</small></span>
+            </button>
+            <button class="hm-item" data-go="dex">
+              <span class="hm-ico">${LINE_ICON.book}</span>
+              <span class="hm-txt"><b>图鉴</b><small>${Object.keys(save.dex).length} / 291 已结缘</small></span>
+            </button>
+            <button class="hm-item" data-go="team">
+              <span class="hm-ico">${LINE_ICON.team}</span>
+              <span class="hm-txt"><b>队伍</b><small>${save.team.length}/10 · 仓库 ${save.box.length}</small></span>
+            </button>
+            <button class="hm-item" data-go="shop">
+              <span class="hm-ico">${LINE_ICON.shop}</span>
+              <span class="hm-txt"><b>每日商店</b><small>精灵 · 蛋 · 树果</small></span>
+            </button>
+            <button class="hm-item" data-go="egg">
+              <span class="hm-ico">${LINE_ICON.egg}</span>
+              <span class="hm-txt"><b>孵蛋</b><small>${save.eggs.slots.filter(Boolean).length}/${save.eggs.unlockedSlots} 槽</small></span>
+            </button>
+            <button class="hm-item" data-go="bag">
+              <span class="hm-ico">${LINE_ICON.bag}</span>
+              <span class="hm-txt"><b>背包</b><small>树果 ×${save.bag.berryNormal}</small></span>
+            </button>
+            <button class="hm-item" data-go="settings">
+              <span class="hm-ico">${LINE_ICON.settings}</span>
+              <span class="hm-txt"><b>设置</b><small>难度 · 声音 · 存档</small></span>
+            </button>
           </div>
         </div>
       </div>
@@ -336,12 +371,25 @@ function showHome(save, justStarted = false) {
   sc.querySelector("#home-badges")?.addEventListener("click", () => {
     openBadgeDetail(loadSave() || save);
   });
+  // 随时重看新手指引
+  sc.querySelector("#home-guide")?.addEventListener("click", () => {
+    const s = loadSave() || save;
+    s.guide = { v: 1, step: 0, done: false };
+    writeSave(s);
+    showHome(s);
+  });
   // 金币"+"获取面板 / 成就面板
   sc.querySelector("#earn-add").addEventListener("click", () => {
+    const refreshRoster = () => {
+      const team = sc.querySelector('[data-go="team"] .hm-txt small');
+      if (team) team.textContent = `${save.team.length}/10 · 仓库 ${save.box.length}`;
+      const dex = sc.querySelector('[data-go="dex"] .hm-txt small');
+      if (dex) dex.textContent = `${Object.keys(save.dex).length} / 291 已结缘`;
+    };
     openEarn(save, () => {
       const coinB = sc.querySelector(".coin-chip b");
       if (coinB) coinB.textContent = save.coins;
-    });
+    }, refreshRoster);
   });
   sc.querySelectorAll("[data-go]").forEach((b) =>
     b.addEventListener("click", () => {
@@ -359,15 +407,8 @@ function showHome(save, justStarted = false) {
     })
   );
 
-  if (!save.onboarded) {
-    setTimeout(() => startOnboarding(sc, save, {
-      onFinish: () => {
-        const cur = loadSave() || save;
-        cur.onboarded = true;
-        writeSave(cur);
-      },
-    }), 420);
-  }
+  // 新玩家局外指引（主页 → 赛季 → 赛前 → 结算；比赛内沿用原 rookie-guide）
+  setTimeout(() => startOnboarding(sc, loadSave() || save), 420);
 }
 
 /* ================= 赛季赛程弹窗（9 队单循环 + 季后赛 + 四天王） ================= */
@@ -454,7 +495,7 @@ function openSeasonBoard(save) {
   const fkHtml = `<div class="lg-fk ${fkCan ? "on" : ""}">
     <div><b>四天王挑战</b><small>${fkText}</small></div>
     <div class="lg-fk-acts">
-      ${fkCan ? '<button class="pk-btn-gold" id="season-fk">挑 战</button><button class="pk-btn-gold pm-ghost" id="season-fk-sim">模拟</button>' : ""}
+      ${fkCan ? '<button class="pk-btn-gold" id="season-fk">挑 战</button>' : ""}
     </div>
   </div>`;
 
@@ -463,15 +504,13 @@ function openSeasonBoard(save) {
     if (s.schedule[s.round]?.bye === "me") {
       actions = `<button class="pk-btn-gold" id="season-bye">进入下一轮</button>`;
     } else {
-      actions = `<button class="pk-btn-gold" id="season-go">下一场</button>
-        <button class="pk-btn-gold season-watch" id="season-watch">${EYE_SVG} 观战</button>
-        <button class="pk-btn-gold season-sim" id="season-sim">一键模拟</button>`;
+      actions = `<button class="pk-btn-gold" id="season-go">进入比赛</button>
+        <button class="pk-btn-gold season-watch" id="season-watch">${EYE_SVG} 观战</button>`;
     }
   } else if (s.phase === "playoffs") {
     const info = leagueInfo(save);
     actions = `<button class="pk-btn-gold" id="season-go">${info?.playoffRound === "final" ? "总决赛" : "半决赛"}</button>
-      <button class="pk-btn-gold season-watch" id="season-watch">${EYE_SVG} 观战</button>
-      <button class="pk-btn-gold season-sim" id="season-sim">一键模拟</button>`;
+      <button class="pk-btn-gold season-watch" id="season-watch">${EYE_SVG} 观战</button>`;
   } else {
     actions = `<button class="pk-btn-gold" id="season-next">进入下一赛季</button>`;
   }
@@ -532,27 +571,10 @@ function openSeasonBoard(save) {
     wrap.remove();
     startAutoMatch(f, null, "league");
   });
-  wrap.querySelector("#season-sim")?.addEventListener("click", async () => {
-    const f = loadSave() || save;
-    const info = leagueInfo(f);
-    if (info?.kind === "bye") { advanceBye(f); writeSave(f); reopen(); return; }
-    if (!info || info.kind === "done") return;
-    wrap.remove();
-    const { engine, cfg } = await simulateCurrentMatch(f, "league");
-    if (engine) showResult(f, engine, false, cfg.gym, true, "league");
-    else openSeasonBoard(loadSave() || f);
-  });
   wrap.querySelector("#season-fk")?.addEventListener("click", () => {
     const f = loadSave() || save;
     wrap.remove();
     showMatch(f, "elite");
-  });
-  wrap.querySelector("#season-fk-sim")?.addEventListener("click", async () => {
-    const f = loadSave() || save;
-    wrap.remove();
-    const { engine, cfg } = await simulateCurrentMatch(f, "elite");
-    if (engine) showResult(f, engine, false, cfg.gym, true, "elite");
-    else openSeasonBoard(loadSave() || f);
   });
   wrap.querySelector("#season-next")?.addEventListener("click", () => {
     const f = loadSave() || save;
@@ -562,6 +584,16 @@ function openSeasonBoard(save) {
     openSeasonBoard(loadSave() || f);
   });
   document.body.appendChild(wrap);
+  const guideBye = s.phase === "regular" && s.schedule[s.round]?.bye === "me";
+  mountGuide("season", loadSave() || save, {
+    root: wrap,
+    target: guideBye ? "#season-bye" : s.phase === "done" ? "#season-next" : "#season-go",
+    text: guideBye
+      ? "本轮你轮空，点「进入下一轮」查看其他球队战况。9 支球队单循环，每队打 8 场、轮空 1 轮；前 4 进季后赛，再打总决赛。赢馆主得徽章，8 枚解锁四天王。"
+      : s.phase === "done"
+        ? "本赛季已经结束，点「进入下一赛季」开启新赛季。新赛季会重置排名和徽章，队伍、等级和金币都会保留。"
+        : undefined,
+  });
 }
 
 /* ================= 场景四：比赛 + 结果面板 ================= */
@@ -665,6 +697,7 @@ function showPreMatch(save, mode = "league") {
     stopBg();
     startMatchNow(loadSave() || save, mode);
   });
+  mountGuide("prematch", loadSave() || save, { root: page });
 }
 
 /** 新手判定：没有任何比赛记录且未看过引导 */
@@ -680,9 +713,9 @@ function showRookieGuide(page, save) {
   save.journey.guideDone = true;
   writeSave(save);
   const steps = [
-    { t: "移动", d: "按住左下摇杆拖动，控制球员跑位。" },
-    { t: "投篮", d: "按住投篮键蓄力，力度条变绿的瞬间松开。" },
-    { t: "传球 / 必杀", d: "点传球键给队友；必杀槽满后点必杀键。" },
+    { t: "移动", d: "按住左下摇杆拖动。进攻时跑位，防守时跟住对位球员。" },
+    { t: "投篮", d: "按住 X 蓄力，力度条进入绿区时松开。空位出手更稳。" },
+    { t: "传球 / 必杀", d: "A 传球给队友；Y 在必杀槽满后释放必杀。B 抢断，RB 加速。" },
   ];
   const box = document.createElement("div");
   box.className = "rookie-guide";
@@ -734,7 +767,8 @@ function startMatchNow(save, mode = "league") {
   gameAudio.setTrack(null);
   const page = el(`<div class="sub-page screen-match"></div>`);
   app.replaceChildren(page);
-  mountMatch(page, cfg, gameAudio, (engine, c, quit, simulated) => showResult(save, engine, quit, gym, simulated, mode), { startingFive: false });
+  // 默认按设置里的「赛前演出」播放入场 + 首发阵容动画
+  mountMatch(page, cfg, gameAudio, (engine, c, quit, simulated) => showResult(save, engine, quit, gym, simulated, mode));
   if (rookie) showRookieGuide(page, save);
 }
 
@@ -812,12 +846,12 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
       <h2 class="rs-title">${quit ? "中途离场" : r.champion ? "总 冠 军" : r.won ? "胜 利" : "惜 败"}</h2>
       <p class="rs-score">${engine ? `${engine.teams[0].abbr} <b>${r.myScore}</b> : <b>${r.oppScore}</b> ${engine.teams[1].abbr}` : quit ? "未打完，按判负记入战绩" : ""}</p>
       <div class="res-lines rs-lines">
-        <p class="res-line"><span class="coin-ico">${ICON.coin}</span><span>篮球币 +${r.coinsGained}（${r.won ? "胜利奖励" : "安慰奖"}）</span></p>
+        <p class="res-line"><span class="coin-ico">${COIN_SVG}</span><span>篮球币 +${r.coinsGained}（${r.won ? "胜利奖励" : "安慰奖"}）</span></p>
         <p class="res-line"><span class="res-dot"></span><span>${r.seasonEnded ? "本赛季结束 · 进入下一赛季" : mode === "elite" ? "四天王挑战结束 · 可回赛季继续" : `下一场：${r.nextLabel}`}</span></p>
         <p class="res-line">${ICON.trophy}<span>战绩 ${save.stats.w} 胜 ${save.stats.l} 负</span></p>
         ${r.badgeGained ? `<p class="res-line res-gold">${BADGE_SVG}<span>获得「${r.badgeName || "道馆"}」徽章！</span></p>` : ""}
         ${r.fourKings && r.won ? `<p class="res-line res-gold">${ICON.trophy}<span>四天王挑战完成！</span></p>` : ""}
-        ${r.champion ? `<p class="res-line res-gold">${ICON.trophy}<span>联赛总冠军！奖杯、300 币与赛季 MVP 已入库</span></p>` : ""}
+        ${r.champion ? `<p class="res-line res-gold">${ICON.trophy}<span>联赛总冠军！奖杯、400 币与赛季 MVP 已入库</span></p>` : ""}
         ${r.legendReward ? `<p class="res-line res-gold"><span>✦</span><span>赛季传说已解锁：${r.legendReward.choices.length} 选 1，本赛季还可领 ${r.legendReward.claims || 1} 只</span></p>` : ""}
         ${r.itemGained ? `<p class="res-line res-gold">${GIFT_SVG}<span>获得道具：${r.itemName}</span></p>` : ""}
         ${r.sign ? (r.sign.dup
@@ -879,6 +913,7 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
     if (mode === "elite") { openSeasonBoard(f); return; }
     showMatch(f, mode);
   });
+  mountGuide("result", save, { root: page });
 }
 
 /* ================= 每日挑战：开球 + 结果 ================= */
@@ -920,7 +955,7 @@ function showDailyResult(save, engine, quit, page = app.firstElementChild) {
         <div class="dr-score"><b>${r.score}</b><small>挑战分${r.newBest ? " · 新纪录！" : ""}</small></div>
         <p class="dr-break">得分 ${d.pts} + 扣篮 ${d.dnk}×3 + 三分 ${d.tpm}×2 + 抢断 ${d.stl}×2 + 盖帽 ${d.blk}×2 + 胜利 ${d.winBonus}</p>
         <div class="res-lines rs-lines">
-          ${r.firstWin ? `<p class="res-line res-gold"><span class="coin-ico">${ICON.coin}</span><span>今日首胜 +100 篮球币</span></p>` : ""}
+          ${r.firstWin ? `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>今日首胜 +100 篮球币</span></p>` : ""}
           <p class="res-line"><span class="res-dot"></span><span>今日最佳 ${r.best} 分 · 已挑战 ${r.plays} 场（${r.wins} 胜）</span></p>
           <p class="res-line" style="color:var(--text-dim);font-size:11.5px"><span class="res-dot" style="background:var(--text-dim)"></span><span>当日任务可在「每日挑战」面板领取</span></p>
         </div>
@@ -977,7 +1012,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=15");
+window.__PC = await import("../engine/readable/play-core.js?v=27");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

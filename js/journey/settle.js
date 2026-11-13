@@ -1,27 +1,25 @@
 /**
  * settle.js —— 比赛结算（pokedunk-v2 · 赛季 v2.4）
- * 奖励口径（docs/09 §6.3/§7）：
- *   - 篮球币：base = 20 + 0.5×对手OVR；常规赛×0.4 / 小决赛×1.5 / 四天王×3.0
- *   - 模拟胜利：奖励 ×0.8、无首通；手动胜利：100% + 首通 +50%（仅第一次）
- *   - 重复通关递减：100% → 50% → 25% → 10%
- *   - 小决赛 3-0 常规赛：金币 +10%（模拟 +5%）
- *   - 失败：每天前 3 次给胜利奖励 20%，之后 0；模拟失败 0 XP；退出 0 币 0 XP
- *   - 四天王胜利：冠军 +300 币，进入下一赛季（season.js 负责重置）
- * XP：胜 12+分差、负 5，再按关卡 40%/100%/200% 缩放，模拟 ×0.8。
+ * 奖励口径（docs/09 §6.3/§7，S13 定案）：
+ *   - 篮球币：base = 20 + 0.5×对手OVR；常规赛×0.7 / 半决赛×1.5 / 总决赛×2.0 / 四天王×3.0
+ *   - 模拟胜利：奖励 ×0.8；失败：每天前 3 次给胜利奖励 20%，之后 0；退出 0 币 0 XP
+ *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
+ * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=15";
+import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=27";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=14";
-import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=12";
-import { ACHV } from "../systems/achv.js?v=8";
-import { bumpDaily } from "../ui/earn.js?v=10";
-import { currentMatchInfo, recordResult } from "./season.js?v=14";
-import { activeBonds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=8";
-import { offerLegendReward } from "./legend.js?v=4";
+import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=26";
+import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=28";
+import { ACHV } from "../systems/achv.js?v=20";
+import { bumpDaily } from "../ui/earn.js?v=30";
+import { currentMatchInfo, recordResult } from "./season.js?v=26";
+import { activeBonds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=21";
+import { offerLegendReward } from "./legend.js?v=16";
 
 const SIGN_CHANCE = 0.25;
-const KIND_COIN = { league: 0.4, playoff: 1.0, final: 1.5, elite: 3.0 };
-const KIND_XP = { league: 0.4, playoff: 1.0, final: 1.5, elite: 2.0 };
+// S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高
+const KIND_COIN = { league: 0.7, playoff: 1.5, final: 2.0, elite: 3.0 };
+const KIND_XP = { league: 5.0, playoff: 7.0, final: 8.0, elite: 8.0 };
 
 /** 战胜签约：胜利后概率收服对手一名上场精灵 */
 function trySign(save, engine) {
@@ -96,11 +94,11 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     : (info.targetPower || 60);
   const baseCoins = 20 + Math.round(oppOvr * 0.5);
   const coinMult = info.kind === "playoff"
-    ? (info.playoffRound === "final" ? 1.5 : 1.0)
-    : (KIND_COIN[info.kind] ?? 0.4);
+    ? (info.playoffRound === "final" ? 2.0 : 1.5)
+    : (KIND_COIN[info.kind] ?? 0.7);
   const xpMult = info.kind === "playoff"
-    ? (info.playoffRound === "final" ? 1.5 : 1.0)
-    : (KIND_XP[info.kind] ?? 0.4);
+    ? (info.playoffRound === "final" ? 8.0 : 7.0)
+    : (KIND_XP[info.kind] ?? 5.0);
 
   let coins = 0;
   let xp = 0;
@@ -111,11 +109,11 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
       coins *= 0.8;
       xp *= 0.8;
     }
-    if (info.kind === "elite") coins += 300;
+    if (info.kind === "elite") coins += 400;
   } else if (!quit) {
     const n = bumpDaily("loss");
     coins = n <= 3 ? baseCoins * 0.2 : 0;
-    xp = simulated ? 0 : 5;
+    xp = simulated ? 0 : 25;
     if (simulated) coins = n <= 3 ? coins * 0.8 : 0;
   }
   // 御三家羁绊：比赛 XP +10%（经济类）
@@ -139,8 +137,8 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   const seasonNo = info.season || save.journey?.season?.no || 1;
   const advance = recordResult(save, info, { won, myScore, oppScore, sim: simulated });
   if (advance.champion) {
-    coins += 300;
-    save.coins += 300; // 联赛总冠军奖励
+    coins += 400;
+    save.coins += 400; // 联赛总冠军奖励
   }
   const legendReward = advance.legendTrack ? offerLegendReward(save, seasonNo, advance.legendTrack) : null;
 

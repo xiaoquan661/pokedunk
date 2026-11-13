@@ -3,9 +3,9 @@
  * 联赛总冠军 / 四天王挑战共享本赛季传说池；领取后立即写入存档。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { loadSave, writeSave } from "../storage.js?v=14";
-import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=4";
-import { ICON } from "./icons.js?v=8";
+import { loadSave, writeSave } from "../storage.js?v=26";
+import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=16";
+import { ICON } from "./icons.js?v=20";
 
 const TYPE_ZH = {
   Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰",

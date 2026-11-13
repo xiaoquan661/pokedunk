@@ -5,12 +5,38 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=14";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=12";
-import { LEGENDARY_DEX } from "./build.js?v=8";
+import { addMon, writeSave } from "../storage.js?v=27";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=28";
+import { LEGENDARY_DEX } from "./build.js?v=20";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
 export const EGG_AD_REDUCE_MS = 30 * 60 * 1000;
+export const EGG_SLOT_MAX = 3;
+export const EGG_SLOT_PRICE = 600;
+
+/** 购买 1 个孵蛋槽位（上限 3，只能购买一次） */
+export function eggBuySlot(save) {
+  save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
+  if (save.eggs.paidSlot) return { ok: false, error: "已购买过槽位" };
+  if (save.eggs.unlockedSlots >= EGG_SLOT_MAX) return { ok: false, error: "孵蛋槽位已全部解锁" };
+  if (save.coins < EGG_SLOT_PRICE) return { ok: false, error: `篮球币不足（需 ${EGG_SLOT_PRICE}）` };
+  save.coins -= EGG_SLOT_PRICE;
+  save.eggs.paidSlot = true;
+  save.eggs.unlockedSlots = Math.min(EGG_SLOT_MAX, (save.eggs.unlockedSlots || 1) + 1);
+  writeSave(save);
+  return { ok: true, price: EGG_SLOT_PRICE, unlocked: save.eggs.unlockedSlots };
+}
+
+/** 看广告送 1 个孵蛋槽位（上限 3，只能领一次；广告播放由 UI 层负责） */
+export function eggAdSlot(save) {
+  save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
+  if (save.eggs.adSlot) return { ok: false, error: "已领取过广告槽位" };
+  if (save.eggs.unlockedSlots >= EGG_SLOT_MAX) return { ok: false, error: "孵蛋槽位已全部解锁" };
+  save.eggs.adSlot = true;
+  save.eggs.unlockedSlots = Math.min(EGG_SLOT_MAX, (save.eggs.unlockedSlots || 1) + 1);
+  writeSave(save);
+  return { ok: true, unlocked: save.eggs.unlockedSlots };
+}
 const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -36,6 +62,8 @@ export function eggList(save) {
     slots: out,
     unlocked: save.eggs.unlockedSlots,
     free: out.filter((e) => !e).length,
+    paidSlot: !!save.eggs.paidSlot,
+    adSlot: !!save.eggs.adSlot,
     stock: save.eggs.stock.map((e, index) => ({ index, tier: e.eggTier || "normal" })),
   };
 }
@@ -98,8 +126,10 @@ export function eggHatch(save, slot) {
       legend: LEGENDARY_DEX.has(dex), mon: getPokemon(dex),
     };
   }
-  // 撞车折币：普通 25 / 传说 200
-  const refund = LEGENDARY_DEX.has(dex) ? DUPE_REFUND_LEGEND : DUPE_REFUND;
+  // 撞车折币：商店价 50% —— 普通 25 / 高级 75 / 传说 200
+  const refund = LEGENDARY_DEX.has(dex)
+    ? DUPE_REFUND_LEGEND
+    : e.eggTier === "premium" ? DUPE_REFUND_PREMIUM : DUPE_REFUND;
   save.coins += refund;
   writeSave(save);
   return {

@@ -3,9 +3,9 @@
  * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=18";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=18";
-import { gameAudio } from "../platform/audio.js?v=8";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=30";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=30";
+import { gameAudio } from "../platform/audio.js?v=21";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -23,8 +23,8 @@ const DRILLS = [
   },
   {
     id: "jumpshots", title: "跳投", metric: "reps", target: 4, time: 42, keys: ["X"],
-    intro: "按住 X 蓄力，在跳跃最高点松开。",
-    tip: "绿色力度区松开，命中率最高。",
+    intro: "按住 X 蓄力，力度条进入绿区时松开。",
+    tip: "绿区松开必进；过早或过晚都会降低命中。",
   },
   {
     id: "passing", title: "传球", metric: "reps", target: 6, time: 34, keys: ["A"],

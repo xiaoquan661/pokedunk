@@ -607,33 +607,60 @@ const BASE_ROSTER = [
     reb: "Rebounding",
     hnd: "Handles",
   },
+  POSITION_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" },
+  TEAM_ABBR_ZH = {
+    PEW: "深灰", CER: "华蓝", VER: "枯叶", CEL: "彩虹",
+    FCH: "浅红", SAF: "金黄", CIN: "红莲", VIR: "常磐", E4: "四强",
+  },
+  AB = (a) => (a && TEAM_ABBR_ZH[a.abbr]) || (a && a.abbr) || "",
+  MOVE_ZH = {
+    "VOLT TACKLE": "伏特攻击",
+    "EXTREME SPEED": "神速",
+    TAILWIND: "顺风",
+    "CALM MIND": "冥想",
+    MOONBLAST: "月亮之力",
+    "IRON FOCUS": "钢铁专注",
+    "PHANTOM FORCE": "潜灵奇袭",
+    "SUCKER PUNCH": "突袭",
+    "TOXIC SPIKES": "毒菱",
+    "BLAST BURN": "爆炸烈焰",
+    OUTRAGE: "逆鳞",
+    EARTHQUAKE: "地震",
+    "ROCK SLIDE": "岩崩",
+    "CLOSE COMBAT": "近身战",
+    SURF: "冲浪",
+    "ICY WIND": "冰冻之风",
+    "SLEEP POWDER": "催眠粉",
+    "STRING SHOT": "吐丝",
+  },
+  MV = (a) => MOVE_ZH[a] || a,
   SPECIAL_EFFECTS = {
-    surge: { label: "Surge", desc: "Unlimited turbo and +25% speed for 5 seconds." },
-    lockin: { label: "Lock-In", desc: "Next shot is a guaranteed perfect release." },
-    phase: { label: "Phase", desc: "Cannot be stolen from, shoved or blocked for 5 seconds." },
-    blaze: { label: "Blaze", desc: "Instantly catch fire." },
-    quake: { label: "Quake", desc: "Knocks down every opponent within 14 ft. Type matchups apply." },
-    freeze: { label: "Freeze", desc: "Slows the whole opposing team for 5 seconds." },
+    surge: { label: "爆发", desc: "5 秒内加速不消耗体力，速度 +25%。" },
+    lockin: { label: "锁定", desc: "下一次投篮必定完美出手。" },
+    phase: { label: "相位", desc: "5 秒内不会被抢断、推撞或盖帽。" },
+    blaze: { label: "烈焰", desc: "立刻进入手感火热状态。" },
+    quake: { label: "震击", desc: "震倒 14 英尺内的所有对手，属性克制生效。" },
+    freeze: { label: "冰冻", desc: "敌方全队减速 5 秒。" },
   },
   SPECIAL_MOVES = {
-    Electric: ["surge", "VOLT TACKLE"],
-    Normal: ["surge", "EXTREME SPEED"],
-    Flying: ["surge", "TAILWIND"],
-    Psychic: ["lockin", "CALM MIND"],
-    Fairy: ["lockin", "MOONBLAST"],
-    Steel: ["lockin", "IRON FOCUS"],
-    Ghost: ["phase", "PHANTOM FORCE"],
-    Dark: ["phase", "SUCKER PUNCH"],
-    Poison: ["phase", "TOXIC SPIKES"],
-    Fire: ["blaze", "BLAST BURN"],
-    Dragon: ["blaze", "OUTRAGE"],
-    Ground: ["quake", "EARTHQUAKE"],
-    Rock: ["quake", "ROCK SLIDE"],
-    Fighting: ["quake", "CLOSE COMBAT"],
-    Water: ["quake", "SURF"],
-    Ice: ["freeze", "ICY WIND"],
-    Grass: ["freeze", "SLEEP POWDER"],
-    Bug: ["freeze", "STRING SHOT"],
+    Electric: ["surge", "伏特攻击"],
+    Normal: ["surge", "神速"],
+    Flying: ["surge", "顺风"],
+    Psychic: ["lockin", "冥想"],
+    Fairy: ["lockin", "月亮之力"],
+    Steel: ["lockin", "钢铁专注"],
+    Ghost: ["phase", "潜灵奇袭"],
+    Dark: ["phase", "突袭"],
+    Poison: ["phase", "毒菱"],
+    Fire: ["blaze", "爆炸烈焰"],
+    Dragon: ["blaze", "逆鳞"],
+    Ground: ["quake", "地震"],
+    Rock: ["quake", "岩崩"],
+    Fighting: ["quake", "近身战"],
+    Water: ["quake", "冲浪"],
+    Ice: ["freeze", "冰冻之风"],
+    Grass: ["freeze", "催眠粉"],
+    Bug: ["freeze", "吐丝"],
   },
   POSITION_WEIGHTS = {
     PG: { spd: 0.2, sht: 0.2, pas: 0.2, hnd: 0.2, def: 0.1, ins: 0.1 },
@@ -1736,12 +1763,12 @@ class MatchEngine {
     }
     if (this.drillId) return this.stageDrill();
     const n =
-      e > 4 ? (e === 5 ? "OVERTIME" : "".concat(e - 4, "OT")) : ["1ST", "2ND", "3RD", "4TH"][e - 1] + " QUARTER";
+      e > 4 ? (e === 5 ? "加时赛" : "".concat(e - 4, " 次加时")) : "第 ".concat(e, " 节");
     this.phase = "tip";
     let o = t;
     if (this.cfg.practice && e === 1) o = this.tipWinner = this.teams[0].human ? 0 : 1;
     else if (e === 1 || e === 3) {
-      (this.setupJump(), this.events.push({ kind: "quarter", label: n, sub: "JUMP BALL" }));
+      (this.setupJump(), this.events.push({ kind: "quarter", label: n, sub: "跳球" }));
       return;
     }
     this.offense = o;
@@ -1749,7 +1776,7 @@ class MatchEngine {
     (this.giveBall(r, !0),
       (this.phaseT = 1.8),
       this.updateUser(!0),
-      this.events.push({ kind: "quarter", label: n, sub: "".concat(this.teams[o].abbr, " BALL") }),
+      this.events.push({ kind: "quarter", label: n, sub: "".concat(AB(this.teams[o]), " 球权") }),
       this.sfx.push("whistle"));
   }
   get drill() {
@@ -1949,11 +1976,11 @@ class MatchEngine {
       return;
     }
     const s =
-        this.quarter === 2 ? "HALFTIME" : this.quarter >= 4 ? "END OF REGULATION" : "END OF Q".concat(this.quarter),
+        this.quarter === 2 ? "中场休息" : this.quarter >= 4 ? "常规时间结束" : "第 ".concat(this.quarter, " 节结束"),
       n =
         this.quarter >= 4
-          ? "TIED! GOING TO OVERTIME"
-          : "".concat(this.teams[0].abbr, " ").concat(e, " - ").concat(t, " ").concat(this.teams[1].abbr);
+          ? "比分战平！进入加时"
+          : "".concat(AB(this.teams[0]), " ").concat(e, " - ").concat(t, " ").concat(AB(this.teams[1]));
     (this.events.push({ kind: "quarter", label: s, sub: n }),
       this.quarter++,
       (this.phase = "break"),
@@ -5344,7 +5371,7 @@ function Hs(a, e, t) {
             .concat(n.color, '" title="')
             .concat(escapeHtml(n.name))
             .concat(n.leader ? " (".concat(escapeHtml(n.leader), ")") : "", '">\n      <span class="abbr">')
-            .concat(escapeHtml(n.abbr), "</span>\n      ")
+            .concat(escapeHtml(AB(n)), "</span>\n      ")
             .concat(
               Array.from({ length: t }, (r, i) =>
                 e[o][i]
@@ -6797,9 +6824,9 @@ const qt = 1 / 60,
   Go = 240 * 1e3,
   Vs = (a) => {
     const e = Math.max(0, a.clock),
-      t = a.quarter > 4 ? "OT" : ["1ST", "2ND", "3RD", "4TH"][a.quarter - 1];
+      t = a.quarter > 4 ? "加时" : "第".concat(a.quarter, "节");
     return a.phase === "final"
-      ? "FINAL"
+      ? "终场"
       : ""
           .concat(t, " ")
           .concat(
@@ -7254,15 +7281,15 @@ function _o(a) {
     case "final":
       return "final";
     case "quarter":
-      return a.label === "1ST QUARTER"
+      return a.label === "第 1 节"
         ? "tipoff"
-        : a.label === "END OF Q1"
+        : a.label === "第 1 节结束"
           ? "q1"
-          : a.label === "HALFTIME"
+          : a.label === "中场休息"
             ? "half"
-            : a.label === "END OF Q3"
+            : a.label === "第 3 节结束"
               ? "q3"
-              : a.label === "END OF REGULATION"
+              : a.label === "常规时间结束"
                 ? "buildPlayer"
                 : null;
     default:
@@ -7293,32 +7320,32 @@ class Ca {
   }
 }
 const Ko = {
-    Normal: "BODY SLAM",
-    Fire: "FLARE BLITZ",
-    Water: "WATERFALL",
-    Electric: "THUNDER PUNCH",
-    Grass: "WOOD HAMMER",
-    Ice: "ICICLE CRASH",
-    Fighting: "SKY UPPERCUT",
-    Poison: "POISON JAB",
-    Ground: "HIGH HORSEPOWER",
-    Flying: "BRAVE BIRD",
-    Psychic: "ZEN HEADBUTT",
-    Bug: "MEGAHORN",
-    Rock: "HEAD SMASH",
-    Ghost: "SHADOW CLAW",
-    Dragon: "DRAGON RUSH",
-    Dark: "CRUNCH",
-    Steel: "METEOR MASH",
-    Fairy: "PLAY ROUGH",
+    Normal: "泰山压顶",
+    Fire: "闪焰冲锋",
+    Water: "攀瀑",
+    Electric: "雷电拳",
+    Grass: "木槌",
+    Ice: "冰柱坠击",
+    Fighting: "冲天拳",
+    Poison: "毒击",
+    Ground: "十万马力",
+    Flying: "勇鸟猛攻",
+    Psychic: "意念头锤",
+    Bug: "超级角击",
+    Rock: "双刃头锤",
+    Ghost: "暗影爪",
+    Dragon: "龙之俯冲",
+    Dark: "咬碎",
+    Steel: "流星拳",
+    Fairy: "嬉闹",
   },
   Vo = {
-    perfect: ["EXCELLENT", "green"],
-    good: ["GOOD RELEASE", "white"],
-    early: ["SLIGHTLY EARLY", "yellow"],
-    late: ["SLIGHTLY LATE", "yellow"],
-    "very-early": ["VERY EARLY", "red"],
-    "very-late": ["VERY LATE", "red"],
+    perfect: ["完美", "green"],
+    good: ["出手不错", "white"],
+    early: ["稍早", "yellow"],
+    late: ["稍晚", "yellow"],
+    "very-early": ["太早", "red"],
+    "very-late": ["太晚", "red"],
     layup: ["", "white"],
     dunk: ["", "white"],
   },
@@ -7346,16 +7373,16 @@ class Ga {
       (r.innerHTML = '\n      <div class="bug">\n        <div class="bug-team" style="--tc:'
         .concat(n.color, '"><span class="abbr">')
         .concat(
-          escapeHtml(n.abbr),
+          escapeHtml(AB(n)),
           '</span><span class="pts" data-k="s0">0</span></div>\n        <div class="bug-team" style="--tc:',
         )
         .concat(o.color, '"><span class="abbr">')
         .concat(
-          escapeHtml(o.abbr),
-          '</span><span class="pts" data-k="s1">0</span></div>\n        <div class="bug-clock"><span data-k="q">1ST</span><span data-k="clock">0:00</span></div>\n        <div class="bug-shot" data-k="shot">24</div>\n      </div>\n      <div class="grade" data-k="grade"></div>\n      <div class="banner" data-k="banner"><div class="banner-main"></div><div class="banner-sub"></div></div>\n      <div class="pcard" data-k="pcard">\n        <img alt="" data-k="pimg">\n        <div class="pinfo">\n          <div class="pname"><span data-k="pname"></span><span class="povr" data-k="povr"></span></div>\n          <div class="bar turbo"><i data-k="turbo"></i><b>TURBO</b></div>\n          <div class="bar spec"><i data-k="spec"></i><b data-k="specname">SPECIAL</b></div>\n          ',
+          escapeHtml(AB(o)),
+          '</span><span class="pts" data-k="s1">0</span></div>\n        <div class="bug-clock"><span data-k="q">第1节</span><span data-k="clock">0:00</span></div>\n        <div class="bug-shot" data-k="shot">24</div>\n      </div>\n      <div class="grade" data-k="grade"></div>\n      <div class="banner" data-k="banner"><div class="banner-main"></div><div class="banner-sub"></div></div>\n      <div class="pcard" data-k="pcard">\n        <img alt="" data-k="pimg">\n        <div class="pinfo">\n          <div class="pname"><span data-k="pname"></span><span class="povr" data-k="povr"></span></div>\n          <div class="bar turbo"><i data-k="turbo"></i><b>加速</b></div>\n          <div class="bar spec"><i data-k="spec"></i><b data-k="specname">必杀</b></div>\n          ',
         )
         .concat(
-          t.cfg.stamina ? '<div class="bar energy"><i data-k="energy"></i><b>ENERGY</b></div>' : "",
+          t.cfg.stamina ? '<div class="bar energy"><i data-k="energy"></i><b>体力</b></div>' : "",
           '\n        </div>\n      </div>\n      <div class="battle" data-k="battle"><p data-k="msg"></p></div>',
         )),
       e.appendChild(r),
@@ -7370,9 +7397,9 @@ class Ga {
         h = t.teams[1 - t.viewTeam];
       this.say(
         h.coach
-          ? "".concat(h.coach.toUpperCase(), " wants to ball!")
-          : "Wild ".concat(h.name.toUpperCase(), " appeared!"),
-        c ? "Go! ".concat(U(c), "! Hit SHOOT when the toss peaks!") : "Go! ".concat(U(l), " and crew!"),
+          ? "".concat(h.coach.toUpperCase(), " 率队来袭！")
+          : "".concat(h.name.toUpperCase(), " 登场！"),
+        c ? "上吧，".concat(U(c), "！跳球到最高点时按投篮！") : "上吧，".concat(U(l), " 和队友们，上吧！"),
       );
     }
   }
@@ -7403,14 +7430,14 @@ class Ga {
             n.classList.add("pts-flash"),
             t.how === "dunk"
               ? this.say(
-                  "".concat(U(t.player), " used ").concat(Ko[t.player.mon.types[0]], "!"),
-                  "It's super effective!",
+                  "".concat(U(t.player), " 使出了").concat(Ko[t.player.mon.types[0]], "！"),
+                  "效果拔群！",
                 )
-              : t.points === 3 && this.say("".concat(U(t.player), " drains a three!")));
+              : t.points === 3 && this.say("".concat(U(t.player), " 命中三分！")));
           break;
         }
         case "miss":
-          t.airball && this.say("AIRBALL! ".concat(U(t.player), " hurt itself in its confusion!"));
+          t.airball && this.say("三不沾！".concat(U(t.player), " 在混乱中伤到了自己！"));
           break;
         case "release":
           if (t.player.human && t.player.team === this.g.viewTeam) {
@@ -7425,87 +7452,87 @@ class Ga {
           }
           break;
         case "block":
-          this.say("".concat(U(t.player), " used PROTECT!"), "".concat(U(t.victim), "'s shot was rejected!"));
+          this.say("".concat(U(t.player), " 使出了守住！"), "".concat(U(t.victim), " 的投篮被盖掉了！"));
           break;
         case "steal":
-          this.say("".concat(U(t.player), " used THIEF!"), "".concat(U(t.player), " stole the ball!"));
+          this.say("".concat(U(t.player), " 使出了小偷！"), "".concat(U(t.player), " 抢到了球！"));
           break;
         case "shove":
           t.mult === 0
-            ? this.say("".concat(U(t.player), " used TACKLE!"), "It doesn't affect ".concat(U(t.victim), "..."))
+            ? this.say("".concat(U(t.player), " 使出了撞击！"), "对 ".concat(U(t.victim), " 没有效果……"))
             : t.ok
               ? t.mult >= 2
-                ? this.say("".concat(U(t.player), " used TACKLE!"), "It's super effective!")
+                ? this.say("".concat(U(t.player), " 使出了撞击！"), "效果拔群！")
                 : t.mult < 1
-                  ? this.say("".concat(U(t.player), " used TACKLE!"), "It's not very effective...")
-                  : this.say("".concat(U(t.player), " used TACKLE!"))
-              : this.say("".concat(U(t.player), " used TACKLE!"), "".concat(U(t.player), "'s attack missed!"));
+                  ? this.say("".concat(U(t.player), " 使出了撞击！"), "效果不佳……")
+                  : this.say("".concat(U(t.player), " 使出了撞击！"))
+              : this.say("".concat(U(t.player), " 使出了撞击！"), "".concat(U(t.player), " 的攻击落空了！"));
           break;
         case "special": {
-          const s = ["".concat(U(t.player), " used ").concat(t.player.mon.move, "!")],
+          const s = ["".concat(U(t.player), " 使出了").concat(MV(t.player.mon.move), "！")],
             n = t.hits.find((o) => o.mult === 0);
           (t.hits.some((o) => o.mult >= 2)
-            ? s.push("It's super effective!")
-            : t.hits.length && t.hits.every((o) => o.mult > 0 && o.mult < 1) && s.push("It's not very effective..."),
-            n && s.push("It doesn't affect ".concat(U(n.victim), "...")),
+            ? s.push("效果拔群！")
+            : t.hits.length && t.hits.every((o) => o.mult > 0 && o.mult < 1) && s.push("效果不佳……"),
+            n && s.push("对 ".concat(U(n.victim), " 没有效果……")),
             this.say(...s));
           break;
         }
         case "heating":
-          this.say("".concat(U(t.player), " is heating up!"));
+          this.say("".concat(U(t.player), " 手感正在升温！"));
           break;
         case "fire":
           t.on
-            ? this.banner("".concat(U(t.player)), "IS ON FIRE!", 2.2)
-            : this.say("".concat(U(t.player), " cooled off."));
+            ? this.banner("".concat(U(t.player)), "手感火热！", 2.2)
+            : this.say("".concat(U(t.player), " 手感冷却了。"));
           break;
         case "sub": {
           const s = this.g.teams[t.in.team].coach;
           t.in.team === 0 && this.g.isHumanTeam(0)
-            ? this.say("Come back, ".concat(U(t.out), "!"), "Go! ".concat(U(t.in), "!"))
+            ? this.say("回来吧，".concat(U(t.out), "！"), "上吧，".concat(U(t.in), "!"))
             : this.say(
                 ""
-                  .concat((s != null ? s : this.g.teams[t.in.team].name).toUpperCase(), " sent out ")
+                  .concat((s != null ? s : this.g.teams[t.in.team].name).toUpperCase(), " 换上了 ")
                   .concat(U(t.in), "!"),
               );
           break;
         }
         case "injury":
           this.say(
-            "".concat(U(t.player), " is hurt!"),
-            "Out ".concat(t.weeks, " week").concat(t.weeks > 1 ? "s" : "", "."),
+            "".concat(U(t.player), " 受伤了！"),
+            "缺阵 ".concat(t.weeks, " 周。"),
           );
           break;
         case "subQueued":
-          this.say("".concat(U(t.in), " checks in for ").concat(U(t.out), " ENGINE_VERSION the next dead ball."));
+          this.say("".concat(U(t.in), " 将换下 ").concat(U(t.out), "，下一次死球时上场。"));
           break;
         case "oop":
-          this.say("ALLEY-OOP to ".concat(U(t.player), "!"));
+          this.say("空中接力给到 ".concat(U(t.player), "!"));
           break;
         case "shotclock":
-          this.say("SHOT CLOCK VIOLATION!");
+          this.say("进攻时间违例！");
           break;
         case "quarter":
           this.banner(t.label, t.sub, 2.2);
           break;
         case "buzzerbeater":
-          (this.banner("BUZZER BEATER!", "".concat(U(t.player), " AT THE HORN"), 2.4),
-            this.say("".concat(U(t.player), " beats the buzzer!"), "It's super effective!"));
+          (this.banner("压哨绝杀！", "".concat(U(t.player), " 压哨出手"), 2.4),
+            this.say("".concat(U(t.player), " 压哨命中！"), "效果拔群！"));
           break;
         case "jumpball":
           this.say(
-            "".concat(U(t.winner), " wins the tip over ").concat(U(t.loser), "!"),
-            "".concat(this.g.teams[t.winner.team].abbr, " ball."),
+            "".concat(U(t.winner), " 跳球胜过 ").concat(U(t.loser), "!"),
+            "".concat(AB(this.g.teams[t.winner.team]), " 球权。"),
           );
           break;
         case "final":
           this.banner(
-            "FINAL",
+            "终场",
             ""
-              .concat(this.g.teams[0].abbr, " ")
+              .concat(AB(this.g.teams[0]), " ")
               .concat(this.g.score[0], " - ")
               .concat(this.g.score[1], " ")
-              .concat(this.g.teams[1].abbr),
+              .concat(AB(this.g.teams[1])),
             3,
           );
           break;
@@ -7517,9 +7544,9 @@ class Ga {
     const s =
       t.quarter > 4
         ? t.quarter === 5
-          ? "OT"
-          : "".concat(t.quarter - 4, "OT")
-        : ["1ST", "2ND", "3RD", "4TH"][t.quarter - 1];
+          ? "加时"
+          : "".concat(t.quarter - 4, " 加时")
+        : "第".concat(t.quarter, "节");
     (this.set("q", s),
       this.set("clock", Yo(t.clock)),
       this.set("shot", String(Math.max(0, Math.ceil(t.shotClock)))),
@@ -7531,8 +7558,8 @@ class Ga {
           ((this.cardDex = n.mon.dex),
           (this.q("pimg").src = le(n.mon.dex)),
           this.set("pname", n.mon.name.toUpperCase()),
-          this.set("povr", "".concat(n.mon.pos, " ").concat(n.mon.ovr)),
-          this.set("specname", n.mon.move)),
+          this.set("povr", "".concat(POSITION_ZH[n.mon.pos] || n.mon.pos, " ").concat(n.mon.ovr)),
+          this.set("specname", MV(n.mon.move))),
         (this.q("turbo").style.width = "".concat((n.fx.surge > 0 || n.fire ? 1 : n.turbo) * 100, "%")),
         (this.q("spec").style.width = "".concat(n.special * 100, "%")),
         this.g.cfg.stamina)
@@ -7907,8 +7934,8 @@ class lr {
   setContext(e, t) {
     var n, o;
     const s = this.labels;
-    (s.shoot && (s.shoot.textContent = e ? "SHOOT" : "JUMP"),
-      s.pass && (s.pass.textContent = e ? "PASS" : "SWITCH"),
+    (s.shoot && (s.shoot.textContent = e ? "投篮" : "起跳"),
+      s.pass && (s.pass.textContent = e ? "传球" : "换防"),
       (o = (n = s.special) == null ? void 0 : n.closest(".tb")) == null || o.classList.toggle("ready", t));
   }
   attachTouch(e) {
@@ -8185,7 +8212,7 @@ function Xs(a, e, t) {
       .map((r, i) =>
         '\n    <li class="s5-card" style="--d:'
           .concat((0.35 + i * Da).toFixed(2), 's">\n      <b>')
-          .concat(r.mon.pos, '</b>\n      <img alt="" src="')
+          .concat(POSITION_ZH[r.mon.pos] || r.mon.pos, '</b>\n      <img alt="" src="')
           .concat(le(r.mon.dex), '">\n      <span>')
           .concat(escapeHtml(r.mon.name), "</span>\n      <i>")
           .concat(r.mon.ovr, "</i>\n    </li>"),
@@ -8197,7 +8224,7 @@ function Xs(a, e, t) {
     .concat(s.color, ";--tc2:")
     .concat(s.color2, '">\n      <header class="s5-head"><small>')
     .concat(t ? "Your starting five" : "Starting five", "</small><strong>")
-    .concat(escapeHtml(s.name), "</strong><em>OVR ")
+    .concat(escapeHtml(s.name), "</strong><em>战力 ")
     .concat(Rt(s.roster), '</em></header>\n      <ol class="s5-row">')
     .concat(o, "</ol>\n    </section>");
 }

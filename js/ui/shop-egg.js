@@ -3,12 +3,13 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=14";
-import { shopList, shopBuy, PRICES, EGG_TIERS, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=12";
-import { eggList, eggHatch, eggStart, eggSpeedUp } from "../systems/egg.js?v=12";
-import { watchRewardedAd } from "../platform/ads.js?v=4";
-import { playHatch } from "./anim.js?v=10";
-import { ICON, coinInline } from "./icons.js?v=8";
+import { loadSave, writeSave } from "../storage.js?v=26";
+import { shopList, shopBuy, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=28";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=29";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=20";
+import { watchRewardedAd } from "../platform/ads.js?v=16";
+import { playHatch } from "./anim.js?v=22";
+import { ICON, coinInline } from "./icons.js?v=20";
 
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];
@@ -62,7 +63,6 @@ function toast(msg, ms = 2200) {
 export function renderShop(root) {
   const save = loadSave();
   const items = shopList(save);
-  const bagCount = save.bag.berryNormal || 0;
 
   root.innerHTML = `
     <div class="page-head">
@@ -70,7 +70,7 @@ export function renderShop(root) {
       <h2>每日商店</h2>
       <span class="count">${coinInline}${save.coins}</span>
     </div>
-    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon} / 普通蛋 ${EGG_TIERS.normal.price} / 高级蛋 ${EGG_TIERS.premium.price} / 树果 ${PRICES.berry} 币 · 蛋有 1% 传说概率</p>
+    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 高级蛋 ${EGG_TIERS.premium.price} / 普通树果 ${PRICES.berry} / 高级树果 ${PRICES.berryPremium} 币</p>
     <div class="shop-tools"><button class="shop-ad" id="shop-refresh">看广告刷新货架（今日剩 ${shopAdRefreshLeft(save)} 次）</button></div>
     <div class="shop-grid">
       ${items.map((it) => {
@@ -78,7 +78,7 @@ export function renderShop(root) {
           return `<div class="shop-card${it.owned ? " off" : ""}">
             <img src="${sprite(it.dex)}" alt="">
             <div class="nm">${monName(it.dex)}</div>
-            <div class="info">${coinInline}${it.price}</div>
+            <div class="info">${coinInline}${it.price} · OVR ${it.ovr} · <i data-rar="${it.rarity}" style="font-style:normal;color:${RARITY_COLOR[it.rarity]}">${it.rarity}</i></div>
             <button data-buy="${it.slot}"${it.owned ? " disabled" : ""}>${it.owned ? "已结缘" : "购买"}</button>
           </div>`;
         if (it.type === "egg") {
@@ -87,8 +87,9 @@ export function renderShop(root) {
             <div class="nm">${t.name}</div><div class="info">${coinInline}${it.price} · 孵化 ${fmtMs(t.hatchMs)}</div>
             <button data-buy="${it.slot}">购买</button></div>`;
         }
+        const premium = it.tier === "premium";
         return `<div class="shop-card"><span class="emoji">${ICON.berry}</span>
-          <div class="nm">普通树果</div><div class="info">${coinInline}${it.price} · +50 XP · 背包 ${bagCount}</div>
+          <div class="nm">${premium ? "高级树果" : "普通树果"}</div><div class="info">${coinInline}${it.price} · +${BERRY_XP[premium ? "premium" : "normal"]} XP</div>
           <button data-buy="${it.slot}">购买</button></div>`;
       }).join("")}
     </div>`;
@@ -99,7 +100,7 @@ export function renderShop(root) {
       if (!r.ok) return toast("购买失败：" + r.error);
       if (r.kind === "mon") toast(`${monName(r.dex)}${r.placed === "box" ? " 进入仓库（队伍已满）" : " 已入队！"}`, 3000);
       else if (r.kind === "egg") toast(`神秘蛋已放入背包（待孵 ${r.stock} 颗）——去孵蛋页选择孵化`, 3000);
-      else toast(`树果已入背包（共 ${r.count} 个）`);
+      else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个）`);
       writeSave(save);
       renderShop(root); // 重渲染刷新币数/置灰
     })
@@ -167,6 +168,12 @@ export function renderEgg(root) {
   const live = data.slots.filter(Boolean).length;
   const hasFree = data.free > 0;
   const nothing = live === 0 && data.stock.length === 0;
+  const slotBtns = [];
+  if (data.unlocked < 3 && !data.paidSlot) slotBtns.push(`<button class="pk-btn-gold" id="egg-buy-slot" style="padding:9px 16px">购买孵蛋槽位 · ${EGG_SLOT_PRICE} 币</button>`);
+  if (data.unlocked < 3 && !data.adSlot) slotBtns.push(`<button class="pk-btn-gold" id="egg-ad-slot" style="padding:9px 16px">看广告送 1 个槽位</button>`);
+  const slotUp = slotBtns.length
+    ? `<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0 10px">${slotBtns.join("")}</div>`
+    : "";
 
   root.innerHTML = `
     <div class="page-head">
@@ -174,19 +181,21 @@ export function renderEgg(root) {
       <h2>孵蛋</h2>
       <span class="count">${ICON.egg}${live}/${data.unlocked}</span>
     </div>
-    <p class="page-sub">购买后进入待孵栏，由你决定何时放入孵化器 · 普通蛋 30 分钟 / 高级蛋 6 小时 · 每次孵化 1% 传说概率</p>
-    ${nothing ? `<div class="empty-art">
+    <p class="page-sub">购买后进入待孵栏，由你决定何时放入孵化器 · 普通蛋 30 分钟 / 高级蛋 3 小时 · 普通蛋 1% / 高级蛋 3% 传说概率</p>
+    ${slotUp ? `<div style="display:flex;justify-content:center;margin:8px 0 10px">${slotUp}</div>` : ""}
+    <div class="egg-sec">孵化器 <small>${live}/${data.unlocked} 槽</small></div>
+    <div class="egg-grid">${data.slots.map((e, i) => eggSlotHtml(e, i)).join("")}</div>
+    ${data.stock.length ? `
+      <div class="egg-sec">待孵化 <small>${data.stock.length} 颗 · 放入后开始计时</small></div>
+      <div class="egg-stock">${data.stock.map((e) => stockCardHtml(e, hasFree)).join("")}</div>
+    ` : nothing ? `<div class="empty-art">
       ${EMPTY_EGG_SVG}
       <b class="empty-title">还没有精灵蛋</b>
-      <p class="empty-sub">去每日商店买一颗神秘蛋，再回来亲手放进孵化器</p>
+      <p class="empty-sub">去每日商店买一颗神秘蛋，放进上面的空槽后开始孵化</p>
       <button class="pk-btn-gold empty-cta" data-eggshop>去每日商店买蛋</button>
     </div>` : `
-      <div class="egg-sec">孵化器 <small>${live}/${data.unlocked} 槽</small></div>
-      <div class="egg-grid">${data.slots.map((e, i) => eggSlotHtml(e, i)).join("")}</div>
-      <div class="egg-sec">待孵化 <small>${data.stock.length} 颗 · 放入后开始计时</small></div>
-      ${data.stock.length
-        ? `<div class="egg-stock">${data.stock.map((e) => stockCardHtml(e, hasFree)).join("")}</div>`
-        : `<p class="egg-stock-empty">待孵栏是空的，去每日商店买一颗蛋吧</p>`}
+      <div class="egg-sec">待孵化 <small>0 颗 · 放入后开始计时</small></div>
+      <p class="egg-stock-empty">待孵栏是空的，去每日商店买一颗蛋吧</p>
     `}`;
 
   // 商店跳转 + 放入孵化器（委托绑定一次：每秒重绘会替换节点）
@@ -194,6 +203,32 @@ export function renderEgg(root) {
     root.__eggBound = true;
     root.addEventListener("click", async (e) => {
       if (e.target.closest("[data-eggshop]")) { root.dispatchEvent(new CustomEvent("page-goto", { detail: "shop" })); return; }
+      const buySlot = e.target.closest("#egg-buy-slot");
+      if (buySlot) {
+        const fresh = loadSave() || save;
+        const r = eggBuySlot(fresh);
+        if (!r.ok) return toast(r.error);
+        toast(`已解锁第 2 个孵蛋槽位（-${r.price} 币）`);
+        renderEgg(root);
+        return;
+      }
+      const adSlot = e.target.closest("#egg-ad-slot");
+      if (adSlot) {
+        adSlot.disabled = true;
+        adSlot.textContent = "播放中…";
+        const ad = await watchRewardedAd("egg_slot");
+        if (!ad.ok) {
+          adSlot.disabled = false;
+          adSlot.textContent = "看广告送 1 个槽位";
+          return toast(ad.message || "广告暂不可用");
+        }
+        const fresh = loadSave() || save;
+        const r = eggAdSlot(fresh);
+        if (!r.ok) return toast(r.error);
+        toast("已解锁第 3 个孵蛋槽位");
+        renderEgg(root);
+        return;
+      }
       const st = e.target.closest("[data-start]");
       if (st && !st.disabled) {
         const fresh = loadSave() || save;
@@ -227,14 +262,15 @@ export function renderEgg(root) {
       const r = eggHatch(save, Number(b.dataset.hatch));
       if (!r.ok) return toast(r.error === "还没孵好" ? `还没孵好（剩 ${fmtMs(r.leftMs)}）` : "无法开启：" + r.error);
       const legend = !!r.legend;
+      const rarity = rarityOf(r.dex);
       const title = r.recruited
         ? legend ? `传说降临 · ${monName(r.dex)}` : `恭喜！${monName(r.dex)} 加入了${r.placed === "box" ? "仓库" : "队伍"}`
         : legend ? `传说再临 · ${monName(r.dex)}` : `撞车 · ${monName(r.dex)} 已折算`;
       const sub = r.recruited
         ? legend
           ? `传说精灵加入了${r.placed === "box" ? "仓库" : "队伍"} · 图鉴${r.first ? "首次点亮" : "记录 +1"}`
-          : "图鉴" + (r.first ? " · 首次点亮" : " · 记录 +1")
-        : `已拥有该精灵 · 转化为篮球币 +${r.coin}`;
+          : `${rarity} · 图鉴` + (r.first ? " · 首次点亮" : " · 记录 +1")
+        : `${rarity} · 已拥有该精灵 · 转化为篮球币 +${r.coin}`;
       playHatch({ dex: r.dex, title, sub, dup: !r.recruited, legend }, () => renderEgg(root));
     })
   );

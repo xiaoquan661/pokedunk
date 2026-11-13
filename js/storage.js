@@ -24,17 +24,17 @@
  *
  * API：
  *   loadSave()          → 读档（无档/损坏返回 null，由调用方走"新建档"流程）
- *   createSave(opts)    → 生成全新默认档（御三家选择后调用，见 startJourney）
+ *   createSave(opts)    → 生成全新默认档（选择初始伙伴后调用，见 startJourney）
  *   writeSave(save)     → 写档（自动 + 保留上次快照 pokejam.save.bak 供恢复）
- *   startJourney(save, starterDex, coachName)  → 御三家三选一落库（dex 1/4/7）
+ *   startJourney(save, starterDex, coachName, starterPos)  → 五位置选伙伴落库
  *   addMon(save, dex, opts)     → 统一入队函数（S5 三通道共用：同种唯一校验→队空入队/满入仓→图鉴点亮）
  *   moveMon(save, id, to)       → 调动（team⇄box，校验边界）
  *   resetSave()                 → 重开（覆盖确认由 UI 负责，这里只管清键）
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { ensureSeason } from "./journey/season.js?v=9";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=8";
+import { ensureSeason } from "./journey/season.js?v=21";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=20";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -174,15 +174,23 @@ export function moveMon(save, id, to) {
   return { ok: false, error: "未知调动目标" };
 }
 
-/** 御三家三选一（S8 开局）：dex ∈ {1,4,7}，Lv1 零 bonus，落库+建档元信息 */
-export function startJourney(save, starterDex, coachName = "小智") {
-  if (![1, 4, 7].includes(starterDex)) return { ok: false, error: "御三家只能是 妙蛙种子/小火龙/杰尼龟" };
+/** 开局五位置选伙伴：Lv1 零 bonus，按所选位置落库+建档元信息 */
+export function startJourney(save, starterDex, coachName = "小智", starterPos = "") {
+  const base = getPokemon(starterDex);
+  if (!base?.name) return { ok: false, error: "未知的初始伙伴" };
+  const POSITIONS = ["PG", "SG", "SF", "PF", "C"];
+  const pos = POSITIONS.includes(starterPos) ? starterPos : base.pos;
   const r = addMon(save, starterDex, { level: 1, bonus: {}, from: "starter" });
   if (!r.ok) return r;
+  const mon = save.mons[r.id];
+  mon.pos = pos; // 开局伙伴按所选位置培养，避免越位惩罚
+  save.assign ||= {};
+  save.assign[r.id] = pos;
   save.coach = { name: coachName };
   save.journey.startedAt = Date.now();
   save.journey.starterDex = starterDex;
-  save.journey.stage = "gym1"; // 选完御三家即进入第一道馆阶段
+  save.journey.starterPos = pos;
+  save.journey.stage = "gym1"; // 选完初始伙伴即进入第一道馆阶段
   return { ok: true, id: r.id };
 }
 
@@ -202,13 +210,14 @@ export function createSave() {
     shop: { date: "", slots: [], soldFlags: {} },
     eggs: { unlockedSlots: 1, slots: [], stock: [] },
     journey: {
-      stage: "starter", // starter=未选御三家 → gym1..8 → elite（旧字段，由 season 同步）
+      stage: "starter", // starter=未选初始伙伴 → gym1..8 → elite（旧字段，由 season 同步）
       difficulty: "",
       gymBadges: [],
       season: { no: 1, phase: "venue", venue: 0, small: 0, results: [], badges: [], champion: false, history: [] },
       seasonNo: 1,
       startedAt: 0,
       starterDex: 0,
+      starterPos: "",
     },
     assign: {}, // 个体 id → 实际位置（构筑系统；缺省=推荐位置）
     stats: { w: 0, l: 0 },

@@ -5,7 +5,7 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=15";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=27";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
@@ -105,8 +105,8 @@ export function trainPrice(mon) {
 }
 export function canTrain(save, mon) {
   tidy(mon);
-  const cap = Math.min(TRAIN_MAX, Math.floor(mon.level / 2));
-  if (mon.train.points >= cap) return { ok: false, error: mon.train.points >= TRAIN_MAX ? "训练已满 40 点" : "已达等级上限（≤Lv/2）" };
+  const cap = Math.min(TRAIN_MAX, 4 + Math.floor(mon.level / 2));
+  if (mon.train.points >= cap) return { ok: false, error: mon.train.points >= TRAIN_MAX ? "训练已满 40 点" : `已达当前等级上限（${cap} 点）` };
   const price = trainPrice(mon);
   if (save.coins < price) return { ok: false, error: `篮球币不足（需 ${price}）` };
   return { ok: true, price, free: mon.train.bank > 0 };
@@ -143,6 +143,8 @@ export const ITEM_TYPES = {
   power: { name: "力量药剂", stat: "ins", desc: "终结 +1（单只最多 4 次）" },
   speed: { name: "速度药剂", stat: "spd", desc: "速度 +1（单只最多 4 次）" },
   skill: { name: "技巧药剂", stat: "sht", desc: "投篮 +1（单只最多 4 次）" },
+  guard: { name: "防守药剂", stat: "def", desc: "防守 +1（单只最多 4 次）" },
+  board: { name: "篮板药剂", stat: "reb", desc: "篮板 +1（单只最多 4 次）" },
 };
 export function itemCount(save, id) {
   save.bag.items ||= {};

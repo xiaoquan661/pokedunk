@@ -1,14 +1,15 @@
 /**
  * ui/settings.js —— 设置中心（pokedunk-v2，移植自旧 pokedunk settings-ui.js）
- * 页签：比赛 / 声音 / 存档。
+ * 页签：比赛 / 声音 / 外观 / 说明 / 存档。
  * - 比赛：难度/节长/自动换人/防守切换/赛前演出 → localStorage pokedunk.settings（buildGymMatch 读取）
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=8";
-import { BONDS } from "../systems/build.js?v=8";
-import { EGG_TIERS } from "../systems/shop.js?v=12";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=15";
+import { gameAudio } from "../platform/audio.js?v=21";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=38";
+import { BONDS } from "../systems/build.js?v=20";
+import { EGG_TIERS } from "../systems/shop.js?v=28";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=27";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -62,8 +63,17 @@ function tabMatch(c) {
   return field("自动换人", "体力不足时自动轮换替补", seg("autoSubs", ASW, c.autoSubs === false ? "manual" : "auto")) +
     field("防守切换", "防守对象自动跟随或手动指定", seg("autoSwitch", ASW, c.autoSwitch === true ? "auto" : "manual")) +
     field("赛前演出", "开局入场与首发阵容展示", seg("introMode", INTRO, c.introMode || "full")) +
+    field("必杀动画", "必杀时播放镜头推近与斜切特写；关闭后不打断比赛画面", seg("specialFx", ONOFF, c.specialFx === false ? "0" : "1")) +
     '<p class="pj-mut">难度由赛程决定：越往后的道馆对手越强</p>' +
     '<p class="pj-mut">比赛偏好即时保存，下次开球生效</p>';
+}
+function tabLook() {
+  const desc = THEME_SWITCH_ENABLED
+    ? "体验版：开放全部主题用于对比。"
+    : "正式版：复古体育 / 墨黑两套风格。";
+  return field("界面风格", "切换局外界面的视觉主题；对局内球场与操作不变", seg("uiTheme", VISIBLE_THEMES, loadTheme())) +
+    `<p class="pj-mut">${desc}</p>` +
+    '<p class="pj-mut">切换后立即生效，并记住到下一次启动。</p>';
 }
 function tabSound() {
   let t = "";
@@ -101,18 +111,32 @@ function typeChartHtml() {
 }
 
 function tabGuide() {
-  const eggs = Object.values(EGG_TIERS).map((t) => `<div class="pj-guide-row">
+  const eggs = Object.values(EGG_TIERS).map((t) => {
+    const oddsText = t.odds.普通 === 0
+      ? `必出稀有 · 传说 ${t.legendOdds}%`
+      : `传说 ${t.legendOdds}% · 其余普通 ${t.odds.普通}% / 稀有 ${t.odds.稀有}%`;
+    const hatchText = t.hatchMs >= 3600000 ? Math.round(t.hatchMs / 3600000) + " 小时" : Math.round(t.hatchMs / 60000) + " 分钟";
+    return `<div class="pj-guide-row">
     <b>${t.name}</b>
-    <span>传说 ${t.legendOdds}% · 其余普通 ${t.odds.普通}% / 稀有 ${t.odds.稀有}%</span>
-    <small>传说为独立 1% 判定；孵化 ${t.hatchMs >= 3600000 ? Math.round(t.hatchMs / 3600000) + " 小时" : Math.round(t.hatchMs / 60000) + " 分钟"} · ${t.price} 币</small>
-  </div>`).join("");
+    <span>${oddsText}</span>
+    <small>传说为独立判定；孵化 ${hatchText} · ${t.price} 币</small>
+  </div>`;
+  }).join("");
   const bonds = BONDS.map((b) => `<div class="pj-guide-row">
     <b>${b.name}<i>${b.category}</i></b>
     <span>${BOND_EFFECT[b.id] || ""}</span>
     <small>${b.desc}</small>
   </div>`).join("");
-  return `<div class="pj-block"><div class="pj-flbl">孵蛋概率</div><div class="pj-fdesc">购买时确定精灵；所有蛋都有 1% 独立概率孵出传说。未拥有优先。</div>${eggs}
-    <div class="pj-guide-row"><b>传说获取</b><span>蛋 1% · 联赛冠军/四天王共享 2 选 1 · 战胜签约</span><small>每赛季 2 只传说；联赛冠军和四天王共享该池，先完成 2 选 1，后完成拿剩下 1 只。重复传说折算 200 币。</small></div></div>
+  return `<div class="pj-block"><div class="pj-flbl">赛季与比赛</div>
+      <div class="pj-guide-row"><b>常规赛</b><span>9 队单循环，每队 8 场 + 1 轮轮空</span><small>每轮 4 场同时进行；赛后会显示其他球队战况，积分榜前 4 进季后赛。</small></div>
+      <div class="pj-guide-row"><b>季后赛</b><span>半决赛 1v4 / 2v3，再打总决赛</span><small>总决赛胜者为赛季总冠军；没进前 4 或季后赛出局，直接进入下一赛季。</small></div>
+      <div class="pj-guide-row"><b>徽章 / 四天王</b><span>每赢一个馆主得 1 枚徽章，8 枚解锁四天王</span><small>四天王是独立 1 场挑战，可重试，不参与积分榜、季后赛和总冠军；赛季结束入口关闭。</small></div>
+      <div class="pj-guide-row"><b>赛前对阵</b><span>看双方战力、预计胜率、首发和系别克制</span><small>该页只读，阵容在队伍页调整；点「继续」开球。</small></div>
+      <div class="pj-guide-row"><b>赛后结算</b><span>奖励、升级进化、其他球队战况和最新积分榜</span><small>常规赛不能重打；中途退出判负，0 币 0 XP。</small></div>
+      <div class="pj-guide-row"><b>赛季轮换</b><span>赛季结束进入下一赛季</span><small>重置排名、徽章和季后赛；保留队伍、等级、训练、金币和图鉴。</small></div>
+    </div>
+    <div class="pj-block"><div class="pj-flbl">孵蛋概率</div><div class="pj-fdesc">购买时确定精灵；普通蛋 1%、高级蛋 3% 独立概率孵出传说。未拥有优先。</div>${eggs}
+    <div class="pj-guide-row"><b>传说获取</b><span>普通蛋 1% / 高级蛋 3% · 联赛冠军/四天王共享 2 选 1 · 战胜签约</span><small>每赛季 2 只传说；联赛冠军和四天王共享该池，先完成 2 选 1，后完成拿剩下 1 只。重复传说折算 200 币。</small></div></div>
     <div class="pj-block"><div class="pj-flbl">系别克制</div><div class="pj-fdesc">以该属性进攻时：×2 克制 / ×0.5 弱效 / ×0 无效。克制影响抢位推撞成功率，以及地震/冰冻类必杀的击退与减速；不影响投篮基础命中。多属性攻击取最高倍率。</div>
       <div class="type-chart">${typeChartHtml()}</div>
     </div>
@@ -158,6 +182,7 @@ function renderBody(panel) {
   const c = loadSet();
   body.innerHTML = curTab === "match" ? tabMatch(c)
     : curTab === "sound" ? tabSound()
+    : curTab === "look" ? tabLook()
     : curTab === "guide" ? tabGuide()
     : tabSave();
 }
@@ -180,6 +205,7 @@ export function openSettings() {
       <div class="pj-tabs">
         <button data-tab="match" class="on">比赛</button>
         <button data-tab="sound">声音</button>
+        <button data-tab="look">外观</button>
         <button data-tab="guide">说明</button>
         <button data-tab="save">存档</button>
       </div>
@@ -198,10 +224,12 @@ export function openSettings() {
     if (sb) {
       const f = sb.dataset.f, v = sb.dataset.v;
       if (f.startsWith("pokedunk.")) { setAudio(f, v === "1"); }
+      else if (f === "uiTheme") { setTheme(v); }
       else {
         const patch = {};
         if (f === "autoSubs") patch[f] = v !== "manual";
         else if (f === "autoSwitch") patch[f] = v !== "manual";
+        else if (f === "specialFx") patch[f] = v === "1";
         else patch[f] = v;
         saveSet(patch);
       }

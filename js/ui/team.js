@@ -4,16 +4,16 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=15";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=14";
-import { openDetail } from "./detail.js?v=19";
-import { ICON } from "./icons.js?v=8";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=27";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=26";
+import { openDetail } from "./detail.js?v=32";
+import { ICON } from "./icons.js?v=20";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
-  activeBonds, ensureLineupSlots, recommendedPositions,
+  activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=8";
+} from "../systems/build.js?v=20";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 const SLOT_ROWS = [["SF", "C", "PF"], ["SG", "PG"]]; // 参考图 3+2 阵型
@@ -58,7 +58,7 @@ function slotCard(pos, id, per) {
   if (!id) {
     return `<div class="lineup-slot empty" data-slot="${pos}" data-empty>
       <div class="slot-empty">${PLUS_SVG}<small>空位</small></div>
-      <span class="slot-label">${pos}</span>
+      <span class="slot-label no-zh">${pos}</span>
     </div>`;
   }
   const m = saveOf(id);
@@ -66,12 +66,13 @@ function slotCard(pos, id, per) {
   const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
   const rec = recommendedPositions(m).join("/");
   const ovr = Math.round(monPower(m, pos, per.get(m)));
+  const rarity = rarityOf(m.dex);
   return `<div class="lineup-slot" data-slot="${pos}">
     <button class="slot-card" data-open="${id}" data-drag="${id}" data-drag-from="start" style="--tc:${color}">
       <span class="drag-dots">${DOTS_SVG}</span>
       <span class="slot-img"><img src="./sprites/${m.dex}.png" alt="" draggable="false"></span>
       <span class="slot-name">${b.name}</span>
-      <span class="slot-meta"><b>${ovr}</b><small>Lv.${m.level}</small></span>
+      <span class="slot-meta"><b>${ovr}</b><small>Lv.${m.level}</small><small class="slot-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</small></span>
       <span class="slot-rec no-zh">推荐 ${rec}</span>
     </button>
     <span class="slot-label no-zh">${pos}</span>
@@ -112,17 +113,18 @@ export function renderTeam(page, save) {
         .lineup-row{display:flex;justify-content:center;gap:9px;margin-bottom:8px}
         .lineup-slot{width:31.5%;max-width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .12s}
         .lineup-slot.empty{opacity:.9}
-        .slot-card{position:relative;width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,#16224a 0%,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:#fff;cursor:pointer;touch-action:pan-y;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
+        .slot-card{position:relative;width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,#16224a 0%,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:#fff;cursor:pointer;touch-action:pan-y;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
         .slot-card .drag-dots{position:absolute;top:0;right:0;padding:9px 8px;color:rgba(255,255,255,.4);display:flex;touch-action:none;cursor:grab}
-        /* 精灵底不再有淡色光晕，立绘整体放大约 20% */
-        .slot-img{display:grid;place-items:center;width:64px;height:64px;background:none}
-        .slot-img img{width:56px;height:56px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+        /* 精灵底不再有淡色光晕，立绘整体放大 50% */
+        .slot-img{display:grid;place-items:center;width:96px;height:96px;background:none}
+        .slot-img img{width:84px;height:84px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
         .slot-name{font:700 12px var(--sport,sans-serif);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .slot-meta{display:flex;align-items:baseline;gap:5px;font-size:10px;color:var(--text-dim)}
+        .slot-meta{display:flex;align-items:baseline;gap:4px;font-size:10px;color:var(--text-dim)}
         .slot-meta b{font:700 13px var(--sport,sans-serif);color:var(--tc)}
+        .slot-rar{font-size:8.5px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 3px;line-height:1.45;white-space:nowrap}
         .slot-rec{font-size:9px;color:rgba(255,255,255,.66);background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:0 6px;line-height:1.5}
         .slot-label{font:700 13px var(--sport,sans-serif);color:var(--gold);letter-spacing:.1em}
-        .slot-empty{width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--text-dim);background:rgba(0,0,0,.14)}
+        .slot-empty{width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--text-dim);background:rgba(0,0,0,.14)}
         .slot-empty small{font-size:10px}
         .lineup-slot.drop-hot{transform:scale(1.04)}
         .lineup-slot.drop-hot .slot-card,.lineup-slot.drop-hot .slot-empty{outline:2px solid var(--gold);box-shadow:0 0 24px rgba(245,197,66,.35)}
@@ -131,9 +133,11 @@ export function renderTeam(page, save) {
         .bench-card img{width:46px;height:46px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
         .bench-card .sc-ovr{font:700 12px var(--sport,sans-serif);color:var(--tc)}
         .bench-card .bc-name{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .bench-card .bench-rar{font-size:8px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 3px;line-height:1.4}
         .bench-card .bench-rec{font-size:9px;color:var(--text-dim)}
         .bench-card.dim{opacity:.5;color:var(--text-dim);justify-content:center;cursor:default;touch-action:auto}
         .bench-card.drop-hot{outline:2px solid var(--gold);box-shadow:0 0 18px rgba(245,197,66,.32)}
+        .box-rar{font-style:normal;color:var(--rc);font-weight:700}
         .drag-ghost{position:fixed;z-index:1200;pointer-events:none;opacity:.9;transform:translate(-50%,-50%) scale(.86);filter:drop-shadow(0 12px 20px rgba(0,0,0,.65))}
         .team-drag-hint{margin:8px 0 0;text-align:center;font-size:10.5px;color:rgba(173,190,226,.65)}
         .bond-active{margin:9px 0 0;padding:8px 10px;border-radius:10px;background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.28)}
@@ -325,11 +329,13 @@ function benchCard(id) {
   const m = _save.mons[id];
   const b = getPokemon(m.dex);
   const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
+  const rarity = rarityOf(m.dex);
   return `<button class="bench-card" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}">
     <span class="drag-dots">${DOTS_SVG}</span>
     <img src="./sprites/${m.dex}.png" alt="" draggable="false">
     <b class="sc-ovr">${mainOVR(m)}</b>
     <span class="bc-name">${b.name}</span>
+    <span class="bench-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</span>
     <span class="bench-rec no-zh">${recommendedPositions(m).join("/")}</span>
   </button>`;
 }
@@ -345,12 +351,13 @@ function renderBoxMgr(page, save) {
     const m = save.mons[id];
     const b = getPokemon(m.dex);
     const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
+    const rarity = rarityOf(m.dex);
     return `<div class="box-row">
       <button class="box-main" data-open="${id}" style="--tc:${color}">
         <img src="./sprites/${m.dex}.png" alt="" loading="lazy" decoding="async">
         <span class="box-meta">
           <b>${b.name}</b>
-          <small>Lv.${m.level} · OVR ${mainOVR(m)} · 推荐 ${recommendedPositions(m).join("/")}</small>
+          <small>Lv.${m.level} · OVR ${mainOVR(m)} · <i class="box-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</i> · 推荐 ${recommendedPositions(m).join("/")}</small>
         </span>
       </button>
       <button class="box-in" data-in="${id}">${full ? "换入队伍" : "调入队伍"}</button>
@@ -452,10 +459,11 @@ function renderBoxSwap(page, save, boxId) {
           const m = save.mons[id];
           const p = getPokemon(m.dex);
           const starter = save.team.slice(0, 5).includes(id);
+          const rarity = rarityOf(m.dex);
           return `<div class="box-row">
             <span class="box-meta">
               <b>${p.name}</b>
-              <small>Lv.${m.level} · OVR ${mainOVR(m)} · ${starter ? "首发" : "替补"}</small>
+              <small>Lv.${m.level} · OVR ${mainOVR(m)} · <i class="box-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</i> · ${starter ? "首发" : "替补"}</small>
             </span>
             <button class="box-in box-out" data-out="${id}">换出</button>
           </div>`;

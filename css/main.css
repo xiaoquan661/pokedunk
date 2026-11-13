@@ -1,4 +1,4 @@
-/* 口袋灌篮高手 v2 · 主样式（docs/13 口袋幸存者风格）
+/* 口袋灌篮 v2 · 主样式（docs/13 口袋幸存者风格）
    基调：暗色像素场景 + 黄色标题 + 深蓝面板 + 像素字
    字体：沿用旧项目 Fusion Pixel 子集（L1 沿用资产） */
 @font-face {
@@ -126,8 +126,10 @@ img { image-rendering: pixelated; }
 .starter-head { animation: starter-head-in 0.45s 0.04s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
 .starter-card { animation: starter-card-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
 .starter-card:nth-child(1) { animation-delay: 0.1s; }
-.starter-card:nth-child(2) { animation-delay: 0.17s; }
-.starter-card:nth-child(3) { animation-delay: 0.24s; }
+.starter-card:nth-child(2) { animation-delay: 0.15s; }
+.starter-card:nth-child(3) { animation-delay: 0.2s; }
+.starter-card:nth-child(4) { animation-delay: 0.25s; }
+.starter-card:nth-child(5) { animation-delay: 0.3s; }
 .starter-actions { animation: starter-head-in 0.45s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
 @keyframes starter-screen-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes starter-head-in {
@@ -142,9 +144,20 @@ img { image-rendering: pixelated; }
 .starter-head h2 { font-size: 24px; color: var(--gold); text-shadow: 0 2px 0 #7a4a00; }
 .starter-head p { margin-top: 6px; color: var(--text-dim); }
 
-.starter-cards { display: flex; gap: 14px; width: 100%; max-width: 420px; }
+.starter-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+.starter-card:nth-child(5) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 5px);
+}
 .starter-card {
-  flex: 1;
+  min-width: 0;
   padding: 14px 8px 12px;
   display: flex;
   flex-direction: column;
@@ -155,7 +168,7 @@ img { image-rendering: pixelated; }
   background: var(--panel-2);
   transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
 }
-.starter-card img { width: 64px; height: 64px; }
+.starter-card img { width: 120px; height: 120px; }
 .starter-card .name { font-size: 15px; }
 .starter-card .tag {
   font-size: 12px;
@@ -290,7 +303,7 @@ img { image-rendering: pixelated; }
   .showcase .frame { width: 116px; height: 116px; }
   .showcase .frame img { width: 92px; height: 92px; }
   .starter-cards { gap: 10px; }
-  .starter-card img { width: 56px; height: 56px; }
+  .starter-card img { width: 105px; height: 105px; }
   .start-title h1 { font-size: 36px; }
 }
 

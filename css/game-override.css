@@ -57,3 +57,138 @@
 
 /* —— 全局禁用态统一（各页按钮不再各自漂移） —— */
 button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
+
+/* ================= 比赛内 UI：统一夜场黑色系（不随主题变化） ================= */
+.game .bug {
+  background: #0a0a0a;
+  border: 2px solid #b8e63c;
+  border-radius: 3px;
+  color: #f2f2f2;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.7), 0 0 18px rgba(184, 230, 60, 0.12);
+}
+.game .bug-team .abbr { color: #f2f2f2; }
+.game .bug-team .pts { color: #f2f2f2; }
+.game .bug-clock { background: #141414; color: #f2f2f2; }
+.game .bug-shot { background: #b8e63c; color: #101010; }
+.game .bug-shot.low { background: #ff6b5e; color: #101010; }
+.game .pcard {
+  background: #121212;
+  border: 2px solid #3a3a3a;
+  border-radius: 3px;
+  color: #f2f2f2;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+}
+.game .pcard .pname,
+.game .pcard .pname span { color: #f2f2f2; }
+.game .pcard .povr { color: #9a9a9a; }
+.game .pcard .bar { background: #1b1b1b; border: 1px solid #2a2a2a; }
+.game .pcard .bar b { color: #f2f2f2; text-shadow: none; }
+.game .battle {
+  background: #111111;
+  color: #f2f2f2;
+  border: 3px solid #b8e63c;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #0a0a0a, 4px 4px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(184, 230, 60, 0.14);
+}
+.game .battle p { color: #f2f2f2; }
+.game .banner-main {
+  background: rgba(0, 0, 0, 0.74);
+  border: 2px solid #b8e63c;
+  padding: 3px 14px;
+  color: #b8e63c;
+  text-shadow: 2px 2px 0 #000, 0 0 14px rgba(184, 230, 60, 0.35);
+}
+.game .banner-sub {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.66);
+  padding: 1px 9px;
+  color: #f2f2f2;
+  text-shadow: 2px 2px 0 #000;
+}
+.game .grade {
+  background: rgba(0, 0, 0, 0.86);
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  color: #f2f2f2;
+}
+.game .grade[data-c="green"] { color: #b8e63c; }
+.game .grade[data-c="yellow"] { color: #ffd45e; }
+.game .grade[data-c="red"] { color: #ff8a7f; }
+.game .pause-btn {
+  border: 2px solid #3a3a3a;
+  background: #121212;
+  color: #f2f2f2;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+}
+.game .sim-btn,
+.game .rot-btn {
+  border: 2px solid #3a3a3a;
+  border-radius: 3px;
+  background: #121212;
+  color: #f2f2f2;
+  font-weight: 700;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+}
+.game .sim-btn { border-color: #b8e63c; color: #b8e63c; }
+.game .sim-btn[disabled] { color: #6f6f6f; border-color: #2a2a2a; opacity: 1; }
+
+/* 触屏按键：深底 + 动作色描边 */
+.game .touch .tb {
+  border: 2px solid #3a3a3a;
+  background: rgba(10, 10, 10, 0.82);
+  color: #f2f2f2;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+}
+.game .touch .tb.xa,
+.game .touch .tb.xb,
+.game .touch .tb.xx,
+.game .touch .tb.xy {
+  background: rgba(var(--xc), 0.28);
+  border-color: rgba(var(--xc), 0.85);
+}
+.game .touch .tb b,
+.game .touch .tb span { color: inherit; text-shadow: none; }
+.game .touch .tb.turbo { background: #1b1b1b; border-color: #3a3a3a; }
+.game .touch .tb.special.ready {
+  background: #b8e63c;
+  border-color: #b8e63c;
+  color: #101010;
+}
+.game .touch .tb.special.ready b { color: #101010; }
+.game .touch .stick-base {
+  border: 3px solid rgba(184, 230, 60, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+.game .touch .stick-knob {
+  border: 3px solid #b8e63c;
+  background: #1b1b1b;
+}
+
+/* 赛前首发演出 */
+.game .s5 { background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.88)); }
+.game .s5-title {
+  background: #0a0a0a;
+  border: 3px solid #b8e63c;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.65);
+  color: #f2f2f2;
+}
+.game .s5-title small { color: #9a9a9a; }
+.game .s5-title strong { color: #f2f2f2; }
+.game .s5-card {
+  background: #121212;
+  border: 2px solid #2a2a2a;
+  border-top: 5px solid var(--tc);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  color: #f2f2f2;
+}
+.game .s5-card b { color: #9a9a9a; }
+.game .s5-card span { color: #f2f2f2; }
+.game .s5-card i { color: #b8e63c; }
+.game .s5-head { border-color: #000; box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.65); }
+.game .s5-skip {
+  background: #121212;
+  border: 2px solid #3a3a3a;
+  border-radius: 3px;
+  color: #f2f2f2;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}

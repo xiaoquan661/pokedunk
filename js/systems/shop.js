@@ -1,28 +1,40 @@
 /**
- * shop.js —— 每日商店（S2）· pokedunk-v2 · v12（传说蛋池 1%）
+ * shop.js —— 每日商店（S2）· pokedunk-v2 · v13（S13 经济定案）
  * 行为规格移植自旧 pokedunk journey-core/shop（用户定稿设计）：
- *   货架 6 格 = 4 精灵 + 1 蛋 + 1 树果；懒刷新（跨天重摇）；撞车置灰；
+ *   货架 6 格 = 2 精灵 + 普通蛋 + 高级蛋 + 普通树果 + 高级树果；懒刷新（跨天重摇）；撞车置灰；
  *   蛋购买时定 dex（防改时间刷稀有）；树果库存制入背包。
- * 数值（临时口径，S13 定案）：mon 60 / egg 50 / berry 30；孵化测试期 30s；撞车折 25 币。
+ * S13 数值：精灵按种族 OVR 分档 80/120/180/240/320；普通蛋 70；高级蛋 220/3h/必稀有；
+ *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=14";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=8";
+import { addMon, hasDex } from "../storage.js?v=27";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=20";
 
 const MIN30 = 30 * 60 * 1000;
-const HOUR6 = 6 * 60 * 60 * 1000;
+const HOUR3 = 3 * 60 * 60 * 1000;
 
-/** 蛋档位：传说 1% 独立判定；其余按普通/稀有比例 */
+/** 蛋档位：传说独立判定；高级蛋必出稀有 */
 export const EGG_TIERS = {
-  normal: { id: "normal", name: "普通蛋", price: 50, hatchMs: MIN30, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
-  premium: { id: "premium", name: "高级蛋", price: 150, hatchMs: HOUR6, legendOdds: 1, odds: { 普通: 30, 稀有: 70 } },
+  normal: { id: "normal", name: "普通蛋", price: 70, hatchMs: MIN30, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
+  premium: { id: "premium", name: "高级蛋", price: 220, hatchMs: HOUR3, legendOdds: 3, odds: { 普通: 0, 稀有: 100 } },
 };
-export const PRICES = { mon: 60, egg: 50, premiumEgg: 150, berry: 30 };
+export const PRICES = { mon: 80, monMax: 320, egg: 70, premiumEgg: 220, berry: 30, berryPremium: 90 };
 export const HATCH_MS = MIN30;
 export const EGG_SLOTS = 1;
-export const DUPE_REFUND = 25;
+export const DUPE_REFUND = 35;
+export const DUPE_REFUND_PREMIUM = 110;
 export const DUPE_REFUND_LEGEND = 200;
 export const BERRY_XP = { normal: 50, premium: 300 };
+
+/** 精灵售价：按种族 OVR 分档，购买时用未养成个体 */
+export function monPrice(dex) {
+  const ovr = getPokemon(dex).ovr || 0;
+  if (ovr < 60) return 80;
+  if (ovr < 70) return 120;
+  if (ovr < 80) return 180;
+  if (ovr < 90) return 240;
+  return 320;
+}
 
 const todayStr = () => {
   const t = new Date();
@@ -46,21 +58,71 @@ function rollEggDex(save, tier) {
   const wantRare = Math.random() * 100 >= odds.普通;
   const want = wantRare ? "稀有" : "普通";
   let pool = base.filter((r) => rarityOf(r[0]) === want);
+  // 高级蛋承诺必出稀有：若未拥有的稀有已抽完，从全部稀有里撞车，不退化成普通
+  if (!pool.length && wantRare) pool = all.filter((r) => rarityOf(r[0]) === "稀有");
   if (!pool.length) pool = base.length ? base : [[25, "皮皮"]];
   return pool[Math.floor(Math.random() * pool.length)][0];
 }
 
-/** 重摇当日货架（4 精灵 + 普通蛋 + 高级蛋 + 树果） */
+/** 精灵出现权重：低 OVR 更常见，高 OVR 稀有 */
+function spawnWeight(dex) {
+  const ovr = getPokemon(dex).ovr || 0;
+  if (ovr < 50) return 5;
+  if (ovr < 60) return 4;
+  if (ovr < 70) return 3;
+  if (ovr < 80) return 2;
+  if (ovr < 90) return 1;
+  return 0.5;
+}
+/** 按权重抽一只，排除已抽出 */
+function weightedPick(list, used) {
+  const pool = list.filter((r) => !used.has(r[0]));
+  if (!pool.length) return null;
+  const total = pool.reduce((a, r) => a + spawnWeight(r[0]), 0);
+  let roll = Math.random() * total;
+  for (const r of pool) {
+    roll -= spawnWeight(r[0]);
+    if (roll <= 0) return r;
+  }
+  return pool[pool.length - 1];
+}
+
+const RARE_SLOT_CHANCE = 0.55;
+/** 货架精灵：2 格；优先未拥有；第 1 格普通档，第 2 格 55% 稀有 */
+function pickShopMons(save) {
+  const all = (window.__PJ_DEX_ROWS || []).filter((r) => !LEGENDARY_DEX.has(r[0]));
+  const unowned = all.filter((r) => !save.dex || !save.dex[r[0]]);
+  const pool = unowned.length ? unowned : all;
+  const common = pool.filter((r) => rarityOf(r[0]) === "普通");
+  const rare = pool.filter((r) => rarityOf(r[0]) !== "普通");
+  const picks = [];
+  const used = new Set();
+  const take = (list) => {
+    const r = weightedPick(list, used);
+    if (!r) return false;
+    picks.push(r);
+    used.add(r[0]);
+    return true;
+  };
+  // 第 1 格：普通档；没有普通档时用稀有档
+  if (!take(common)) take(rare);
+  // 第 2 格：55% 稀有，否则普通；池子不足时从全量补
+  if (rare.length && Math.random() < RARE_SLOT_CHANCE) take(rare);
+  else take(common);
+  while (picks.length < 2 && take(all)) {}
+  return picks.slice(0, 2);
+}
+
+/** 重摇当日货架（2 精灵 + 普通蛋 + 高级蛋 + 树果） */
 function rollShop(save) {
-  const rows = (window.__PJ_DEX_ROWS || [])
-    .filter((r) => !LEGENDARY_DEX.has(r[0]))
-    .slice()
-    .sort(() => Math.random() - 0.5);
   const items = [];
-  for (let i = 0; i < 4 && i < rows.length; i++) items.push({ t: "mon", dex: rows[i][0], price: PRICES.mon });
+  for (const r of pickShopMons(save)) {
+    items.push({ t: "mon", dex: r[0], price: monPrice(r[0]) });
+  }
   items.push({ t: "egg", tier: "normal", dex: rollEggDex(save, "normal"), price: EGG_TIERS.normal.price });
   items.push({ t: "egg", tier: "premium", dex: rollEggDex(save, "premium"), price: EGG_TIERS.premium.price });
-  items.push({ t: "berry", price: PRICES.berry });
+  items.push({ t: "berry", tier: "normal", price: PRICES.berry });
+  items.push({ t: "berry", tier: "premium", price: PRICES.berryPremium });
   save.shop = { date: todayStr(), slots: items, soldFlags: {}, adDay: save.shop?.adDay || null };
 }
 
@@ -69,7 +131,7 @@ function shopEnsure(save) {
   const slots = Array.isArray(save.shop?.slots) ? save.shop.slots : [];
   const hasPremium = slots.some((it) => it.t === "egg" && it.tier === "premium");
   const hasLegendMon = slots.some((it) => it.t === "mon" && LEGENDARY_DEX.has(it.dex));
-  if (save.shop && save.shop.date === todayStr() && slots.length >= 7 && hasPremium && !hasLegendMon) return;
+  if (save.shop && save.shop.date === todayStr() && slots.length === 6 && hasPremium && !hasLegendMon) return;
   rollShop(save);
 }
 
@@ -101,6 +163,8 @@ export function shopList(save) {
     tier: it.tier || null,
     dex: it.dex ?? null,
     price: it.price,
+    ovr: it.t === "mon" ? getPokemon(it.dex).ovr : null,
+    rarity: it.t === "mon" ? rarityOf(it.dex) : null,
     owned: it.t === "mon" ? hasDex(save, it.dex) : false,
   }));
 }
@@ -136,8 +200,10 @@ export function shopBuy(save, slot) {
   if (it.t === "berry") {
     if (save.coins < it.price) return { ok: false, error: "篮球币不足" };
     save.coins -= it.price;
-    save.bag.berryNormal = (save.bag.berryNormal || 0) + 1;
-    return { ok: true, kind: "berry", count: save.bag.berryNormal };
+    const premium = it.tier === "premium";
+    const key = premium ? "berryPremium" : "berryNormal";
+    save.bag[key] = (save.bag[key] || 0) + 1;
+    return { ok: true, kind: "berry", tier: premium ? "premium" : "normal", count: save.bag[key] };
   }
   return { ok: false, error: "bad-item" };
 }

@@ -5,11 +5,12 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=14";
-import { gameAudio } from "../platform/audio.js?v=8";
-import { getPokemon } from "../../engine/readable/play-core.js?v=15";
-import { openDetail } from "./detail.js?v=19";
-import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=7";
+import { loadSave, writeSave } from "../storage.js?v=26";
+import { gameAudio } from "../platform/audio.js?v=21";
+import { getPokemon } from "../../engine/readable/play-core.js?v=27";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=20";
+import { openDetail } from "./detail.js?v=32";
+import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=19";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...
@@ -27,6 +28,7 @@ function toast(msg, ms = 2400) {
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const TYPE_ORDER = Object.keys(TYPE_ZH);
+const RARITY_ORDER = ["传说", "稀有", "普通"];
 
 const ownedSet = () => {
   const s = loadSave();
@@ -49,9 +51,11 @@ function cardHtml(r, owned) {
   const dex = r[0], name = String(r[1]).replace(/#\d+$/, "");
   const has = !!owned[dex];
   const color = has ? TYPE_COLORS_ZH(dex) : "rgba(255,255,255,.14)";
+  const rarity = rarityOf(dex);
   return (
     '<button class="dex-card' + (has ? "" : " off") + '" data-dex="' + dex + '" style="border-color:' + color + '">' +
     '<span class="no">No.' + dex + "</span>" +
+    '<span class="dex-rar" style="--rc:' + RARITY_COLOR[rarity] + '">' + rarity + "</span>" +
     '<img loading="lazy" src="./sprites/' + dex + '.png" alt="' + (has ? name : "???") + '">' +
     '<div class="nm">' + (has ? name : "？？？") + "</div>" +
     (has ? '<div class="info">' + r[2] + " · " + r[3] + "</div>" : "") +
@@ -69,13 +73,31 @@ function renderGrid(root, owned) {
   let list;
   if (curFilter === "all") list = ROWS;
   else if (curFilter === "own") list = ROWS.filter((r) => owned[r[0]]);
-  else {
+  else if (curFilter.startsWith("Rarity:")) {
+    const rar = curFilter.slice(7);
+    list = ROWS.filter((r) => rarityOf(r[0]) === rar);
+  } else {
     const t = curFilter.slice(5);
     list = ROWS.filter((r) => typeOf(r[0]) === t);
   }
   body.innerHTML = list.length
     ? list.map((r) => cardHtml(r, owned)).join("")
     : '<div class="dex-empty">这里还没有收集记录。<br>比赛签约、孵蛋和商店获得的精灵会点亮图鉴。</div>';
+}
+
+function rarityChipsHtml(owned) {
+  const cnt = {};
+  for (const r of ROWS) {
+    if (!owned[r[0]]) continue;
+    const rar = rarityOf(r[0]);
+    cnt[rar] = (cnt[rar] || 0) + 1;
+  }
+  return RARITY_ORDER.map((rar) => {
+    const key = "Rarity:" + rar;
+    const on = curFilter === key;
+    const c = cnt[rar] || 0;
+    return `<button data-f="${key}"${on ? ' class="on"' : ""} style="--rc:${RARITY_COLOR[rar]}">${rar}${c ? ` ${c}` : ""}</button>`;
+  }).join("");
 }
 
 function chipsHtml(owned) {
@@ -123,6 +145,12 @@ export function renderDex(root) {
   const got = ROWS.filter((r) => owned[r[0]]).length;
   const save = loadSave() || { dex: {} };
   root.innerHTML = `
+    <style>
+      .dex-chips.rarity-chips button{border-color:var(--rc);color:var(--rc)}
+      .dex-chips.rarity-chips button.on{background:var(--rc);color:#10203f;box-shadow:0 0 8px var(--rc)}
+      .dex-card .dex-rar{position:absolute;right:6px;top:5px;font-style:normal;font-size:9px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 4px;background:rgba(0,0,0,.28)}
+      .dex-card.off .dex-rar{opacity:.55}
+    </style>
     <div class="page-head">
       <button class="back" data-back>‹</button>
       <h2>图鉴</h2>
@@ -134,6 +162,7 @@ export function renderDex(root) {
       <button data-f="all"${curFilter === "all" ? ' class="on"' : ""}>全部</button>
       <button data-f="own"${curFilter === "own" ? ' class="on"' : ""}>已获得</button>
     </div>
+    <div class="dex-chips rarity-chips">${rarityChipsHtml(owned)}</div>
     <div class="dex-chips type-chips">${chipsHtml(owned)}</div>
     <div class="dex-grid" id="dex-grid"></div>`;
 

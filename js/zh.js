@@ -210,7 +210,7 @@
   });
   function start() {
     document.documentElement.lang = "zh-Hans";
-    document.title = "口袋灌篮高手";
+    document.title = "口袋灌篮";
     obs.observe(document.documentElement, {
       subtree: true,
       childList: true,
