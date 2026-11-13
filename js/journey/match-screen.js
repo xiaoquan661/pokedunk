@@ -9,13 +9,13 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=42";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=42";
-import { loadSet } from "../ui/settings.js?v=77";
-import { STAT_KEYS } from "./gyms.js?v=29";
-import { currentMatchInfo, matchSeed } from "./season.js?v=38";
-import { buildMatchPlayer, bondMultipliers } from "../systems/build.js?v=32";
-import { createMatchHype } from "../ui/match-hype.js?v=33";
+import { calcOVR } from "../../engine/readable/play-core.js?v=43";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=43";
+import { loadSet } from "../ui/settings.js?v=78";
+import { STAT_KEYS } from "./gyms.js?v=30";
+import { currentMatchInfo, matchSeed } from "./season.js?v=39";
+import { buildMatchPlayer, bondMultipliers } from "../systems/build.js?v=33";
+import { createMatchHype } from "../ui/match-hype.js?v=34";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */

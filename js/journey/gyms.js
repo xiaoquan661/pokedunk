@@ -2,7 +2,7 @@
  * journey/gyms.js —— 八馆 + 四天王配置（pokedunk-v2）
  * 从 match-screen.js 抽出，供赛季系统与比赛屏共用。
  */
-import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=39";
+import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=40";
 
 const GYM_DEXES = {
   Rock: [95, 111, 74, 138, 247],

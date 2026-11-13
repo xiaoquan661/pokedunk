@@ -3,11 +3,11 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=38";
-import { gameAudio } from "../platform/audio.js?v=33";
+import { loadSave, writeSave } from "../storage.js?v=39";
+import { gameAudio } from "../platform/audio.js?v=34";
 import {
   dailyPreview, dailyMissionRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=42";
+} from "../journey/daily.js?v=43";
 
 let toastTimer = null;
 function toast(msg, ms = 2400) {

@@ -4,18 +4,23 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=39";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=38";
-import { openDetail } from "./detail.js?v=44";
-import { ICON } from "./icons.js?v=32";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=40";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=39";
+import { openDetail } from "./detail.js?v=45";
+import { ICON } from "./icons.js?v=33";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=32";
+} from "../systems/build.js?v=33";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
+/** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
+const monZh = (dex) => {
+  const r = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
+  return r ? String(r[1]).replace(/#\d+$/, "") : getPokemon(dex).name;
+};
 const SLOT_ROWS = [["SF", "C", "PF"], ["SG", "PG"]]; // 参考图 3+2 阵型
 const BOND_EFFECT = {
   fivePos: "全队有效属性 +3%",
@@ -131,6 +136,7 @@ export function renderTeam(page, save) {
         .bench-card .bench-rec{font-size:9px;color:var(--text-dim)}
         .bench-card.dim{opacity:.5;color:var(--text-dim);justify-content:center;cursor:default;touch-action:auto}
         .bench-card.drop-hot{outline:2px solid var(--gold);box-shadow:0 0 18px rgba(245,197,66,.32)}
+        .bench-grid.drop-hot{outline:2px dashed var(--gold);outline-offset:4px;border-radius:10px}
         .box-rar{font-style:normal;color:var(--rc);font-weight:700}
         .drag-ghost{position:fixed;z-index:1200;pointer-events:none;opacity:.9;transform:translate(-50%,-50%) scale(.86);filter:drop-shadow(0 12px 20px rgba(0,0,0,.65))}
         .team-drag-hint{margin:8px 0 0;text-align:center;font-size:10.5px;color:rgba(173,190,226,.65)}
@@ -158,7 +164,7 @@ export function renderTeam(page, save) {
       <p class="team-drag-hint">直接拖动卡片换位 · 拖到首发槽即可换人 · 推荐位置仅作提示</p>
 
       <div class="team-h" style="margin:14px 0 8px;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">替补席 <small style="color:var(--text-dim);font-weight:400;font-size:11px">SUBSTITUTE · ${benchIds.length} 位待命</small></div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div class="bench-grid" data-bench-drop style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         ${benchIds.map((id) => benchCard(id)).join("")}
         ${save.team.length < 10 ? benchCard(null) : ""}
       </div>
@@ -226,7 +232,7 @@ function bindTeamDrag(page) {
   const cleanup = () => { ghost?.remove(); ghost = null; clearHot(); };
   const targetAt = (x, y) => {
     const el = document.elementFromPoint(x, y);
-    return el ? el.closest("[data-slot],[data-bench]") : null;
+    return el ? el.closest("[data-slot],[data-bench],[data-bench-drop]") : null;
   };
   const flash = (msg, bad) => {
     const m = page.querySelector(".team-msg");
@@ -236,10 +242,33 @@ function bindTeamDrag(page) {
     setTimeout(() => { if (m.isConnected) m.textContent = ""; }, 2200);
   };
 
+  // 拖到屏幕上下边缘时自动滚动（替补席在小屏手机上需要滚动才看得到）
+  let rafId = 0;
+  const stopAutoScroll = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } };
+  const autoScroll = () => {
+    rafId = 0;
+    if (!drag || !drag.active) return;
+    const r = page.getBoundingClientRect();
+    const edge = Math.min(96, r.height * 0.18);
+    let dy = 0;
+    if (drag.y > r.bottom - edge) dy = Math.min(16, (drag.y - (r.bottom - edge)) * 0.4 + 3);
+    else if (drag.y < r.top + edge) dy = -Math.min(16, ((r.top + edge) - drag.y) * 0.4 + 3);
+    if (dy) {
+      const before = page.scrollTop;
+      page.scrollTop += dy;
+      if (page.scrollTop !== before) {
+        const t = targetAt(drag.x, drag.y);
+        if (t !== hot) { clearHot(); hot = t; hot?.classList.add("drop-hot"); }
+      }
+    }
+    rafId = requestAnimationFrame(autoScroll);
+  };
+
   const onMove = (e) => {
     if (!drag) return;
+    drag.x = e.clientX; drag.y = e.clientY;
     if (!drag.active) {
-      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 9) return;
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 9) return;
       drag.active = true;
       const rect = drag.card.getBoundingClientRect();
       ghost = drag.card.cloneNode(true);
@@ -247,6 +276,7 @@ function bindTeamDrag(page) {
       ghost.style.width = `${rect.width}px`;
       ghost.style.height = `${rect.height}px`;
       document.body.appendChild(ghost);
+      rafId = requestAnimationFrame(autoScroll);
     }
     e.preventDefault();
     if (ghost) { ghost.style.left = `${e.clientX}px`; ghost.style.top = `${e.clientY}px`; }
@@ -273,20 +303,28 @@ function bindTeamDrag(page) {
             const r = substituteBenchToSlot(s, drag.id, pos);
             if (r.ok) {
               writeSave(s); renderTeam(page, s);
-              msg = `换人完成：${getPokemon(s.mons[drag.id].dex).name} → ${pos}`;
+              msg = `换人完成：${monZh(s.mons[drag.id].dex)} → ${pos}`;
             } else { msg = r.error || "换人失败"; bad = true; }
           }
-        } else if (target.hasAttribute("data-bench") && drag.from === "start") {
-          const r = substituteStarterToBench(s, drag.id, Number(target.dataset.bench));
-          if (r.ok) {
-            writeSave(s); renderTeam(page, s);
-            msg = `${getPokemon(s.mons[r.out].dex).name} 回到替补席`;
-          } else { msg = r.error || "换人失败"; bad = true; }
+        } else if (drag.from === "start") {
+          // 指定替补卡，或直接丢在替补席区域（与第一位替补互换）
+          const benchId = target.hasAttribute("data-bench")
+            ? Number(target.dataset.bench)
+            : (s.team.filter((id) => !s.team.slice(0, 5).includes(id) && s.mons[id])[0] ?? null);
+          if (benchId == null) { msg = "替补席还没有精灵，先去商店或孵蛋结缘伙伴"; bad = true; }
+          else {
+            const r = substituteStarterToBench(s, drag.id, benchId);
+            if (r.ok) {
+              writeSave(s); renderTeam(page, s);
+              msg = `${monZh(s.mons[r.out].dex)} 回到替补席`;
+            } else { msg = r.error || "换人失败"; bad = true; }
+          }
         }
       }
       if (msg) flash(msg, bad);
       page.__dragAt = Date.now();
     }
+    stopAutoScroll();
     cleanup();
     drag = null;
     if (!page.isConnected) {
@@ -304,6 +342,7 @@ function bindTeamDrag(page) {
     drag = {
       id: Number(card.dataset.drag),
       from: card.dataset.dragFrom || "start",
+      x0: e.clientX, y0: e.clientY,
       x: e.clientX, y: e.clientY,
       active: false, card,
     };

@@ -5,7 +5,7 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=39";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=40";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
@@ -387,7 +387,15 @@ export function substituteBenchToSlot(save, benchId, pos) {
   if (bi < 5) return { ok: false, error: "该精灵已在首发" };
   const occupant = slotOwner(save, pos);
   if (occupant === benchId) return { ok: true };
-  if (!occupant) return { ok: false, error: "该槽位为空" };
+  if (!occupant) {
+    // 空槽：替补直接升入首发，占据该位置
+    save.assign[benchId] = pos;
+    const firstCount = save.team.slice(0, 5).filter((id) => save.mons[id]).length;
+    save.team.splice(bi, 1);
+    save.team.splice(Math.min(firstCount, save.team.length), 0, benchId);
+    syncStarterOrder(save);
+    return { ok: true, out: null };
+  }
   const oi = save.team.indexOf(occupant);
   if (oi < 0) return { ok: false, error: "找不到原首发" };
   save.team[oi] = benchId;

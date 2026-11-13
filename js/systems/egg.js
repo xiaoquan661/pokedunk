@@ -5,9 +5,9 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=39";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=40";
-import { LEGENDARY_DEX } from "./build.js?v=32";
+import { addMon, writeSave } from "../storage.js?v=40";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=41";
+import { LEGENDARY_DEX } from "./build.js?v=33";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
 export const EGG_AD_REDUCE_MS = 30 * 60 * 1000;
