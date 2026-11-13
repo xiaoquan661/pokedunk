@@ -33,8 +33,8 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { ensureSeason } from "./journey/season.js?v=31";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=30";
+import { ensureSeason } from "./journey/season.js?v=32";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=31";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";

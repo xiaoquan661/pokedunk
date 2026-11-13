@@ -1875,3 +1875,14 @@ html[data-ui-theme="black"] .screen-menu .title::before,
 html[data-ui-theme="black"] .screen-menu .title .tag {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.8);
 }
+/* 精灵详情：训练/道具/调动反馈 */
+.detail-wrap .train-flash {
+  margin: 8px 0 10px;
+  padding: 7px 10px;
+  border: 2px solid var(--r-green);
+  border-radius: 3px;
+  background: rgba(184, 230, 60, 0.1);
+  color: var(--r-green);
+  font: 700 11.5px var(--r-font);
+  line-height: 1.5;
+}

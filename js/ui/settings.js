@@ -5,11 +5,11 @@
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=31";
-import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=48";
-import { BONDS } from "../systems/build.js?v=30";
-import { EGG_TIERS } from "../systems/shop.js?v=38";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=37";
+import { gameAudio } from "../platform/audio.js?v=32";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=49";
+import { BONDS } from "../systems/build.js?v=31";
+import { EGG_TIERS } from "../systems/shop.js?v=39";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=38";
 
 const SET_KEY = "pokedunk.settings";
 

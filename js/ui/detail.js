@@ -5,17 +5,17 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=37";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=38";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=31";
-import { loadSave, writeSave, moveMon } from "../storage.js?v=36";
-import { BERRY_XP } from "../systems/shop.js?v=38";
+} from "../systems/build.js?v=32";
+import { loadSave, writeSave, moveMon } from "../storage.js?v=37";
+import { BERRY_XP } from "../systems/shop.js?v=39";
 import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=28";
-import { ICON } from "./icons.js?v=30";
+import { playEvolve } from "./anim.js?v=29";
+import { ICON } from "./icons.js?v=31";
 import { xpToNext } from "../../engine/growth.js";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
@@ -32,6 +32,7 @@ const monName = (dex) => {
 
 let toastTimer = null;
 let buildTab = "train"; // 详情页构筑页签：train / item
+let trainFlash = ""; // 训练/道具/调动后的一次性反馈文案
 function toast(msg, ms = 2600) {
   let t = document.getElementById("pk-toast");
   if (!t) { t = document.createElement("div"); t.id = "pk-toast"; document.body.appendChild(t); }
@@ -88,6 +89,8 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const trainCap = mon ? Math.min(TRAIN_MAX, 4 + Math.floor(mon.level / 2)) : 0;
   const tr = mon?.train || { points: 0, stats: {} };
   const seenTab = ["train", "item"].includes(buildTab) ? buildTab : "train";
+  const flashNow = trainFlash;
+  trainFlash = "";
   const trainBody = mon
     ? `<div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
       <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + 5} 币` : ""}。</p>
@@ -100,6 +103,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
     : "";
   const buildHtml = mon
     ? `<div class="dsec">构筑 <small>训练 ${tr.points}/${TRAIN_MAX} · 道具 ${mon.item?.points || 0}/20 · ${POS_ZH[assigned]}</small></div>
+      ${flashNow ? `<p class="train-flash">${flashNow}</p>` : ""}
       <div class="dtab-row">
         ${[["train", "训练"], ["item", "道具"]].map(([id, label]) => `<button class="dtab${seenTab === id ? " on" : ""}" data-btab="${id}">${label}</button>`).join("")}
       </div>
@@ -109,8 +113,8 @@ export function openDetail(dexNo, monId = null, onClose = null) {
 
   const moveHtml = mon
     ? (where === "roster"
-        ? `<button class="dbtn b" data-move="box"${save.team.length <= 5 ? " disabled" : ""}>放入仓库</button>`
-        : `<button class="dbtn b" data-move="roster"${save.team.length >= 10 ? " disabled" : ""}>调入队伍</button>`)
+        ? `<button class="dbtn b" data-move="box"${save.team.length <= 5 ? " disabled" : ""}>${save.team.length <= 5 ? "至少保留 5 人" : "放入仓库"}</button>`
+        : `<button class="dbtn b" data-move="roster"${save.team.length >= 10 ? " disabled" : ""}>${save.team.length >= 10 ? "队伍已满（10 人）" : "调入队伍"}</button>`)
     : "";
 
   const ov = document.createElement("div");
@@ -155,10 +159,14 @@ export function openDetail(dexNo, monId = null, onClose = null) {
     if (act && mon) {
       const refresh = () => { ov.remove(); openDetail(mon.dex, monId, onClose); };
       if (act.hasAttribute("data-train")) {
-        const r = trainStat(save, mon, act.dataset.train);
+        const k = act.dataset.train;
+        const before = growthStats(mon)[k];
+        const r = trainStat(save, mon, k);
         if (!r.ok) return toast(r.error);
+        const after = growthStats(mon)[k];
         writeSave(save);
-        toast(`训练 +1：${STAT_ZH[act.dataset.train]}${r.free ? "（返还点）" : "（-" + r.price + " 币）"}`);
+        trainFlash = `训练完成：${STAT_ZH[k]} ${before} → ${after}${r.free ? " · 使用返还点" : ` · -${r.price} 币`}`;
+        toast(trainFlash, 3000);
         refresh();
         return;
       }
@@ -166,15 +174,21 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         const r = resetTrain(mon);
         if (!r.ok) return toast(r.error);
         writeSave(save);
-        toast(`已重置训练，返还 ${r.refund} 点`);
+        trainFlash = `已重置训练，返还 ${r.refund} 点`;
+        toast(trainFlash);
         refresh();
         return;
       }
       if (act.hasAttribute("data-item")) {
-        const r = useItem(save, mon, act.dataset.item);
+        const id = act.dataset.item;
+        const stat = ITEM_TYPES[id].stat;
+        const before = growthStats(mon)[stat];
+        const r = useItem(save, mon, id);
         if (!r.ok) return toast(r.error);
+        const after = growthStats(mon)[stat];
         writeSave(save);
-        toast(`${ITEM_TYPES[act.dataset.item].name}：${STAT_ZH[r.stat]} +1`);
+        trainFlash = `道具已使用：${ITEM_TYPES[id].name} · ${STAT_ZH[r.stat]} ${before} → ${after}`;
+        toast(trainFlash, 3000);
         refresh();
         return;
       }
@@ -224,8 +238,11 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       else { toast(`${monName(dexNo)} 经验增加（未升级）`, 3000); openDetail(mon.dex, monId, onClose); }
     } else if (b.hasAttribute("data-move")) {
       const mr = moveMon(save, monId, b.dataset.move);
-      if (mr.ok) { writeSave(save); toast(`${monName(dexNo)}${b.dataset.move === "box" ? " 移入仓库" : " 调入队伍"}`); }
-      else toast("调动失败：" + mr.error);
+      if (mr.ok) {
+        writeSave(save);
+        trainFlash = `${monName(dexNo)}${b.dataset.move === "box" ? " 已移入仓库" : " 已调入队伍"}`;
+        toast(trainFlash);
+      } else toast("调动失败：" + mr.error);
       ov.remove();
       openDetail(dexNo, monId, onClose);
     }

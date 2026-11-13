@@ -1489,3 +1489,33 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
   color: var(--r-ink);
   border-radius: 3px;
 }
+/* 精灵详情：训练 / 道具 / 调动按钮与反馈 */
+.detail-wrap .detail-box .dbtn {
+  background: var(--r-paper-3);
+  border: 2px solid var(--r-ink);
+  border-radius: 3px;
+  color: var(--r-ink);
+  font-weight: 700;
+}
+.detail-wrap .detail-box .dbtn.b {
+  background: rgba(31, 92, 58, 0.08);
+  border-color: var(--r-green);
+  color: var(--r-green);
+}
+.detail-wrap .detail-box .dbtn[disabled] {
+  background: #e6d7b6;
+  border-color: var(--r-line);
+  color: #5a5446;
+  opacity: 1;
+}
+.detail-wrap .detail-box .dbtn .btn-ico { color: inherit; }
+.detail-wrap .train-flash {
+  margin: 8px 0 10px;
+  padding: 7px 10px;
+  border: 2px solid var(--r-green);
+  border-radius: 3px;
+  background: rgba(31, 92, 58, 0.08);
+  color: var(--r-green);
+  font: 700 11.5px var(--r-font);
+  line-height: 1.5;
+}
