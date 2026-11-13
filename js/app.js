@@ -3,32 +3,32 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=27"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=41";
-import { renderDex } from "./ui/dex.js?v=48";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=56";
-import { openSettings } from "./ui/settings.js?v=79";
-import { renderBag } from "./ui/bag.js?v=43";
-import { renderTeam } from "./ui/team.js?v=60";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=103";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=35";
-import { watchRewardedAd } from "./platform/ads.js?v=30";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=40";
-import { settleMatchResult } from "./journey/settle.js?v=63";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=44";
-import { openDaily } from "./ui/daily.js?v=47";
-import { openAchievements } from "./ui/achv-ui.js?v=39";
-import { startTutorial } from "./ui/tutorial.js?v=34";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=42";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=29";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=44";
-import { ACHV } from "./systems/achv.js?v=34";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR } from "./systems/build.js?v=34";
-import { playEvolve } from "./ui/anim.js?v=36";
-import { ICON } from "./ui/icons.js?v=34";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=27";
-import { pendingLegend } from "./journey/legend.js?v=30";
-import { openLegendPicker } from "./ui/legend.js?v=31";
+import "./systems/evo-rules.js?v=29"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=43";
+import { renderDex } from "./ui/dex.js?v=50";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=58";
+import { openSettings } from "./ui/settings.js?v=81";
+import { renderBag } from "./ui/bag.js?v=45";
+import { renderTeam } from "./ui/team.js?v=62";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=105";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=37";
+import { watchRewardedAd } from "./platform/ads.js?v=32";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=42";
+import { settleMatchResult } from "./journey/settle.js?v=65";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=46";
+import { openDaily } from "./ui/daily.js?v=49";
+import { openAchievements } from "./ui/achv-ui.js?v=41";
+import { startTutorial } from "./ui/tutorial.js?v=36";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=44";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=31";
+import { openEarn, bumpDaily } from "./ui/earn.js?v=46";
+import { ACHV } from "./systems/achv.js?v=36";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=36";
+import { playEvolve } from "./ui/anim.js?v=38";
+import { ICON } from "./ui/icons.js?v=36";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=29";
+import { pendingLegend } from "./journey/legend.js?v=32";
+import { openLegendPicker } from "./ui/legend.js?v=33";
 import {
   getPokemon,
   calcOVR,
@@ -44,7 +44,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=41";
+} from "../engine/readable/play-core.js?v=43";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -612,8 +612,9 @@ function showPreMatch(save, mode = "league") {
   const winP = Math.round(Math.max(0.05, Math.min(0.95, 0.5 + (teamPower - info.targetPower) * 0.03)) * 100);
   const gym = cfg.gym;
   const coach = save.coach?.name || "ME";
-  const starters = save.team.slice(0, 5).filter((id) => save.mons[id]);
-  const bench = save.team.slice(5).filter((id) => save.mons[id]);
+  const starters = starterIds(save);
+  const starterSet = new Set(starters);
+  const bench = save.team.filter((id) => save.mons[id] && !starterSet.has(id));
   const per = bondMultipliers(save);
   const typeHints = (() => {
     const mine = [], theirs = [];
@@ -1012,7 +1013,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=41");
+window.__PC = await import("../engine/readable/play-core.js?v=43");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

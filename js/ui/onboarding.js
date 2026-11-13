@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=41";
+import { loadSave, writeSave } from "../storage.js?v=43";
 
 const STEPS = [
   {

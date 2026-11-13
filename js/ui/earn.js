@@ -6,11 +6,11 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { writeSave, addMon, hasDex } from "../storage.js?v=41";
+import { writeSave, addMon, hasDex } from "../storage.js?v=43";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=34";
-import { watchRewardedAd } from "../platform/ads.js?v=30";
-import { gameAudio } from "../platform/audio.js?v=35";
+import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=36";
+import { watchRewardedAd } from "../platform/ads.js?v=32";
+import { gameAudio } from "../platform/audio.js?v=37";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 40;      // 每次看广告奖励（S13：40 × 5 = 200/天）
@@ -110,8 +110,8 @@ function openRookiePicker(save, taskId, done) {
     if (!r.ok) return;
     const mon = save.mons[r.id];
     mon.pos = meta.pos;
-    if (save.team.slice(0, 5).includes(r.id)) {
-      const used = new Set(save.team.slice(0, 5).map((id) => save.assign?.[id]).filter(Boolean));
+    if (save.team.indexOf(r.id) < 5) {
+      const used = new Set(Object.values(save.assign || {}).filter(Boolean));
       save.assign[r.id] = ["PG", "SG", "SF", "PF", "C"].find((p) => !used.has(p)) || meta.pos;
       ensureLineupSlots(save);
     }

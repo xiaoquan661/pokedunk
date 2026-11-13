@@ -5,7 +5,7 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=41";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=43";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
@@ -175,9 +175,9 @@ function chainRoot(dex) {
   return d;
 }
 
-/** 首发 5 人（按队伍顺序 + assign） */
+/** 首发 5 人（按 assign 槽位，主动下放的替补不计入） */
 export function startersOf(save) {
-  return save.team.slice(0, 5).map((id) => save.mons[id]).filter(Boolean);
+  return starterIds(save).map((id) => save.mons[id]).filter(Boolean);
 }
 
 export const BONDS = [
@@ -254,7 +254,7 @@ export const BONDS = [
 
 /** 首发上下文 */
 function bondCtx(save) {
-  const entries = save.team.slice(0, 5)
+  const entries = starterIds(save)
     .map((id) => ({ id, mon: save.mons[id], pos: save.assign?.[id] || save.mons[id]?.pos }))
     .filter((e) => e.mon);
   return {
@@ -307,10 +307,13 @@ export function bondMultipliers(save) {
 }
 
 /* ---------------- 默认首发位置 ---------------- */
-/** 为首发 5 人补齐实际位置（缺省按位置槽顺序；已有 assign 不覆盖） */
+/** 为首发 5 人补齐实际位置（缺省按位置槽顺序；已有 assign 不覆盖；主动下放的替补不补位） */
 export function ensureAssignments(save) {
   save.assign ||= {};
-  const first = save.team.slice(0, 5);
+  save.benched ||= {};
+  // 自愈：已经占据首发槽位的精灵不应再标记为替补
+  for (const id of Object.keys(save.benched)) if (save.assign[id]) delete save.benched[id];
+  const first = save.team.slice(0, 5).filter((id) => save.mons[id] && !save.benched[id]);
   const used = new Set(first.map((id) => save.assign[id]).filter(Boolean));
   first.forEach((id, i) => {
     if (save.assign[id]) return;
@@ -321,12 +324,25 @@ export function ensureAssignments(save) {
   });
 }
 
+/** 首发 id（按槽位顺序；以 assign 为准，主动下放的替补不算首发） */
+export function starterIds(save) {
+  ensureLineupSlots(save);
+  return POSITION_ORDER.map((pos) => save.team.find((id) => save.assign?.[id] === pos)).filter(Boolean);
+}
+
+/** 替补 id（队伍中未占据首发槽位的精灵） */
+export function benchIds(save) {
+  const st = new Set(starterIds(save));
+  return save.team.filter((id) => save.mons[id] && !st.has(id));
+}
+
 /* ---------------- 首发槽位（位置只是槽，任何精灵都能放） ---------------- */
 /** 让首发 5 人各占一个唯一位置槽；缺失/重复的按空槽补齐 */
 export function ensureLineupSlots(save) {
   save.assign ||= {};
+  save.benched ||= {};
   ensureAssignments(save);
-  const first = save.team.slice(0, 5).filter((id) => save.mons[id]);
+  const first = save.team.slice(0, 5).filter((id) => save.mons[id] && !save.benched[id]);
   const used = new Set();
   for (const id of first) {
     const p = save.assign[id];
@@ -340,25 +356,25 @@ export function ensureLineupSlots(save) {
   return first;
 }
 
-/** 首发数组按槽位顺序（PG/SG/SF/PF/C）排列，替补顺序不动 */
+/** 首发数组按槽位顺序（PG/SG/SF/PF/C）排列，主动下放的替补排到队尾 */
 export function syncStarterOrder(save) {
-  const first = save.team.slice(0, 5).filter((id) => save.mons[id]);
-  if (first.length !== save.team.slice(0, 5).length) return;
-  const ordered = POSITION_ORDER.map((pos) => first.find((id) => save.assign?.[id] === pos)).filter(Boolean);
-  if (ordered.length === first.length) save.team = [...ordered, ...save.team.slice(5)];
+  const assigned = POSITION_ORDER
+    .map((pos) => save.team.find((id) => save.assign?.[id] === pos))
+    .filter(Boolean);
+  if (assigned.length) save.team = [...assigned, ...save.team.filter((id) => !assigned.includes(id))];
 }
 
 /** 当前占据某槽位的首发 id */
 export function slotOwner(save, pos) {
   ensureLineupSlots(save);
-  return save.team.slice(0, 5).find((id) => save.assign?.[id] === pos) || null;
+  return save.team.find((id) => save.assign?.[id] === pos) || null;
 }
 
 /** 首发换槽：id 移到 pos；若该槽有人则两人交换（任意位置都可放） */
 export function assignStarterSlot(save, id, pos) {
   if (!POSITION_ORDER.includes(pos)) return { ok: false, error: "未知位置" };
   ensureLineupSlots(save);
-  if (!save.team.slice(0, 5).includes(id)) return { ok: false, error: "该精灵不在首发" };
+  if (!save.assign?.[id]) return { ok: false, error: "该精灵不在首发" };
   const old = save.assign[id];
   if (old === pos) return { ok: true, swapped: null };
   const occupant = slotOwner(save, pos);
@@ -371,50 +387,48 @@ export function assignStarterSlot(save, id, pos) {
 /** 首发两人互换槽位 */
 export function swapStarterSlots(save, a, b) {
   ensureLineupSlots(save);
-  const first = save.team.slice(0, 5);
-  if (!first.includes(a) || !first.includes(b) || a === b) return { ok: false };
+  if (!save.assign?.[a] || !save.assign?.[b] || a === b) return { ok: false };
   const pa = save.assign[a], pb = save.assign[b];
   save.assign[a] = pb; save.assign[b] = pa;
   syncStarterOrder(save);
   return { ok: true };
 }
 
-/** 替补换入首发槽：原首发回替补席 */
+/** 替补换入首发槽：原首发回替补席；空槽则替补直接升入 */
 export function substituteBenchToSlot(save, benchId, pos) {
   if (!POSITION_ORDER.includes(pos)) return { ok: false, error: "未知位置" };
   ensureLineupSlots(save);
-  const bi = save.team.indexOf(benchId);
-  if (bi < 5) return { ok: false, error: "该精灵已在首发" };
+  save.benched ||= {};
+  if (save.assign?.[benchId]) return { ok: false, error: "该精灵已在首发" };
   const occupant = slotOwner(save, pos);
   if (occupant === benchId) return { ok: true };
   if (!occupant) {
-    // 空槽：替补直接升入首发，占据该位置
     save.assign[benchId] = pos;
-    const firstCount = save.team.slice(0, 5).filter((id) => save.mons[id]).length;
-    save.team.splice(bi, 1);
-    save.team.splice(Math.min(firstCount, save.team.length), 0, benchId);
+    delete save.benched[benchId];
     syncStarterOrder(save);
     return { ok: true, out: null };
   }
-  const oi = save.team.indexOf(occupant);
-  if (oi < 0) return { ok: false, error: "找不到原首发" };
-  save.team[oi] = benchId;
-  save.team[bi] = occupant;
   save.assign[benchId] = pos;
+  delete save.benched[benchId];
   delete save.assign[occupant];
+  save.benched[occupant] = true;
   syncStarterOrder(save);
   return { ok: true, out: occupant };
 }
 
-/** 首发换下到替补席（与指定替补互换队伍位置） */
-export function substituteStarterToBench(save, starterId, benchId) {
+/** 首发换下到替补席（与指定替补互换；benchId 为空则仅下放，留出空槽） */
+export function substituteStarterToBench(save, starterId, benchId = null) {
   ensureLineupSlots(save);
-  const si = save.team.indexOf(starterId), bi = save.team.indexOf(benchId);
-  if (si < 0 || bi < 5) return { ok: false, error: "换人参数无效" };
+  save.benched ||= {};
+  if (!save.assign?.[starterId]) return { ok: false, error: "该精灵不在首发" };
+  if (benchId != null && save.assign?.[benchId]) return { ok: false, error: "换人参数无效" };
   const pos = save.assign[starterId];
-  save.team[si] = benchId; save.team[bi] = starterId;
-  save.assign[benchId] = pos;
   delete save.assign[starterId];
+  save.benched[starterId] = true;
+  if (benchId != null) {
+    save.assign[benchId] = pos;
+    delete save.benched[benchId];
+  }
   syncStarterOrder(save);
   return { ok: true, in: benchId, out: starterId, pos };
 }

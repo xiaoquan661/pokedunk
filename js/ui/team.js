@@ -4,16 +4,17 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=41";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=40";
-import { openDetail } from "./detail.js?v=46";
-import { ICON } from "./icons.js?v=34";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=43";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=42";
+import { openDetail } from "./detail.js?v=48";
+import { ICON } from "./icons.js?v=36";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
+  starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=34";
+} from "../systems/build.js?v=36";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
@@ -94,13 +95,13 @@ export function renderTeam(page, save) {
   EVOS_TARGET.clear();
   for (const m of Object.values(save.mons)) EVOS_TARGET.add(m.dex);
 
-  // 首发 = 队伍前 5 人，各占唯一槽位；槽位=位置，任意精灵可放
+  // 首发 = 占据首发槽位的精灵；其余（含主动下放）都在替补席
   ensureLineupSlots(save);
-  const lineupIds = save.team.slice(0, 5).filter((id) => save.mons[id]);
+  const lineupIds = starterIds(save);
   const byPos = {};
   for (const id of lineupIds) byPos[save.assign[id]] = id;
   const lineup = lineupIds.map((id) => ({ id, pos: save.assign[id] }));
-  const benchIds = save.team.filter((id) => !lineupIds.includes(id) && save.mons[id]);
+  const benchIds = benchMonIds(save);
   const per = bondMultipliers(save);
   const teamOvr = teamPower(save);
   const startersOvr = lineup.length
@@ -207,7 +208,8 @@ export function renderTeam(page, save) {
       const lineup = buildAutoLineup(s);
       const ids = lineup.map((x) => x.id);
       s.assign ||= {};
-      lineup.forEach((x) => { s.assign[x.id] = x.pos; });
+      s.benched ||= {};
+      lineup.forEach((x) => { s.assign[x.id] = x.pos; delete s.benched[x.id]; });
       const rest = s.team.filter((id) => !ids.includes(id) && s.mons[id]);
       s.team = [...ids, ...rest].slice(0, 10);
       ensureLineupSlots(s);
@@ -310,15 +312,14 @@ function bindTeamDrag(page) {
           // 指定替补卡，或直接丢在替补席区域（与第一位替补互换）
           const benchId = target.hasAttribute("data-bench")
             ? Number(target.dataset.bench)
-            : (s.team.filter((id) => !s.team.slice(0, 5).includes(id) && s.mons[id])[0] ?? null);
-          if (benchId == null) { msg = "替补席还没有精灵，先去商店或孵蛋结缘伙伴"; bad = true; }
-          else {
-            const r = substituteStarterToBench(s, drag.id, benchId);
-            if (r.ok) {
-              writeSave(s); renderTeam(page, s);
-              msg = `${monZh(s.mons[r.out].dex)} 回到替补席`;
-            } else { msg = r.error || "换人失败"; bad = true; }
-          }
+            : (benchMonIds(s)[0] ?? null);
+          const r = substituteStarterToBench(s, drag.id, benchId);
+          if (r.ok) {
+            writeSave(s); renderTeam(page, s);
+            msg = r.in != null
+              ? `${monZh(s.mons[r.in].dex)} 进入首发 · ${monZh(s.mons[r.out].dex)} 回到替补席`
+              : `${monZh(s.mons[r.out].dex)} 回到替补席，首发放出空位`;
+          } else { msg = r.error || "换人失败"; bad = true; }
         }
       }
       if (msg) flash(msg, bad);
@@ -486,7 +487,7 @@ function renderBoxSwap(page, save, boxId) {
         ${team.map((id) => {
           const m = save.mons[id];
           const p = getPokemon(m.dex);
-          const starter = save.team.slice(0, 5).includes(id);
+          const starter = !!save.assign?.[id];
           const rarity = rarityOf(m.dex);
           return `<div class="box-row">
             <span class="box-meta">
