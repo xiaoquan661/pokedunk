@@ -1519,3 +1519,270 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
   font: 700 11.5px var(--r-font);
   line-height: 1.5;
 }
+/* ================= 比赛内 UI：报纸记分牌（跟随复古主题） ================= */
+html[data-ui-theme="retro"] .screen-match {
+  --r-paper: #f4ead2;
+  --r-paper-2: #e9dcc0;
+  --r-paper-3: #fff8e8;
+  --r-ink: #1c241e;
+  --r-ink-2: #3a443c;
+  --r-green: #1f5c3a;
+  --r-green-2: #2d7a4a;
+  --r-orange: #d98324;
+  --r-orange-2: #b56a16;
+  --r-red: #b33a2f;
+  --r-muted: #575245;
+  --r-line: #b9ad92;
+  font-family: "FusionPixel", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* 记分牌 */
+html[data-ui-theme="retro"] .game .bug {
+  background: var(--r-paper);
+  border: 3px solid var(--r-ink);
+  border-radius: 2px;
+  color: var(--r-ink);
+  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .bug-team .abbr,
+html[data-ui-theme="retro"] .game .bug-team .pts { color: var(--r-ink); }
+html[data-ui-theme="retro"] .game .bug-clock {
+  background: var(--r-ink);
+  color: var(--r-paper);
+}
+html[data-ui-theme="retro"] .game .bug-shot {
+  background: var(--r-orange);
+  color: #fff8e8;
+}
+html[data-ui-theme="retro"] .game .bug-shot.low {
+  background: var(--r-red);
+  color: #fff8e8;
+}
+
+/* 球员状态卡 */
+html[data-ui-theme="retro"] .game .pcard {
+  background: var(--r-paper);
+  border: 3px solid var(--r-ink);
+  border-radius: 2px;
+  color: var(--r-ink);
+  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .pcard .pname,
+html[data-ui-theme="retro"] .game .pcard .pname span { color: var(--r-ink); }
+html[data-ui-theme="retro"] .game .pcard .povr { color: var(--r-muted); }
+html[data-ui-theme="retro"] .game .pcard .bar {
+  background: #dccdaa;
+  border: 1px solid var(--r-ink);
+  border-radius: 2px;
+}
+html[data-ui-theme="retro"] .game .pcard .bar b {
+  color: var(--r-ink);
+  text-shadow: none;
+}
+
+/* 解说条 */
+html[data-ui-theme="retro"] .game .battle {
+  background: var(--r-paper);
+  color: var(--r-ink);
+  border: 3px solid var(--r-green);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--r-ink), 4px 4px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .battle p { color: var(--r-ink); }
+
+/* 横幅与评分 */
+html[data-ui-theme="retro"] .game .banner-main {
+  background: rgba(244, 234, 210, 0.92);
+  border: 2px solid var(--r-ink);
+  padding: 3px 14px;
+  color: var(--r-green);
+  text-shadow: none;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.3);
+}
+html[data-ui-theme="retro"] .game .banner-sub {
+  display: inline-block;
+  background: var(--r-ink);
+  padding: 1px 9px;
+  color: var(--r-paper);
+  text-shadow: none;
+}
+html[data-ui-theme="retro"] .game .grade {
+  background: var(--r-paper);
+  border: 2px solid var(--r-ink);
+  border-radius: 2px;
+  color: var(--r-ink);
+  box-shadow: 2px 2px 0 rgba(28, 36, 30, 0.3);
+}
+html[data-ui-theme="retro"] .game .grade[data-c="green"] { color: var(--r-green); }
+html[data-ui-theme="retro"] .game .grade[data-c="yellow"] { color: var(--r-orange-2); }
+html[data-ui-theme="retro"] .game .grade[data-c="red"] { color: var(--r-red); }
+
+/* 暂停 / 模拟 / 横屏按钮 */
+html[data-ui-theme="retro"] .game .pause-btn {
+  border: 2px solid var(--r-ink);
+  background: var(--r-paper);
+  color: var(--r-ink);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .sim-btn,
+html[data-ui-theme="retro"] .game .rot-btn {
+  border: 2px solid var(--r-ink);
+  border-radius: 2px;
+  background: rgba(244, 234, 210, 0.94);
+  color: var(--r-ink);
+  font-weight: 700;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .sim-btn { border-color: var(--r-green); color: var(--r-green); }
+html[data-ui-theme="retro"] .game .sim-btn[disabled] {
+  color: var(--r-muted);
+  border-color: var(--r-line);
+  opacity: 1;
+}
+
+/* 触屏按键 */
+html[data-ui-theme="retro"] .game .touch .tb {
+  border: 2px solid var(--r-ink);
+  background: rgba(244, 234, 210, 0.92);
+  color: var(--r-ink);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
+}
+html[data-ui-theme="retro"] .game .touch .tb.xa,
+html[data-ui-theme="retro"] .game .touch .tb.xb,
+html[data-ui-theme="retro"] .game .touch .tb.xx,
+html[data-ui-theme="retro"] .game .touch .tb.xy {
+  background: linear-gradient(rgba(var(--xc), 0.22), rgba(var(--xc), 0.22)), var(--r-paper);
+  border-color: rgba(var(--xc), 0.85);
+}
+html[data-ui-theme="retro"] .game .touch .tb b,
+html[data-ui-theme="retro"] .game .touch .tb span { color: inherit; text-shadow: none; }
+html[data-ui-theme="retro"] .game .touch .tb.turbo {
+  background: var(--r-paper-2);
+  border-color: var(--r-ink);
+}
+html[data-ui-theme="retro"] .game .touch .tb.special.ready {
+  background: var(--r-green);
+  border-color: var(--r-ink);
+  color: var(--r-paper);
+}
+html[data-ui-theme="retro"] .game .touch .tb.special.ready b { color: var(--r-paper); }
+html[data-ui-theme="retro"] .game .touch .stick-base {
+  border: 3px dashed rgba(28, 36, 30, 0.5);
+  background: rgba(244, 234, 210, 0.3);
+}
+html[data-ui-theme="retro"] .game .touch .stick-knob {
+  border: 3px solid var(--r-green);
+  background: var(--r-paper);
+}
+
+/* 暂停面板 */
+html[data-ui-theme="retro"] .game .pause-menu {
+  background: rgba(28, 36, 30, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+html[data-ui-theme="retro"] .game .pause-menu .panel {
+  background: var(--r-paper);
+  border: 3px solid var(--r-ink);
+  border-left: 6px solid var(--r-green);
+  border-radius: 2px;
+  box-shadow: 8px 8px 0 rgba(28, 36, 30, 0.35);
+  color: var(--r-ink);
+}
+html[data-ui-theme="retro"] .game .pause-menu h2 {
+  margin: 0 0 14px;
+  padding: 0 0 10px;
+  border-bottom: 2px solid var(--r-green);
+  color: var(--r-ink);
+  font: 700 22px var(--sport);
+  letter-spacing: 0.22em;
+  text-align: left;
+  text-shadow: none;
+}
+html[data-ui-theme="retro"] .game .pause-menu .btn {
+  padding: 9px 15px;
+  border-radius: 2px;
+  border: 2px solid var(--r-ink);
+  background: var(--r-paper-3);
+  color: var(--r-ink);
+  font: 700 12px var(--sport);
+  letter-spacing: 0.03em;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.3);
+  text-shadow: none;
+}
+html[data-ui-theme="retro"] .game .pause-menu .btn.primary {
+  background: var(--r-green);
+  border-color: var(--r-ink);
+  color: var(--r-paper);
+}
+html[data-ui-theme="retro"] .game .pause-menu .btn.ghost {
+  border-color: var(--r-line);
+  background: var(--r-paper-2);
+  color: var(--r-muted);
+}
+html[data-ui-theme="retro"] .game .pause-menu .controls {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--r-line);
+}
+html[data-ui-theme="retro"] .game .pause-menu .controls h3 {
+  color: var(--r-muted);
+  letter-spacing: 0.16em;
+}
+html[data-ui-theme="retro"] .game .pause-menu .touch-help li {
+  color: var(--r-ink);
+  border-bottom-color: var(--r-line);
+}
+html[data-ui-theme="retro"] .game .pause-menu .touch-help li b { color: var(--r-green); }
+
+/* 换人面板 */
+html[data-ui-theme="retro"] .game .pause-menu .sub-row {
+  background: var(--r-paper-3);
+  border-color: var(--r-line);
+}
+html[data-ui-theme="retro"] .game .pause-menu .sub-row.sel {
+  border-color: var(--r-green);
+  box-shadow: 0 0 0 1px var(--r-green);
+}
+html[data-ui-theme="retro"] .game .pause-menu .subs-panel {
+  background: var(--r-paper-2);
+  border-color: var(--r-line);
+}
+
+/* 赛前首发演出 */
+html[data-ui-theme="retro"] .game .s5 {
+  background: radial-gradient(ellipse at center, rgba(28, 36, 30, 0.42), rgba(28, 36, 30, 0.72));
+}
+html[data-ui-theme="retro"] .game .s5-title {
+  background: var(--r-paper);
+  border: 3px solid var(--r-ink);
+  border-radius: 2px;
+  box-shadow: 6px 6px 0 rgba(28, 36, 30, 0.4);
+  color: var(--r-ink);
+}
+html[data-ui-theme="retro"] .game .s5-title small { color: var(--r-muted); }
+html[data-ui-theme="retro"] .game .s5-title strong { color: var(--r-ink); }
+html[data-ui-theme="retro"] .game .s5-card {
+  background: var(--r-paper);
+  border: 2px solid var(--r-ink);
+  border-top: 5px solid var(--tc);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
+  color: var(--r-ink);
+}
+html[data-ui-theme="retro"] .game .s5-card b { color: var(--r-muted); }
+html[data-ui-theme="retro"] .game .s5-card span { color: var(--r-ink); }
+html[data-ui-theme="retro"] .game .s5-card i { color: var(--r-green); }
+html[data-ui-theme="retro"] .game .s5-head {
+  border-color: var(--r-ink);
+  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.4);
+}
+html[data-ui-theme="retro"] .game .s5-skip {
+  background: var(--r-paper);
+  border: 2px solid var(--r-ink);
+  border-radius: 2px;
+  color: var(--r-ink);
+  box-shadow: 2px 2px 0 rgba(28, 36, 30, 0.3);
+}
