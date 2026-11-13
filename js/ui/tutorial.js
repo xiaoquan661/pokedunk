@@ -3,9 +3,9 @@
  * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=46";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=46";
-import { gameAudio } from "../platform/audio.js?v=37";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=47";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=47";
+import { gameAudio } from "../platform/audio.js?v=38";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -90,6 +90,34 @@ const CSS = `
 .screen-match .tut-sum{list-style:none;margin:0 0 12px;padding:0;text-align:left;font-size:12px}
 .screen-match .tut-sum li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #242424}
 .screen-match .tut-sum li:last-child{border-bottom:none}
+
+/* —— 复古主题：黑底保留，文字改米色、强调色改复古琥珀，边框改米色 —— */
+html[data-ui-theme="retro"] .screen-match .tut-strip{border-color:#f4ead2;background:rgba(8,10,9,.88);box-shadow:4px 4px 0 rgba(0,0,0,.6)}
+html[data-ui-theme="retro"] .screen-match .tut-strip .tut-step{color:#e9b45f}
+html[data-ui-theme="retro"] .screen-match .tut-key{border-color:#f4ead2;background:rgba(244,234,210,.08);color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-strip .tut-hint{color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-strip button{border-color:#f4ead2;background:#121212;color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-strip button.ghost{border-color:#575245;background:#0d0d0d;color:#b9b19d}
+html[data-ui-theme="retro"] .screen-match .tut-strip .tut-prog{background:linear-gradient(90deg,#b5761f,#e9b45f)}
+html[data-ui-theme="retro"] .screen-match .tut-result .panel,
+html[data-ui-theme="retro"] .screen-match .tut-done .panel,
+html[data-ui-theme="retro"] .screen-match .tut-intro .panel{border-color:#f4ead2;border-left-color:#e9b45f;background:#0a0a0a;color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-result h2,
+html[data-ui-theme="retro"] .screen-match .tut-done h2,
+html[data-ui-theme="retro"] .screen-match .tut-intro h2{border-bottom-color:#e9b45f;color:#e9b45f}
+html[data-ui-theme="retro"] .screen-match .tut-result p,
+html[data-ui-theme="retro"] .screen-match .tut-done p,
+html[data-ui-theme="retro"] .screen-match .tut-intro p{color:#e6ddc9}
+html[data-ui-theme="retro"] .screen-match .tut-intro-sub{color:#c9c0a8}
+html[data-ui-theme="retro"] .screen-match .tut-keys li{border-color:rgba(244,234,210,.35);background:#121212}
+html[data-ui-theme="retro"] .screen-match .tut-keys li i{border-color:#f4ead2;background:rgba(244,234,210,.08);color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-keys li span{color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-intro .tut-begin{border-color:#f4ead2;background:#e9b45f;color:#1c241e}
+html[data-ui-theme="retro"] .screen-match .tut-score b{color:#e9b45f}
+html[data-ui-theme="retro"] .screen-match .tut-stars{color:#e9b45f}
+html[data-ui-theme="retro"] .screen-match .tut-done-acts button{border-color:#f4ead2;background:#121212;color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-done-acts button.primary{background:#e9b45f;border-color:#f4ead2;color:#1c241e}
+html[data-ui-theme="retro"] .screen-match .tut-sum li{border-bottom-color:rgba(244,234,210,.2)}
 `;
 
 function ensureCss() {

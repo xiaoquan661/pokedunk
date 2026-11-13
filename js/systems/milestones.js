@@ -3,7 +3,7 @@
  * 按「累计结缘数」阶梯发奖，不按首次点亮；每档只能领一次。
  * 存档：save.milestones = { 档位: 领取时间戳 }（不新增存档版本，旧档按空对象处理）。
  */
-import { ITEM_TYPES } from "./build.js?v=36";
+import { ITEM_TYPES } from "./build.js?v=37";
 
 /** 档位表（S13 定案）：累计收集数 → 篮球币 + 道具 */
 export const MILESTONES = [
