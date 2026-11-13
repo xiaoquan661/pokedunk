@@ -15,3 +15,47 @@ html[data-ui-theme="black"] .game.has-touch .pcard .bar b {
   font: 700 8px/12px var(--pixel);
   padding-left: 5px;
 }
+
+/* ============================================================
+   横屏（CSS 旋转兜底 .game.rot）：紧凑 HUD
+   旋转后容器是“宽 ≤100dvh × 高 ≤100vw”，竖屏那套叠放会让
+   一键模拟/横屏按钮和右下角操作键挤在一起，这里统一收顶部。
+   ============================================================ */
+.game.rot .pcard {
+  top: 6px;
+  left: 6px;
+  width: 232px;
+  transform: scale(0.78);
+  transform-origin: top left;
+  z-index: 8;
+}
+.game.rot .bug {
+  top: 4px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) scale(0.9);
+  transform-origin: top center;
+  max-width: none;
+  z-index: 7;
+}
+.game.rot .pause-btn {
+  top: 6px;
+  right: 6px;
+  z-index: 9;
+}
+.game.rot .sim-btn {
+  top: 50px;
+  right: 8px;
+  height: 30px;
+  padding: 0 9px;
+  font-size: 11px;
+  z-index: 8;
+}
+.game.rot .rot-btn {
+  top: 86px;
+  right: 8px;
+  height: 30px;
+  padding: 0 9px;
+  font-size: 11px;
+  z-index: 8;
+}
