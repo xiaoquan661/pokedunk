@@ -11,9 +11,9 @@
  *   - 传说直接进队伍；队伍满 10 只进仓库；重复折算 200 币。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=29";
-import { addMon } from "../storage.js?v=28";
-import { LEGENDARY_DEX } from "../systems/build.js?v=22";
+import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=37";
+import { addMon } from "../storage.js?v=36";
+import { LEGENDARY_DEX } from "../systems/build.js?v=30";
 
 export const LEGEND_DUPE_COINS = 200;
 const DEXES = new Set(POKEMON_LIST.map((p) => p.dex));

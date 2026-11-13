@@ -1171,121 +1171,8 @@
   box-shadow: 3px 3px 0 var(--r-ink);
 }
 
-/* ================= 训练教程 / 成就 / 图鉴 / 拖拽 ================= */
-.screen-match .tut-intro .panel,
-.screen-match .tut-result .panel,
-.screen-match .tut-done .panel {
-  border: 3px solid var(--r-ink);
-  border-radius: 4px;
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-  box-shadow: 7px 7px 0 rgba(28, 36, 30, 0.3), 0 18px 50px rgba(20, 26, 22, 0.28);
-}
-.screen-match .tut-intro h2,
-.screen-match .tut-result h2,
-.screen-match .tut-done h2 { color: var(--r-ink); font-family: var(--r-font); }
-.screen-match .tut-intro p,
-.screen-match .tut-result p,
-.screen-match .tut-done p,
-.screen-match .tut-intro-sub { color: var(--r-muted); }
-.screen-match .tut-keys li {
-  border: 2px solid var(--r-line);
-  border-radius: 3px;
-  background: var(--r-paper);
-}
-.screen-match .tut-keys li i {
-  border: 2px solid var(--r-ink);
-  border-radius: 3px;
-  background: var(--r-paper-3);
-  color: var(--r-green);
-  font-family: var(--r-font);
-}
-.screen-match .tut-keys li span { color: var(--r-ink); }
-.screen-match .tut-intro .tut-begin,
-.screen-match .tut-done-acts button.primary {
-  border: 2px solid var(--r-ink);
-  border-radius: 3px;
-  background: var(--r-green);
-  color: var(--r-paper-3);
-  font-family: var(--r-font);
-  box-shadow: 3px 3px 0 var(--r-ink);
-}
-.screen-match .tut-done-acts button {
-  border: 2px solid var(--r-ink);
-  border-radius: 3px;
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-  font-family: var(--r-font);
-  box-shadow: 2px 2px 0 rgba(28, 36, 30, 0.2);
-}
-.screen-match .tut-strip {
-  border: 2px solid var(--r-ink);
-  border-radius: 4px;
-  background: var(--r-paper-3);
-  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.25);
-}
-.screen-match .tut-strip .tut-hint { color: var(--r-ink); }
-.screen-match .tut-strip .tut-step { color: var(--r-green); font-family: var(--r-font); }
-.screen-match .tut-key {
-  border: 1px solid var(--r-ink);
-  border-radius: 3px;
-  background: var(--r-paper);
-  color: var(--r-green);
-  font-family: var(--r-font);
-}
-.screen-match .tut-strip button {
-  border: 2px solid var(--r-ink);
-  border-radius: 3px;
-  background: var(--r-paper);
-  color: var(--r-ink);
-  font-family: var(--r-font);
-}
-.screen-match .tut-strip button.ghost {
-  background: #e6d7b6;
-  border-color: var(--r-line);
-  color: #4f4a3d;
-}
-/* 训练模式内的触屏按键同步复古体育，正式比赛仍保持原版 */
-.game.tut-on .touch .tb {
-  border: 3px solid var(--r-ink);
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-  box-shadow: 3px 3px 0 var(--r-ink);
-}
-.game.tut-on .touch .tb b {
-  color: var(--r-ink);
-  border: 2px solid var(--r-ink);
-  background: var(--r-paper);
-  border-radius: 3px;
-}
-.game.tut-on .touch .tb span { color: var(--r-muted); }
-.game.tut-on .touch .tb.on {
-  background: var(--r-green);
-  color: var(--r-paper-3);
-}
-.game.tut-on .touch .tb.on b {
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-}
-.game.tut-on .touch .tb.ready {
-  border-color: var(--r-green);
-  box-shadow: 0 0 0 3px rgba(31, 92, 58, 0.25), 3px 3px 0 var(--r-ink);
-}
-.game.tut-on .touch .stick-base {
-  border: 3px solid var(--r-paper-3);
-  background: rgba(255, 248, 232, 0.14);
-}
-.game.tut-on .touch .stick-knob {
-  border: 3px solid var(--r-ink);
-  background: var(--r-green);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
-}
-.screen-match .tut-prog { background: var(--r-green); }
-.screen-match .tut-score b,
-.screen-match .tut-stars { color: var(--r-green); }
-.screen-match .tut-intro-sub { color: var(--r-muted); }
+/* ================= 成就 / 图鉴 / 拖拽 ================= */
 
-/* 成就 */
 .pj-scrim .achv-body .pj-prog {
   border: 2px solid var(--r-line);
   border-radius: 4px;
@@ -1542,4 +1429,63 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
   border: 2px solid #d98324;
   border-radius: 3px;
   color: #7a4a0e;
+}
+/* ================= 精灵详情：报纸信息卡可读性 ================= */
+.detail-top {
+  background: var(--r-paper-3);
+  color: var(--r-ink);
+  border: 2px solid var(--r-green);
+  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.28);
+}
+.detail-top h3 { color: var(--r-ink); }
+.detail-top .detail-ovr { color: var(--r-green); }
+.detail-top .detail-ovr small { color: var(--r-muted); }
+.detail-top .arch,
+.detail-top .build-meta { color: var(--r-muted); }
+.detail-box .stat-cell span { color: var(--r-muted); }
+.detail-box .stat-cell b { color: var(--r-ink); }
+.detail-box .dtab {
+  border-radius: 3px;
+  border: 2px solid var(--r-line);
+  background: var(--r-paper-3);
+  color: var(--r-muted);
+  font-weight: 700;
+}
+.detail-box .dtab.on {
+  background: var(--r-green);
+  border-color: var(--r-ink);
+  color: var(--r-paper-3);
+  box-shadow: none;
+}
+
+/* 队伍页拖动提示 */
+.pj-scrim .team-drag-hint { color: var(--r-muted); }
+/* 队伍页：拖动把手在奶油卡片上可见 */
+.pj-scrim .slot-card .drag-dots,
+.pj-scrim .bench-card .drag-dots { color: rgba(28, 36, 30, 0.62); }
+.pj-scrim .slot-card .drag-dots:active,
+.pj-scrim .bench-card .drag-dots:active { color: var(--r-green); }
+.pj-scrim .team-drag-hint { font-size: 11px; }
+/* 道馆徽章页：奶油底深色字 */
+.pj-scrim .bd-card {
+  background: var(--r-paper-3);
+  border: 2px solid var(--r-line);
+  border-radius: 3px;
+  opacity: 1;
+  filter: none;
+}
+.pj-scrim .bd-card.locked {
+  background: var(--r-paper-2);
+  filter: grayscale(0.15);
+}
+.pj-scrim .bd-card.locked .bd-info b { color: var(--r-muted); }
+.pj-scrim .bd-info b { color: var(--r-ink); }
+.pj-scrim .bd-info span { color: var(--r-orange-2); }
+.pj-scrim .bd-info small { color: var(--r-muted); }
+.pj-scrim .bd-note { color: var(--r-muted); }
+.pj-scrim .page-head .badge-count {
+  border: 2px solid var(--r-line);
+  background: var(--r-paper-3);
+  color: var(--r-ink);
+  border-radius: 3px;
 }

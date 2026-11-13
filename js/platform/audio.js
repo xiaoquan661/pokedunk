@@ -4,7 +4,7 @@
  * - music.js：原版程序化 BGM（菜单轮播 / 比赛静音）
  * - 偏好键沿用本项目：pokedunk.muted / pokedunk.music / pokedunk.announcer
  */
-import { MusicManager } from "./music.js?v=19";
+import { MusicManager } from "./music.js?v=27";
 
 const SFX_KEY = "pokedunk.muted";
 const MUSIC_KEY = "pokedunk.music";
@@ -229,6 +229,16 @@ export function installAudioUnlock() {
   for (const ev of ["pointerdown", "touchend", "click", "keydown"]) {
     window.addEventListener(ev, unlock, { passive: true });
   }
+  // 所有普通按钮统一点击音效（比赛触屏操作有自己的音效，不重复叠加）
+  window.addEventListener("click", (e) => {
+    const target = e.target;
+    const btn = target && target.closest ? target.closest("button") : null;
+    if (!btn || btn.disabled) return;
+    if (btn.closest(".game .touch") || btn.classList.contains("tb")) return;
+    if (btn.dataset.clickSound === "off") return;
+    if (!gameAudio.context) gameAudio.unlock();
+    gameAudio.blip(false);
+  }, true);
   gameAudio.setTrack("menu");
 }
 

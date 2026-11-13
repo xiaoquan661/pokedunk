@@ -3,9 +3,9 @@
  * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=32";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=32";
-import { gameAudio } from "../platform/audio.js?v=23";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=40";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=40";
+import { gameAudio } from "../platform/audio.js?v=31";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -58,38 +58,38 @@ const CONTROLS = [
 ];
 
 const CSS = `
-.tut-strip{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:35;display:flex;align-items:center;gap:8px;padding:9px 10px 10px;border:1px solid rgba(245,197,66,.4);border-radius:12px;background:rgba(8,14,32,.92);box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none}
-.tut-strip .tut-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.tut-strip .tut-step{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--gold);display:flex;align-items:center;gap:5px}
-.tut-key{display:inline-block;min-width:18px;padding:1px 5px;border:1px solid rgba(245,197,66,.5);border-radius:5px;background:rgba(245,197,66,.14);color:#ffe08a;font:700 9px/1.5 var(--sport);letter-spacing:0;text-align:center}
-.tut-strip .tut-hint{font-size:12px;line-height:1.35;color:#fff}
-.tut-strip .tut-acts{display:flex;gap:5px;flex-shrink:0}
-.tut-strip button{pointer-events:auto;border:1px solid rgba(245,197,66,.35);border-radius:8px;background:rgba(245,197,66,.12);color:#ffe08a;font:700 10px var(--sport);padding:7px 9px}
-.tut-strip button.ghost{border-color:rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:rgba(255,255,255,.7)}
-.tut-strip .tut-prog{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 12px 12px;background:linear-gradient(90deg,var(--gold),#ffe89a);transform-origin:left;transform:scaleX(0);transition:transform .15s}
+.screen-match .tut-strip{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:35;display:flex;align-items:center;gap:8px;padding:9px 10px 10px;border:2px solid #b8e63c;border-radius:3px;background:#0a0a0a;box-shadow:4px 4px 0 rgba(0,0,0,.6);pointer-events:none}
+.screen-match .tut-strip .tut-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.screen-match .tut-strip .tut-step{font-size:10px;font-weight:700;letter-spacing:.08em;color:#b8e63c;display:flex;align-items:center;gap:5px}
+.screen-match .tut-key{display:inline-block;min-width:18px;padding:1px 5px;border:1px solid #b8e63c;border-radius:3px;background:rgba(184,230,60,.12);color:#b8e63c;font:700 9px/1.5 var(--sport);letter-spacing:0;text-align:center}
+.screen-match .tut-strip .tut-hint{font-size:12px;line-height:1.35;color:#f2f2f2}
+.screen-match .tut-strip .tut-acts{display:flex;gap:5px;flex-shrink:0}
+.screen-match .tut-strip button{pointer-events:auto;border:2px solid #3a3a3a;border-radius:3px;background:#121212;color:#f2f2f2;font:700 10px var(--sport);padding:7px 9px}
+.screen-match .tut-strip button.ghost{border-color:#262626;background:#0d0d0d;color:#9a9a9a}
+.screen-match .tut-strip .tut-prog{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#8fbf2a,#b8e63c);transform-origin:left;transform:scaleX(0);transition:transform .15s}
 .game.tut-on .bug,.game.tut-on .pcard,.game.tut-on .sim-btn,.game.tut-on .rot-btn,.game.tut-on .pause-btn{display:none!important}
-.tut-result,.tut-done,.tut-intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:18px;background:rgba(4,7,14,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-.tut-result[hidden],.tut-done[hidden],.tut-intro[hidden]{display:none}
-.tut-intro .panel{text-align:left}
-.tut-intro-sub{margin:0 0 10px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5}
-.tut-keys{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
-.tut-keys li{display:flex;align-items:center;gap:9px;padding:5px 8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.04)}
-.tut-keys li i{flex:0 0 52px;text-align:center;padding:3px 0;border:1px solid rgba(245,197,66,.5);border-radius:6px;background:rgba(245,197,66,.14);color:#ffe08a;font:700 10px var(--sport);font-style:normal}
-.tut-keys li span{font-size:12px;color:rgba(255,255,255,.86)}
-.tut-intro .tut-begin{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #8a6a00;background:linear-gradient(180deg,#ffd75e,#f5c542);color:#2a1b52;font:700 13px var(--sport)}
+.screen-match .tut-result,.screen-match .tut-done,.screen-match .tut-intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.screen-match .tut-result[hidden],.screen-match .tut-done[hidden],.screen-match .tut-intro[hidden]{display:none}
+.screen-match .tut-intro .panel{text-align:left}
+.screen-match .tut-intro-sub{margin:0 0 10px;color:#9a9a9a;font-size:12px;line-height:1.5}
+.screen-match .tut-keys{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.screen-match .tut-keys li{display:flex;align-items:center;gap:9px;padding:5px 8px;border:1px solid #2a2a2a;border-radius:3px;background:#121212}
+.screen-match .tut-keys li i{flex:0 0 52px;text-align:center;padding:3px 0;border:1px solid #b8e63c;border-radius:3px;background:rgba(184,230,60,.12);color:#b8e63c;font:700 10px var(--sport);font-style:normal}
+.screen-match .tut-keys li span{font-size:12px;color:#f2f2f2}
+.screen-match .tut-intro .tut-begin{width:100%;padding:11px 12px;border-radius:3px;border:2px solid #b8e63c;background:#b8e63c;color:#101010;font:700 13px var(--sport)}
 .screen-match.intro-on .tut-strip{opacity:.5}
 .screen-match.intro-on .tut-strip [data-tut="skip"]{visibility:hidden}
-.tut-result .panel,.tut-done .panel,.tut-intro .panel{width:min(340px,92vw);border-radius:16px;border:1px solid rgba(245,197,66,.45);background:linear-gradient(180deg,#1c376e,#0e1830);box-shadow:0 18px 50px rgba(0,0,0,.65);padding:18px 16px;text-align:center;color:#fff}
-.tut-result h2,.tut-done h2,.tut-intro h2{margin:0 0 8px;font:700 20px var(--sport);color:var(--gold)}
-.tut-result p,.tut-done p,.tut-intro p{margin:0 0 10px;color:rgba(255,255,255,.78);font-size:12px;line-height:1.55}
-.tut-score b{font-size:24px;color:var(--gold)}
-.tut-stars{font-size:26px;line-height:1;color:var(--gold);letter-spacing:.14em}
-.tut-done-acts{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:12px}
-.tut-done-acts button{flex:1;min-width:100px;padding:10px 12px;border-radius:10px;border:1px solid rgba(245,197,66,.45);background:rgba(245,197,66,.14);color:#ffe08a;font:700 12px var(--sport)}
-.tut-done-acts button.primary{background:linear-gradient(180deg,#ffd75e,#f5c542);border-color:#8a6a00;color:#2a1b52}
-.tut-sum{list-style:none;margin:0 0 12px;padding:0;text-align:left;font-size:12px}
-.tut-sum li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)}
-.tut-sum li:last-child{border-bottom:none}
+.screen-match .tut-result .panel,.screen-match .tut-done .panel,.screen-match .tut-intro .panel{width:min(340px,92vw);border-radius:3px;border:2px solid #3a3a3a;border-left:6px solid #b8e63c;background:#0a0a0a;box-shadow:7px 7px 0 rgba(0,0,0,.6);padding:18px 16px;text-align:center;color:#f2f2f2}
+.screen-match .tut-result h2,.screen-match .tut-done h2,.screen-match .tut-intro h2{margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #b8e63c;font:700 20px var(--sport);color:#b8e63c;text-align:left}
+.screen-match .tut-result p,.screen-match .tut-done p,.screen-match .tut-intro p{margin:0 0 10px;color:#d0d0d0;font-size:12px;line-height:1.55}
+.screen-match .tut-score b{font-size:24px;color:#b8e63c}
+.screen-match .tut-stars{font-size:26px;line-height:1;color:#b8e63c;letter-spacing:.14em}
+.screen-match .tut-done-acts{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:12px}
+.screen-match .tut-done-acts button{flex:1;min-width:100px;padding:10px 12px;border-radius:3px;border:2px solid #3a3a3a;background:#121212;color:#f2f2f2;font:700 12px var(--sport)}
+.screen-match .tut-done-acts button.primary{background:#b8e63c;border-color:#b8e63c;color:#101010}
+.screen-match .tut-sum{list-style:none;margin:0 0 12px;padding:0;text-align:left;font-size:12px}
+.screen-match .tut-sum li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #242424}
+.screen-match .tut-sum li:last-child{border-bottom:none}
 `;
 
 function ensureCss() {
