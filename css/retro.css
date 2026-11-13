@@ -1559,25 +1559,27 @@ html[data-ui-theme="retro"] .game .bug-shot.low {
   color: #fff8e8;
 }
 
-/* 球员状态卡 */
+/* 球员状态卡：黑色系 + 透明底 + 米色描边（悬浮在球场上更统一） */
 html[data-ui-theme="retro"] .game .pcard {
-  background: var(--r-paper);
-  border: 3px solid var(--r-ink);
+  background: rgba(8, 10, 9, 0.55);
+  border: 2px solid var(--r-paper);
   border-radius: 2px;
-  color: var(--r-ink);
-  box-shadow: 4px 4px 0 rgba(28, 36, 30, 0.35);
+  color: var(--r-paper);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 html[data-ui-theme="retro"] .game .pcard .pname,
-html[data-ui-theme="retro"] .game .pcard .pname span { color: var(--r-ink); }
-html[data-ui-theme="retro"] .game .pcard .povr { color: var(--r-muted); }
+html[data-ui-theme="retro"] .game .pcard .pname span { color: #fff8e8; }
+html[data-ui-theme="retro"] .game .pcard .povr { color: #d8cfb8; }
 html[data-ui-theme="retro"] .game .pcard .bar {
-  background: #dccdaa;
-  border: 1px solid var(--r-ink);
+  background: rgba(18, 20, 18, 0.72);
+  border: 1px solid rgba(244, 234, 210, 0.6);
   border-radius: 2px;
 }
 html[data-ui-theme="retro"] .game .pcard .bar b {
-  color: var(--r-ink);
-  text-shadow: none;
+  color: #fff8e8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 /* 解说条 */
@@ -1619,11 +1621,13 @@ html[data-ui-theme="retro"] .game .grade[data-c="red"] { color: var(--r-red); }
 
 /* 暂停 / 模拟 / 横屏按钮 */
 html[data-ui-theme="retro"] .game .pause-btn {
-  border: 2px solid var(--r-ink);
-  background: var(--r-paper);
-  color: var(--r-ink);
+  border: 2px solid var(--r-paper);
+  background: rgba(8, 10, 9, 0.55);
+  color: #fff8e8;
   border-radius: 2px;
-  box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 html[data-ui-theme="retro"] .game .sim-btn,
 html[data-ui-theme="retro"] .game .rot-btn {

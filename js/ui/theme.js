@@ -35,7 +35,7 @@ export const VISIBLE_THEMES = THEME_SWITCH_ENABLED
 const VISIBLE_VALID = new Set(VISIBLE_THEMES.map((x) => x[0]));
 
 const HREF = {
-  retro: "./css/retro.css?v=35",
+  retro: "./css/retro.css?v=34",
   classic: "./css/classic.css?v=5",
   valorant: "./css/valorant.css?v=14",
   stardew: "./css/stardew.css?v=8",
