@@ -5,7 +5,7 @@
  * 持久化键：pokedunk.uiTheme
  */
 const KEY = "pokedunk.uiTheme";
-const LOCKED = "retro";
+const LOCKED = "black";
 
 /** 是否开放主题切换：默认关闭，?themes=1 开启 */
 export const THEME_SWITCH_ENABLED = (() => {

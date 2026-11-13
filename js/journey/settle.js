@@ -6,15 +6,15 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=27";
+import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=29";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=26";
-import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=28";
-import { ACHV } from "../systems/achv.js?v=20";
-import { bumpDaily } from "../ui/earn.js?v=30";
-import { currentMatchInfo, recordResult } from "./season.js?v=26";
-import { activeBonds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=21";
-import { offerLegendReward } from "./legend.js?v=16";
+import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=28";
+import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=30";
+import { ACHV } from "../systems/achv.js?v=22";
+import { bumpDaily } from "../ui/earn.js?v=32";
+import { currentMatchInfo, recordResult } from "./season.js?v=28";
+import { activeBonds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=23";
+import { offerLegendReward } from "./legend.js?v=18";
 
 const SIGN_CHANCE = 0.25;
 // S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高

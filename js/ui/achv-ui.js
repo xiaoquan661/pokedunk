@@ -2,8 +2,8 @@
  * ui/achv-ui.js —— 成就面板 UI（pokedunk-v2，移植自旧 achievements-ui.js）
  * 主界面成就入口 → 面板：总进度条 + 生涯/单场两页签 + 卡片流。
  */
-import { ACHV } from "../systems/achv.js?v=20";
-import { ICON } from "./icons.js?v=20";
+import { ACHV } from "../systems/achv.js?v=22";
+import { ICON } from "./icons.js?v=22";
 
 const CAREER_IDS = new Set(["stage1", "badges4", "badges8", "champion", "tour1", "evo1", "evo5", "vet16", "coll10", "coll30", "rich1k", "w10", "sign1"]);
 const ICON_CAREER = ICON.trophy, ICON_MATCH = ICON.ball;

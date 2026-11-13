@@ -104,8 +104,27 @@ img { image-rendering: pixelated; }
 .screen-start.is-leaving .start-title {
   animation: start-title-up 0.52s cubic-bezier(0.5, 0, 0.2, 1) forwards;
 }
+.screen-start.is-leaving .start-bg canvas {
+  transform: scale(1.1);
+  transition: transform 0.62s cubic-bezier(0.4, 0, 0.2, 1);
+}
 .screen-start.is-leaving .start-bg,
-.screen-start.is-leaving .start-dim { opacity: 0.72; transition: opacity 0.5s ease; }
+.screen-start.is-leaving .start-dim { opacity: 1; transition: opacity 0.55s ease; }
+.screen-start.is-leaving::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  background: #050505;
+  opacity: 0;
+  pointer-events: none;
+  animation: start-veil 0.62s ease-in forwards;
+}
+@keyframes start-veil {
+  0% { opacity: 0; }
+  55% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
 @keyframes start-title-up {
   0% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-62vh) scale(0.92); }

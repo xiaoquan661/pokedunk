@@ -4,7 +4,7 @@
  * - music.js：原版程序化 BGM（菜单轮播 / 比赛静音）
  * - 偏好键沿用本项目：pokedunk.muted / pokedunk.music / pokedunk.announcer
  */
-import { MusicManager } from "./music.js?v=17";
+import { MusicManager } from "./music.js?v=19";
 
 const SFX_KEY = "pokedunk.muted";
 const MUSIC_KEY = "pokedunk.music";
