@@ -3,32 +3,32 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=24"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=38";
-import { renderDex } from "./ui/dex.js?v=45";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=53";
-import { openSettings } from "./ui/settings.js?v=76";
-import { renderBag } from "./ui/bag.js?v=40";
-import { renderTeam } from "./ui/team.js?v=57";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=100";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=32";
-import { watchRewardedAd } from "./platform/ads.js?v=27";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=37";
-import { settleMatchResult } from "./journey/settle.js?v=60";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=41";
-import { openDaily } from "./ui/daily.js?v=44";
-import { openAchievements } from "./ui/achv-ui.js?v=36";
-import { startTutorial } from "./ui/tutorial.js?v=31";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=39";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=26";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=41";
-import { ACHV } from "./systems/achv.js?v=31";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR } from "./systems/build.js?v=31";
-import { playEvolve } from "./ui/anim.js?v=33";
-import { ICON } from "./ui/icons.js?v=31";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=24";
-import { pendingLegend } from "./journey/legend.js?v=27";
-import { openLegendPicker } from "./ui/legend.js?v=28";
+import "./systems/evo-rules.js?v=25"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=39";
+import { renderDex } from "./ui/dex.js?v=46";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=54";
+import { openSettings } from "./ui/settings.js?v=77";
+import { renderBag } from "./ui/bag.js?v=41";
+import { renderTeam } from "./ui/team.js?v=58";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=101";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=33";
+import { watchRewardedAd } from "./platform/ads.js?v=28";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=38";
+import { settleMatchResult } from "./journey/settle.js?v=61";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=42";
+import { openDaily } from "./ui/daily.js?v=45";
+import { openAchievements } from "./ui/achv-ui.js?v=37";
+import { startTutorial } from "./ui/tutorial.js?v=32";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=40";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=27";
+import { openEarn, bumpDaily } from "./ui/earn.js?v=42";
+import { ACHV } from "./systems/achv.js?v=32";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR } from "./systems/build.js?v=32";
+import { playEvolve } from "./ui/anim.js?v=34";
+import { ICON } from "./ui/icons.js?v=32";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=25";
+import { pendingLegend } from "./journey/legend.js?v=28";
+import { openLegendPicker } from "./ui/legend.js?v=29";
 import {
   getPokemon,
   calcOVR,
@@ -44,7 +44,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=38";
+} from "../engine/readable/play-core.js?v=39";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -284,35 +284,35 @@ function showHome(save, justStarted = false) {
           <div class="hm-grid">
             <button class="hm-item" data-go="achv">
               <span class="hm-ico">${LINE_ICON.trophy}</span>
-              <span class="hm-txt"><b>成就</b><small>${achvDone} / 16 · 里程碑</small></span>
+              <span class="hm-txt"><b>成就</b></span>
             </button>
             <button class="hm-item" data-go="tutorial">
               <span class="hm-ico">${LINE_ICON.tutorial}</span>
-              <span class="hm-txt"><b>新手教程</b><small>操作 · 规则 · 训练</small></span>
+              <span class="hm-txt"><b>新手教程</b></span>
             </button>
             <button class="hm-item" data-go="dex">
               <span class="hm-ico">${LINE_ICON.book}</span>
-              <span class="hm-txt"><b>图鉴</b><small>${Object.keys(save.dex).length} / 291 已结缘</small></span>
+              <span class="hm-txt"><b>图鉴</b></span>
             </button>
             <button class="hm-item" data-go="team">
               <span class="hm-ico">${LINE_ICON.team}</span>
-              <span class="hm-txt"><b>队伍</b><small>${save.team.length}/10 · 仓库 ${save.box.length}</small></span>
+              <span class="hm-txt"><b>队伍</b></span>
             </button>
             <button class="hm-item" data-go="shop">
               <span class="hm-ico">${LINE_ICON.shop}</span>
-              <span class="hm-txt"><b>每日商店</b><small>精灵 · 蛋 · 树果</small></span>
+              <span class="hm-txt"><b>每日商店</b></span>
             </button>
             <button class="hm-item" data-go="egg">
               <span class="hm-ico">${LINE_ICON.egg}</span>
-              <span class="hm-txt"><b>孵蛋</b><small>${save.eggs.slots.filter(Boolean).length}/${save.eggs.unlockedSlots} 槽</small></span>
+              <span class="hm-txt"><b>孵蛋</b></span>
             </button>
             <button class="hm-item" data-go="bag">
               <span class="hm-ico">${LINE_ICON.bag}</span>
-              <span class="hm-txt"><b>背包</b><small>树果 ×${save.bag.berryNormal}</small></span>
+              <span class="hm-txt"><b>背包</b></span>
             </button>
             <button class="hm-item" data-go="settings">
               <span class="hm-ico">${LINE_ICON.settings}</span>
-              <span class="hm-txt"><b>设置</b><small>难度 · 声音 · 存档</small></span>
+              <span class="hm-txt"><b>设置</b></span>
             </button>
           </div>
         </div>
@@ -1012,7 +1012,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=38");
+window.__PC = await import("../engine/readable/play-core.js?v=39");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

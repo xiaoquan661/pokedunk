@@ -4,16 +4,16 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=38";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=37";
-import { openDetail } from "./detail.js?v=43";
-import { ICON } from "./icons.js?v=31";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=39";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=38";
+import { openDetail } from "./detail.js?v=44";
+import { ICON } from "./icons.js?v=32";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=31";
+} from "../systems/build.js?v=32";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 const SLOT_ROWS = [["SF", "C", "PF"], ["SG", "PG"]]; // 参考图 3+2 阵型
@@ -50,9 +50,6 @@ function typeOf(m) {
   return (b.types && b.types[0]) || "Normal";
 }
 
-/** 拖动把手图标（六点） */
-const DOTS_SVG = `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="4" r="1.2"/><circle cx="11" cy="4" r="1.2"/><circle cx="5" cy="8" r="1.2"/><circle cx="11" cy="8" r="1.2"/><circle cx="5" cy="12" r="1.2"/><circle cx="11" cy="12" r="1.2"/></g></svg>`;
-
 /** 首发槽位卡：位置是槽，任何精灵都能放；卡片显示初始八维推荐位置 */
 function slotCard(pos, id, per) {
   if (!id) {
@@ -69,7 +66,6 @@ function slotCard(pos, id, per) {
   const rarity = rarityOf(m.dex);
   return `<div class="lineup-slot" data-slot="${pos}">
     <button class="slot-card" data-open="${id}" data-drag="${id}" data-drag-from="start" style="--tc:${color}">
-      <span class="drag-dots">${DOTS_SVG}</span>
       <span class="slot-img"><img src="./sprites/${m.dex}.png" alt="" draggable="false"></span>
       <span class="slot-name">${b.name}</span>
       <span class="slot-meta"><b>${ovr}</b><small>Lv.${m.level}</small><small class="slot-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</small></span>
@@ -113,8 +109,7 @@ export function renderTeam(page, save) {
         .lineup-row{display:flex;justify-content:center;gap:9px;margin-bottom:8px}
         .lineup-slot{width:31.5%;max-width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .12s}
         .lineup-slot.empty{opacity:.9}
-        .slot-card{position:relative;width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,#16224a 0%,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:#fff;cursor:pointer;touch-action:pan-y;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
-        .slot-card .drag-dots{position:absolute;top:0;right:0;padding:9px 8px;color:rgba(255,255,255,.4);display:flex;touch-action:none;cursor:grab}
+        .slot-card{position:relative;width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,#16224a 0%,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:#fff;cursor:pointer;touch-action:none;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
         /* 精灵底不再有淡色光晕，立绘整体放大 50% */
         .slot-img{display:grid;place-items:center;width:96px;height:96px;background:none}
         .slot-img img{width:84px;height:84px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
@@ -128,8 +123,7 @@ export function renderTeam(page, save) {
         .slot-empty small{font-size:10px}
         .lineup-slot.drop-hot{transform:scale(1.04)}
         .lineup-slot.drop-hot .slot-card,.lineup-slot.drop-hot .slot-empty{outline:2px solid var(--gold);box-shadow:0 0 24px rgba(245,197,66,.35)}
-        .bench-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 5px 7px;background:linear-gradient(160deg,#16224a,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:10px;color:#fff;cursor:pointer;touch-action:pan-y;box-shadow:0 0 10px color-mix(in srgb,var(--tc) 35%,transparent)}
-        .bench-card .drag-dots{position:absolute;top:0;right:0;padding:7px 6px;color:rgba(255,255,255,.38);display:flex;touch-action:none;cursor:grab}
+        .bench-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 5px 7px;background:linear-gradient(160deg,#16224a,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:10px;color:#fff;cursor:pointer;touch-action:none;box-shadow:0 0 10px color-mix(in srgb,var(--tc) 35%,transparent)}
         .bench-card img{width:46px;height:46px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
         .bench-card .sc-ovr{font:700 12px var(--sport,sans-serif);color:var(--tc)}
         .bench-card .bc-name{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -161,13 +155,12 @@ export function renderTeam(page, save) {
       <div class="team-h" style="margin:8px 0;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">首发阵容 <small style="color:var(--text-dim);font-weight:400;font-size:11px">STARTING FIVE · ${lineup.length} / 5 人</small></div>
       ${SLOT_ROWS.map((row) => `<div class="lineup-row">${row.map((pos) => slotCard(pos, byPos[pos], per)).join("")}</div>`).join("")}
       ${active.length ? `<div class="bond-active"><b>羁绊生效中</b><div class="ba-list">${active.map((b) => `<div class="ba-item"><div class="ba-top"><span class="ba-name">${b.name}</span><span class="ba-eff">${BOND_EFFECT[b.id] || ""}</span></div><small>触发：${b.desc} · ${b.progress}</small></div>`).join("")}</div></div>` : ""}
-      <p class="team-drag-hint">拖动卡片右上角把手换位 · 替补拖到首发槽即可换人 · 推荐位置仅作提示</p>
+      <p class="team-drag-hint">直接拖动卡片换位 · 拖到首发槽即可换人 · 推荐位置仅作提示</p>
 
       <div class="team-h" style="margin:14px 0 8px;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">替补席 <small style="color:var(--text-dim);font-weight:400;font-size:11px">SUBSTITUTE · ${benchIds.length} 位待命</small></div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         ${benchIds.map((id) => benchCard(id)).join("")}
         ${save.team.length < 10 ? benchCard(null) : ""}
-        <div class="bench-card dim"><span class="bc-ico">${ICON.egg}</span><small style="font-size:10px">去孵蛋/商店签约</small></div>
       </div>
 
       <div style="display:flex;gap:10px;margin-top:14px">
@@ -307,9 +300,6 @@ function bindTeamDrag(page) {
     if (page.__view !== "team") return;
     const card = e.target.closest("[data-drag]");
     if (!card) return;
-    // 触摸端只从右上角把手起拖，避免占满卡片的拖拽阻断页面滚动
-    const fromHandle = !!e.target.closest(".drag-dots");
-    if (e.pointerType && e.pointerType !== "mouse" && !fromHandle) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
     drag = {
       id: Number(card.dataset.drag),
@@ -331,7 +321,6 @@ function benchCard(id) {
   const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
   const rarity = rarityOf(m.dex);
   return `<button class="bench-card" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}">
-    <span class="drag-dots">${DOTS_SVG}</span>
     <img src="./sprites/${m.dex}.png" alt="" draggable="false">
     <b class="sc-ovr">${mainOVR(m)}</b>
     <span class="bc-name">${b.name}</span>

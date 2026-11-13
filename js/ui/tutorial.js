@@ -3,9 +3,9 @@
  * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=41";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=41";
-import { gameAudio } from "../platform/audio.js?v=32";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=42";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=42";
+import { gameAudio } from "../platform/audio.js?v=33";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];

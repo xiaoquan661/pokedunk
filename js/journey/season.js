@@ -11,9 +11,9 @@
  * { v, no, phase, round, byeRound, schedule[], rounds[], results[], table[],
  *   playoffs, fourKings, badges[], champion, history[] }
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=38";
-import { pickGymRoster } from "./gyms.js?v=28";
-import { teamPower as buildTeamPower } from "../systems/build.js?v=31";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=39";
+import { pickGymRoster } from "./gyms.js?v=29";
+import { teamPower as buildTeamPower } from "../systems/build.js?v=32";
 
 export const GYM_CN = ["深灰道馆", "华蓝道馆", "枯叶道馆", "彩虹道馆", "浅红道馆", "金黄道馆", "红莲道馆", "常磐道馆"];
 export const ROUNDS = 9;
