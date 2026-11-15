@@ -5,17 +5,17 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=53";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=54";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=47";
-import { loadSave, writeSave, moveMon } from "../storage.js?v=52";
-import { BERRY_XP } from "../systems/shop.js?v=54";
+} from "../systems/build.js?v=48";
+import { loadSave, writeSave, moveMon } from "../storage.js?v=53";
+import { BERRY_XP } from "../systems/shop.js?v=55";
 import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=44";
-import { ICON } from "./icons.js?v=46";
+import { playEvolve } from "./anim.js?v=45";
+import { ICON } from "./icons.js?v=47";
 import { xpToNext } from "../../engine/growth.js";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 

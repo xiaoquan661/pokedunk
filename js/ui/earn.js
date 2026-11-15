@@ -6,11 +6,11 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { writeSave, addMon, hasDex } from "../storage.js?v=53";
+import { writeSave, addMon, hasDex } from "../storage.js?v=54";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=46";
-import { watchRewardedAd } from "../platform/ads.js?v=42";
-import { gameAudio } from "../platform/audio.js?v=47";
+import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=47";
+import { watchRewardedAd } from "../platform/ads.js?v=43";
+import { gameAudio } from "../platform/audio.js?v=48";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 40;      // 每次看广告奖励（S13：40 × 5 = 200/天）
@@ -239,20 +239,7 @@ export function openEarn(save, onCoins, onRoster) {
         <div class="pj-fdesc">观看一段短广告，立刻获得金币（今日剩余 ${Math.max(0, adsLeft)} 次）</div>
         <div class="pj-row"><span>看广告得 <span class="pj-coin">+${AD_COINS} 币</span></span><button class="pj-btn" id="pj-earn-ad" ${adsLeft <= 0 ? "disabled" : ""}>观看</button></div>
       </div>
-      <div class="pj-block">
-        <div class="pj-flbl">每日活跃任务</div>
-        <div class="pj-fdesc">每天 0 点重置 · 完成后领金币</div>
-        ${TASKS.map((t) => {
-          const done = !!d.claimed[t.id];
-          const can = t.check(save) && !done;
-          const cnt = t.id === "play1" || t.id === "play3" ? (d.cnt.match || 0)
-            : t.id === "feed2" ? (d.cnt.feed || 0)
-            : t.id === "sign1" ? (d.cnt.sign || 0)
-            : (d.cnt.visit || 0);
-          return `<div class="pj-row"><span>${t.name} <small style="color:rgba(255,255,255,.4)">${cnt >= t.goal ? "✓" : `(${Math.min(cnt, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-claim="${t.id}" ${can ? "" : "disabled"}>${done ? "已领取" : `领 +${t.coin} 币`}</button></div>`;
-        }).join("")}
-      </div>
-      <p class="pj-note">口袋灌篮 · 金币获取</p>`;
+      <p class="pj-note">口袋灌篮 · 金币获取（每日活跃任务在主页「每日任务」）</p>`;
   }
   const keyOf = (t) => t.id;
 
