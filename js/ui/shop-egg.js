@@ -3,13 +3,13 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=49";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=51";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=52";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=43";
-import { watchRewardedAd } from "../platform/ads.js?v=39";
-import { playHatch } from "./anim.js?v=45";
-import { ICON, coinInline } from "./icons.js?v=43";
+import { loadSave, writeSave } from "../storage.js?v=52";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=54";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=55";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=46";
+import { watchRewardedAd } from "../platform/ads.js?v=42";
+import { playHatch } from "./anim.js?v=48";
+import { ICON, coinInline } from "./icons.js?v=46";
 
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];
@@ -110,8 +110,17 @@ export function renderShop(root) {
       if (r.kind === "mon") toast(`${monName(r.dex)}${r.placed === "box" ? " 进入仓库（队伍已满）" : " 已入队！"}`, 3000);
       else if (r.kind === "egg") toast(`神秘蛋已放入背包（待孵 ${r.stock} 颗，今日还可买 ${r.left} 颗）——去孵蛋页选择孵化`, 3000);
       else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个，今日还可买 ${r.left} 个）`);
+      // 新手之路：购买精灵计入进度，并自动排进首发，避免流程卡在“队伍人数不够”
+      if (r.kind === "mon" && save.newbie && !save.newbie.done) {
+        save.newbie.shopBuys = (save.newbie.shopBuys || 0) + 1;
+        ensureLineupSlots(save);
+      }
       writeSave(save);
       renderShop(root); // 重渲染刷新币数/置灰
+      if (r.kind === "mon" && save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 2) {
+        toast("首发 5 人已凑齐，准备第一场比赛！", 2600);
+        setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
+      }
     })
   );
 

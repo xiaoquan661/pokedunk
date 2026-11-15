@@ -3,9 +3,9 @@
  * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=53";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=53";
-import { gameAudio } from "../platform/audio.js?v=44";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=56";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=56";
+import { gameAudio } from "../platform/audio.js?v=47";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -90,6 +90,7 @@ const CSS = `
 .screen-match .tut-sum{list-style:none;margin:0 0 12px;padding:0;text-align:left;font-size:12px}
 .screen-match .tut-sum li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #242424}
 .screen-match .tut-sum li:last-child{border-bottom:none}
+.screen-match .tut-reward{margin:0 0 10px;padding:8px 10px;border:1px dashed #b8e63c;border-radius:3px;color:#eaffb0;font-size:12px;line-height:1.5;text-align:left}
 
 /* —— 复古主题：黑底保留，文字改米色、强调色改复古琥珀，边框改米色 —— */
 html[data-ui-theme="retro"] .screen-match .tut-strip{border-color:#f4ead2;background:rgba(8,10,9,.88);box-shadow:4px 4px 0 rgba(0,0,0,.6)}
@@ -118,6 +119,7 @@ html[data-ui-theme="retro"] .screen-match .tut-stars{color:#e9b45f}
 html[data-ui-theme="retro"] .screen-match .tut-done-acts button{border-color:#f4ead2;background:#121212;color:#f4ead2}
 html[data-ui-theme="retro"] .screen-match .tut-done-acts button.primary{background:#e9b45f;border-color:#f4ead2;color:#1c241e}
 html[data-ui-theme="retro"] .screen-match .tut-sum li{border-bottom-color:rgba(244,234,210,.2)}
+html[data-ui-theme="retro"] .screen-match .tut-reward{border-color:#e9b45f;color:#f4ead2}
 `;
 
 function ensureCss() {
@@ -173,6 +175,7 @@ export function startTutorial(root, save, actions = {}) {
   let lastBallMode = "";
   let started = false;
   let finished = false;
+  let rewarded = false;
 
   const game = () => page.querySelector(".game");
   const strip = () => page.querySelector(".tut-strip");
@@ -249,14 +252,18 @@ export function startTutorial(root, save, actions = {}) {
   }
 
   function showDone() {
+    if (finished) return;
     finished = true;
     if (engine) engine.paused = true;
+    let reward = "";
+    if (!rewarded) { rewarded = true; reward = actions.onDone?.() || ""; }
     const summary = DRILLS.map((d, i) => `<li><span>${i + 1}. ${d.title}</span><span>${i < idx || (i === idx && phase === "done") ? "✓" : "—"}</span></li>`).join("");
     const done = page.querySelector(".tut-done");
     done.innerHTML = `<div class="panel">
       <h2>教程完成</h2>
       <ul class="tut-sum">${summary}</ul>
-      <p>现在可以去打一场真正的比赛了。</p>
+      ${reward ? `<p class="tut-reward">${reward}</p>` : ""}
+      <p>${reward ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : "现在可以去打一场真正的比赛了。"}</p>
       <div class="tut-done-acts">
         <button class="primary" data-done="exit">返回主页</button>
         <button data-done="again">重新训练</button>
@@ -374,7 +381,13 @@ export function startTutorial(root, save, actions = {}) {
       if (r === "retry") { startDrill(idx); return; }
       if (r === "exit") { exitTutorial(); return; }
       const d = ev.target.closest("[data-done]")?.dataset.done;
-      if (d === "exit") { exitTutorial(); return; }
+      if (d === "exit") {
+        finished = true;
+        handle?.stop();
+        gameAudio.setTrack("menu");
+        actions.onExit?.();
+        return;
+      }
       if (d === "again") {
         page.querySelector(".tut-done")?.setAttribute("hidden", "");
         finished = false;

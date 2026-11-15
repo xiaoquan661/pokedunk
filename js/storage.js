@@ -33,8 +33,8 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { ensureSeason } from "./journey/season.js?v=44";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=43";
+import { ensureSeason } from "./journey/season.js?v=47";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=46";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -191,6 +191,8 @@ export function startJourney(save, starterDex, coachName = "小智", starterPos 
   save.journey.starterDex = starterDex;
   save.journey.starterPos = pos;
   save.journey.stage = "gym1"; // 选完初始伙伴即进入第一道馆阶段
+  // 新手之路：教程 → 领取 2 只伙伴 → 商店买 2 只 → 组齐 5 人 → 第一场比赛
+  save.newbie = { v: 1, tutorialDone: false, giftDone: false, shopBuys: 0, shopPrompted: false, done: false };
   return { ok: true, id: r.id };
 }
 

@@ -7,8 +7,8 @@
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=50";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=43";
+import { addMon, hasDex } from "../storage.js?v=53";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=46";
 
 const MIN30 = 30 * 60 * 1000;
 const HOUR3 = 3 * 60 * 60 * 1000;
@@ -107,7 +107,12 @@ const RARE_SLOT_CHANCE = 0.55;
 function pickShopMons(save) {
   const all = (window.__PJ_DEX_ROWS || []).filter((r) => !LEGENDARY_DEX.has(r[0]));
   const unowned = all.filter((r) => !save.dex || !save.dex[r[0]]);
-  const pool = unowned.length ? unowned : all;
+  let pool = unowned.length ? unowned : all;
+  // 新手之路：货架只出低价精灵，保证 300 开局币能买齐 2 只
+  if (save.newbie && !save.newbie.done) {
+    const cheap = pool.filter((r) => (getPokemon(r[0]).ovr || 0) < 70);
+    if (cheap.length >= 2) pool = cheap;
+  }
   const common = pool.filter((r) => rarityOf(r[0]) === "普通");
   const rare = pool.filter((r) => rarityOf(r[0]) !== "普通");
   const picks = [];
