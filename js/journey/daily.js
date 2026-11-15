@@ -10,10 +10,10 @@
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER, simulateFullMatch,
-} from "../../engine/readable/play-core.js?v=54";
-import { buildMyRoster } from "./match-screen.js?v=116";
-import { teamPower, STAT_KEYS } from "../systems/build.js?v=47";
-import { writeSave } from "../storage.js?v=53";
+} from "../../engine/readable/play-core.js?v=55";
+import { buildMyRoster } from "./match-screen.js?v=117";
+import { teamPower, STAT_KEYS } from "../systems/build.js?v=48";
+import { writeSave } from "../storage.js?v=54";
 
 const FIRST_WIN_COINS = 100;
 
