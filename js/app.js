@@ -3,33 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=41"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=55";
-import { renderDex } from "./ui/dex.js?v=62";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=70";
-import { openSettings } from "./ui/settings.js?v=93";
-import { renderBag } from "./ui/bag.js?v=57";
-import { renderTeam } from "./ui/team.js?v=74";
-import { openDetail } from "./ui/detail.js?v=60";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=117";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=49";
-import { watchRewardedAd } from "./platform/ads.js?v=44";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=54";
-import { settleMatchResult } from "./journey/settle.js?v=77";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=58";
-import { openDaily } from "./ui/daily.js?v=61";
-import { openAchievements } from "./ui/achv-ui.js?v=53";
-import { startTutorial } from "./ui/tutorial.js?v=48";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=56";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=43";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=58";
-import { ACHV } from "./systems/achv.js?v=48";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=48";
-import { playEvolve } from "./ui/anim.js?v=50";
-import { ICON } from "./ui/icons.js?v=48";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=41";
-import { pendingLegend } from "./journey/legend.js?v=44";
-import { openLegendPicker } from "./ui/legend.js?v=45";
+import "./systems/evo-rules.js?v=42"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=56";
+import { renderDex } from "./ui/dex.js?v=63";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=71";
+import { openSettings } from "./ui/settings.js?v=94";
+import { renderBag } from "./ui/bag.js?v=58";
+import { renderTeam } from "./ui/team.js?v=75";
+import { openDetail } from "./ui/detail.js?v=61";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=118";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=50";
+import { watchRewardedAd } from "./platform/ads.js?v=45";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=55";
+import { settleMatchResult } from "./journey/settle.js?v=78";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=59";
+import { openDaily } from "./ui/daily.js?v=62";
+import { openAchievements } from "./ui/achv-ui.js?v=54";
+import { startTutorial } from "./ui/tutorial.js?v=49";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=57";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=44";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=59";
+import { ACHV } from "./systems/achv.js?v=49";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=49";
+import { playEvolve } from "./ui/anim.js?v=51";
+import { ICON } from "./ui/icons.js?v=49";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=42";
+import { pendingLegend } from "./journey/legend.js?v=45";
+import { openLegendPicker } from "./ui/legend.js?v=46";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=55";
+} from "../engine/readable/play-core.js?v=56";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -487,14 +487,13 @@ function showHome(save, justStarted = false) {
         .screen-menu .hf-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
         .screen-menu .hf-head b{font:700 13px var(--sport);color:var(--text,#1c241e)}
         .screen-menu .hf-head small{font-size:10px;color:var(--text-dim,#575245)}
-        .screen-menu .hf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
-        .screen-menu .hf-card{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px 5px;min-height:86px;border-radius:4px;border:1px solid color-mix(in srgb,var(--tc,#7ac74c) 62%,transparent);background:color-mix(in srgb,var(--tc,#7ac74c) 8%,var(--panel,#f4ead2));color:var(--text,#1c241e)}
-        .screen-menu .hf-card img{width:38px;height:38px;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-        .screen-menu .hf-card b{font-size:9px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .screen-menu .hf-card small{font-size:8px;line-height:1;color:var(--text-dim,#575245)}
-        .screen-menu .hf-pos{font:700 7.5px var(--sport);letter-spacing:.1em;color:var(--gold,#d98324)}
-        .screen-menu .hf-card.empty{border-style:dashed;border-color:var(--line,#b9ad92);background:transparent;justify-content:center;opacity:.75}
-        .screen-menu .hf-empty{font-size:9px;color:var(--text-dim,#575245)}
+        .screen-menu .hf-line{display:flex;align-items:flex-end;justify-content:center;min-height:104px;padding:2px 0 0}
+        .screen-menu .hf-mon{width:88px;height:88px;margin-left:-24px;image-rendering:pixelated;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4));position:relative;flex-shrink:0}
+        .screen-menu .hf-mon:first-child{margin-left:0}
+        .screen-menu .hf-mon:nth-child(even){transform:translateY(-7px);z-index:2}
+        .screen-menu .hf-mon:nth-child(3){transform:translateY(-12px);z-index:3}
+        .screen-menu .hf-empty{width:66px;height:66px;margin-left:-16px;flex-shrink:0;border:2px dashed var(--line,#b9ad92);border-radius:50%;display:grid;place-items:center;font:700 22px var(--sport);color:var(--text-dim,#575245);opacity:.7;background:color-mix(in srgb,var(--panel,#f4ead2) 60%,transparent)}
+        .screen-menu .hf-empty:first-child{margin-left:0}
       </style>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
@@ -510,19 +509,13 @@ function showHome(save, justStarted = false) {
         </header>
         <div class="home-five">
           <div class="hf-head"><b>首发阵容</b><small>${fiveSlots.filter((x) => x.id).length}/5 人</small></div>
-          <div class="hf-grid">
-            ${fiveSlots.map(({ pos, id }) => {
-              if (!id) return `<div class="hf-card empty"><span class="hf-pos">${pos}</span><span class="hf-empty">空位</span></div>`;
+          <div class="hf-line">
+            ${fiveSlots.filter((x) => x.id).map(({ id }) => {
               const m = save.mons[id];
               const b = getPokemon(m.dex);
-              const tc = TYPE_COLORS[b.types?.[0]] || "#7ac74c";
-              return `<div class="hf-card" style="--tc:${tc}">
-                <img src="./sprites/${m.dex}.png" alt="" draggable="false">
-                <b>${b.name}</b>
-                <small>Lv.${m.level}</small>
-                <span class="hf-pos">${pos}</span>
-              </div>`;
+              return `<img class="hf-mon" src="./sprites/${m.dex}.png" alt="${b.name}" title="Lv.${m.level} ${b.name}" draggable="false">`;
             }).join("")}
+            ${Array.from({ length: Math.max(0, 5 - fiveSlots.filter((x) => x.id).length) }).map(() => `<span class="hf-empty" aria-hidden="true">+</span>`).join("")}
           </div>
         </div>
         <div class="menu-panel home-menu">
@@ -1271,7 +1264,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=55");
+window.__PC = await import("../engine/readable/play-core.js?v=56");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
