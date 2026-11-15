@@ -1444,6 +1444,23 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
 .detail-top .build-meta { color: var(--r-muted); }
 .detail-box .stat-cell span { color: var(--r-muted); }
 .detail-box .stat-cell b { color: var(--r-ink); }
+/* 能力格：压过 menu-legacy 的深色默认值，浅色纸底上提高对比 */
+.detail-box .ratings.compact .stat-cell {
+  background: rgba(28, 36, 30, 0.06);
+  border: 1px solid rgba(28, 36, 30, 0.22);
+  border-radius: 3px;
+}
+.detail-box .ratings.compact .stat-cell span { color: #4a4436; font-size: 10px; font-weight: 700; }
+.detail-box .ratings.compact .stat-cell b { color: #1c241e; }
+.detail-box .ratings.compact .stat-cell i { background: rgba(28, 36, 30, 0.16); }
+.detail-box .ratings.compact .stat-cell i:after { background: linear-gradient(90deg, #b56a16, #d98324); }
+/* 说明文字：避免米色底上发灰 */
+.detail-box .arch,
+.detail-box .build-meta,
+.detail-box .special-box p,
+.detail-box .note { color: #4a4436; }
+.detail-box .special-box { background: rgba(28, 36, 30, 0.07); border: 1px solid rgba(28, 36, 30, 0.16); }
+.detail-box .special-box .lbl { color: #1f5c3a; }
 .detail-box .dtab {
   border-radius: 3px;
   border: 2px solid var(--r-line);
