@@ -6,11 +6,11 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { writeSave, addMon, hasDex } from "../storage.js?v=49";
+import { writeSave, addMon, hasDex } from "../storage.js?v=50";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=42";
-import { watchRewardedAd } from "../platform/ads.js?v=38";
-import { gameAudio } from "../platform/audio.js?v=43";
+import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=43";
+import { watchRewardedAd } from "../platform/ads.js?v=39";
+import { gameAudio } from "../platform/audio.js?v=44";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 40;      // 每次看广告奖励（S13：40 × 5 = 200/天）
@@ -118,6 +118,73 @@ function openRookiePicker(save, taskId, done) {
     layer.remove();
     done(null);
   });
+}
+
+/** 每日活跃任务独立面板（主页入口）：完成进度 + 领币 */
+export function openDailyTasks(save, onCoins) {
+  if (!document.getElementById("pj-earn-style")) {
+    const st = document.createElement("style");
+    st.id = "pj-earn-style";
+    st.textContent =
+      ".earn-body .pj-block{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:10px}" +
+      ".earn-body .pj-flbl{font-size:13px;font-weight:700;margin-bottom:2px}" +
+      ".earn-body .pj-fdesc{font-size:11.5px;color:var(--text-dim);margin-bottom:8px}" +
+      ".earn-body .pj-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}" +
+      ".earn-body .pj-row:last-child{border-bottom:none}" +
+      ".earn-body .pj-coin{color:var(--gold);font-weight:700}" +
+      ".earn-body .pj-btn{padding:7px 14px;border-radius:14px;border:none;font:700 11.5px var(--sport);background:var(--gold);color:#1a2c55}" +
+      ".earn-body .pj-btn[disabled]{opacity:.4}" +
+      ".earn-body .pj-btn.done{background:rgba(33,208,122,.2);color:var(--good);box-shadow:inset 0 0 0 1px rgba(33,208,122,.5)}" +
+      ".earn-body .pj-note{font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center}";
+    document.head.appendChild(st);
+  }
+  const wrap = document.createElement("div");
+  wrap.className = "pj-scrim page-modal";
+  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  wrap.innerHTML = `
+    <div class="pj-page-card"><div class="sub-page pj-page-body earn-body">
+      <div class="page-head"><button class="back" data-back>‹</button><h2>每日活跃任务</h2><span class="count" id="task-done">0/5</span></div>
+      <div id="pj-task-body"></div>
+    </div></div>`;
+  const body = wrap.querySelector("#pj-task-body");
+  const render = () => {
+    const d = daily();
+    const doneN = TASKS.filter((t) => d.claimed[t.id]).length;
+    const cntEl = wrap.querySelector("#task-done");
+    if (cntEl) cntEl.textContent = `${doneN}/${TASKS.length} 已完成`;
+    body.innerHTML = `
+      <div class="pj-block">
+        <div class="pj-flbl">今日任务</div>
+        <div class="pj-fdesc">每天 0 点重置 · 完成后领取金币</div>
+        ${TASKS.map((t) => {
+          const done = !!d.claimed[t.id];
+          const can = t.check(save) && !done;
+          const cnt = t.id === "play1" || t.id === "play3" ? (d.cnt.match || 0)
+            : t.id === "feed2" ? (d.cnt.feed || 0)
+            : t.id === "sign1" ? (d.cnt.sign || 0)
+            : (d.cnt.visit || 0);
+          return `<div class="pj-row"><span>${t.name} <small style="opacity:.55">${cnt >= t.goal ? "✓" : `(${Math.min(cnt, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-task-claim="${t.id}" ${can ? "" : "disabled"}>${done ? "已领取" : `领 +${t.coin} 币`}</button></div>`;
+        }).join("")}
+      </div>
+      <p class="pj-note">打比赛、投喂树果、战胜签约为主要来源</p>`;
+  };
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap || e.target.closest("[data-back]")) { wrap.remove(); return; }
+    const cb = e.target.closest("[data-task-claim]");
+    if (!cb || cb.disabled) return;
+    const t = TASKS.find((x) => x.id === cb.dataset.taskClaim);
+    const d = daily();
+    if (!t || d.claimed[t.id] || !t.check(save)) return;
+    d.claimed[t.id] = true;
+    persistDaily(d);
+    save.coins += t.coin;
+    writeSave(save);
+    gameAudio.play("coin");
+    onCoins?.();
+    render();
+  });
+  document.body.appendChild(wrap);
+  render();
 }
 
 export function openEarn(save, onCoins, onRoster) {

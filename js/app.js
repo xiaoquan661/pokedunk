@@ -3,33 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=35"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=49";
-import { renderDex } from "./ui/dex.js?v=56";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=64";
-import { openSettings } from "./ui/settings.js?v=87";
-import { renderBag } from "./ui/bag.js?v=51";
-import { renderTeam } from "./ui/team.js?v=68";
-import { openDetail } from "./ui/detail.js?v=54";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=111";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=43";
-import { watchRewardedAd } from "./platform/ads.js?v=38";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=48";
-import { settleMatchResult } from "./journey/settle.js?v=71";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=52";
-import { openDaily } from "./ui/daily.js?v=55";
-import { openAchievements } from "./ui/achv-ui.js?v=47";
-import { startTutorial } from "./ui/tutorial.js?v=42";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=50";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=37";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=52";
-import { ACHV } from "./systems/achv.js?v=42";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=42";
-import { playEvolve } from "./ui/anim.js?v=44";
-import { ICON } from "./ui/icons.js?v=42";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=35";
-import { pendingLegend } from "./journey/legend.js?v=38";
-import { openLegendPicker } from "./ui/legend.js?v=39";
+import "./systems/evo-rules.js?v=36"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=50";
+import { renderDex } from "./ui/dex.js?v=57";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=65";
+import { openSettings } from "./ui/settings.js?v=88";
+import { renderBag } from "./ui/bag.js?v=52";
+import { renderTeam } from "./ui/team.js?v=69";
+import { openDetail } from "./ui/detail.js?v=55";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=112";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=44";
+import { watchRewardedAd } from "./platform/ads.js?v=39";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=49";
+import { settleMatchResult } from "./journey/settle.js?v=72";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=53";
+import { openDaily } from "./ui/daily.js?v=56";
+import { openAchievements } from "./ui/achv-ui.js?v=48";
+import { startTutorial } from "./ui/tutorial.js?v=43";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=51";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=38";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=53";
+import { ACHV } from "./systems/achv.js?v=43";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=43";
+import { playEvolve } from "./ui/anim.js?v=45";
+import { ICON } from "./ui/icons.js?v=43";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=36";
+import { pendingLegend } from "./journey/legend.js?v=39";
+import { openLegendPicker } from "./ui/legend.js?v=40";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=49";
+} from "../engine/readable/play-core.js?v=50";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -79,6 +79,56 @@ function ensureLineupGateCss() {
     'html[data-ui-theme="retro"] .lineup-gate .lg-gate-acts button{background:#1f5c3a;border-color:#1c241e;color:#f4ead2;box-shadow:3px 3px 0 rgba(28,36,30,.3)}' +
     'html[data-ui-theme="retro"] .lineup-gate .lg-gate-close{background:#fff8e8;border-color:#b9ad92;color:#575245}';
   document.head.appendChild(st);
+}
+
+function ensureGuideMenuCss() {
+  if (document.getElementById("guide-menu-style")) return;
+  const st = document.createElement("style");
+  st.id = "guide-menu-style";
+  st.textContent =
+    ".guide-menu .guide-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:14px;margin-bottom:10px;text-align:left;border:2px solid #b8e63c;border-radius:4px;background:#121212;color:#f2f2f2;cursor:pointer;font-family:inherit}" +
+    ".guide-menu .guide-opt b{font:700 14px var(--sport);color:#b8e63c}" +
+    ".guide-menu .guide-opt small{font-size:11px;line-height:1.5;color:#bdbdbd}" +
+    'html[data-ui-theme="retro"] .guide-menu .guide-opt{background:#fff8e8;border-color:#1c241e;color:#1c241e;box-shadow:3px 3px 0 rgba(28,36,30,.2)}' +
+    'html[data-ui-theme="retro"] .guide-menu .guide-opt b{color:#1f5c3a}' +
+    'html[data-ui-theme="retro"] .guide-menu .guide-opt small{color:#4a4436}';
+  document.head.appendChild(st);
+}
+
+/** 主页「导引」：界面指引 / 操作教程 二选一 */
+function openGuideMenu(save) {
+  ensureGuideMenuCss();
+  const wrap = document.createElement("div");
+  wrap.className = "pj-scrim page-modal";
+  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body guide-menu">
+    <div class="page-head"><button class="back" data-back>‹</button><h2>导引</h2></div>
+    <p class="page-sub">需要帮忙时，可以重看界面指引，或进入练习赛学习操作。</p>
+    <button class="guide-opt" data-guide-walk>
+      <b>界面指引</b>
+      <small>重看主界面 → 赛季 → 赛前 → 结算的流程说明</small>
+    </button>
+    <button class="guide-opt" data-guide-tut>
+      <b>操作教程</b>
+      <small>进入练习赛，学习移动、投篮、传球、抢断、加速与必杀</small>
+    </button>
+  </div></div>`;
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap || e.target.closest("[data-back]")) { wrap.remove(); return; }
+    if (e.target.closest("[data-guide-walk]")) {
+      const s = loadSave() || save;
+      s.guide = { v: 1, step: 0, done: false };
+      writeSave(s);
+      wrap.remove();
+      showHome(s);
+      return;
+    }
+    if (e.target.closest("[data-guide-tut]")) {
+      wrap.remove();
+      startTutorial(app, loadSave() || save, { onExit: () => showHome(loadSave() || save) });
+    }
+  });
+  document.body.appendChild(wrap);
 }
 
 /** 首发不足 5 人：阻止开赛并提供去组队 / 商店 / 孵蛋的入口 */
@@ -340,9 +390,9 @@ function showHome(save, justStarted = false) {
               <span class="hm-ico">${LINE_ICON.trophy}</span>
               <span class="hm-txt"><b>成就</b></span>
             </button>
-            <button class="hm-item" data-go="tutorial">
-              <span class="hm-ico">${LINE_ICON.tutorial}</span>
-              <span class="hm-txt"><b>新手教程</b></span>
+            <button class="hm-item" data-go="tasks">
+              <span class="hm-ico">${LINE_ICON.daily}</span>
+              <span class="hm-txt"><b>每日任务</b></span>
             </button>
             <button class="hm-item" data-go="dex">
               <span class="hm-ico">${LINE_ICON.book}</span>
@@ -425,13 +475,8 @@ function showHome(save, justStarted = false) {
   sc.querySelector("#home-badges")?.addEventListener("click", () => {
     openBadgeDetail(loadSave() || save);
   });
-  // 随时重看新手指引
-  sc.querySelector("#home-guide")?.addEventListener("click", () => {
-    const s = loadSave() || save;
-    s.guide = { v: 1, step: 0, done: false };
-    writeSave(s);
-    showHome(s);
-  });
+  // 导引：新手指引 + 操作教程合并入口
+  sc.querySelector("#home-guide")?.addEventListener("click", () => openGuideMenu(loadSave() || save));
   // 金币"+"获取面板 / 成就面板
   sc.querySelector("#earn-add").addEventListener("click", () => {
     const refreshRoster = () => {
@@ -463,7 +508,14 @@ function showHome(save, justStarted = false) {
         });
       }
       else if (go === "achv") { openAchievements(); }
-      else if (go === "tutorial") { sc.__stopBg?.(); startTutorial(app, loadSave() || save, { onExit: () => showHome(loadSave() || save) }); }
+      else if (go === "tasks") {
+        sc.__stopBg?.();
+        const f = loadSave() || save;
+        openDailyTasks(f, () => {
+          const coinB = sc.querySelector(".coin-chip b");
+          if (coinB) coinB.textContent = f.coins;
+        });
+      }
       else if (go === "dex") { sc.__stopBg?.(); showDex(save); }
       else if (go === "shop") { sc.__stopBg?.(); bumpDaily("visit"); showSub(renderShop, save); }
       else if (go === "egg") { sc.__stopBg?.(); bumpDaily("visit"); showSub(renderEgg, save); }
@@ -1094,7 +1146,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=49");
+window.__PC = await import("../engine/readable/play-core.js?v=50");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
