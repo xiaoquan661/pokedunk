@@ -3,33 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=42"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=56";
-import { renderDex } from "./ui/dex.js?v=63";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=71";
-import { openSettings } from "./ui/settings.js?v=94";
-import { renderBag } from "./ui/bag.js?v=58";
-import { renderTeam } from "./ui/team.js?v=75";
-import { openDetail } from "./ui/detail.js?v=61";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=118";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=50";
-import { watchRewardedAd } from "./platform/ads.js?v=45";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=55";
-import { settleMatchResult } from "./journey/settle.js?v=78";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=59";
-import { openDaily } from "./ui/daily.js?v=62";
-import { openAchievements } from "./ui/achv-ui.js?v=54";
-import { startTutorial } from "./ui/tutorial.js?v=49";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=57";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=44";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=59";
-import { ACHV } from "./systems/achv.js?v=49";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=49";
-import { playEvolve } from "./ui/anim.js?v=51";
-import { ICON } from "./ui/icons.js?v=49";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=42";
-import { pendingLegend } from "./journey/legend.js?v=45";
-import { openLegendPicker } from "./ui/legend.js?v=46";
+import "./systems/evo-rules.js?v=53"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=67";
+import { renderDex } from "./ui/dex.js?v=74";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=82";
+import { openSettings } from "./ui/settings.js?v=105";
+import { renderBag } from "./ui/bag.js?v=69";
+import { renderTeam } from "./ui/team.js?v=86";
+import { openDetail } from "./ui/detail.js?v=72";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=129";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=61";
+import { watchRewardedAd } from "./platform/ads.js?v=56";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=66";
+import { settleMatchResult } from "./journey/settle.js?v=89";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=70";
+import { openDaily } from "./ui/daily.js?v=73";
+import { openAchievements } from "./ui/achv-ui.js?v=65";
+import { startTutorial } from "./ui/tutorial.js?v=60";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=68";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=55";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=70";
+import { ACHV } from "./systems/achv.js?v=60";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=60";
+import { playEvolve } from "./ui/anim.js?v=62";
+import { ICON } from "./ui/icons.js?v=60";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=53";
+import { pendingLegend } from "./journey/legend.js?v=56";
+import { openLegendPicker } from "./ui/legend.js?v=57";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=56";
+} from "../engine/readable/play-core.js?v=67";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -54,6 +54,8 @@ const el = (html) => {
   return t.content.firstElementChild;
 };
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
+/** 关都八馆馆主（原作姓名） */
+const GYM_LEADER_CN = ["小刚", "小霞", "马志士", "莉佳", "阿桔", "娜姿", "夏伯", "坂木"];
 
 /** 首发人数：比赛要求 5 人，不足时引导玩家先组队 */
 const lineupSize = (save) => starterIds(save).filter((id) => save.mons[id]).length;
@@ -487,13 +489,18 @@ function showHome(save, justStarted = false) {
         .screen-menu .hf-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
         .screen-menu .hf-head b{font:700 13px var(--sport);color:var(--text,#1c241e)}
         .screen-menu .hf-head small{font-size:10px;color:var(--text-dim,#575245)}
-        .screen-menu .hf-line{display:flex;align-items:flex-end;justify-content:center;min-height:104px;padding:2px 0 0}
-        .screen-menu .hf-mon{width:88px;height:88px;margin-left:-24px;image-rendering:pixelated;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4));position:relative;flex-shrink:0}
-        .screen-menu .hf-mon:first-child{margin-left:0}
-        .screen-menu .hf-mon:nth-child(even){transform:translateY(-7px);z-index:2}
-        .screen-menu .hf-mon:nth-child(3){transform:translateY(-12px);z-index:3}
-        .screen-menu .hf-empty{width:66px;height:66px;margin-left:-16px;flex-shrink:0;border:2px dashed var(--line,#b9ad92);border-radius:50%;display:grid;place-items:center;font:700 22px var(--sport);color:var(--text-dim,#575245);opacity:.7;background:color-mix(in srgb,var(--panel,#f4ead2) 60%,transparent)}
-        .screen-menu .hf-empty:first-child{margin-left:0}
+        .screen-menu .hf-line{display:flex;align-items:flex-end;justify-content:center;min-height:118px;padding:2px 4px 0}
+        .screen-menu .hf-mon{width:102px;height:102px;image-rendering:pixelated;filter:drop-shadow(0 4px 5px rgba(0,0,0,.42));position:relative;flex-shrink:0}
+        .screen-menu .hf-line[data-n="2"]{justify-content:space-around}
+        .screen-menu .hf-line[data-n="3"]{justify-content:space-between}
+        .screen-menu .hf-line[data-n="3"] .hf-mon:nth-child(2){transform:translateY(-12px);z-index:3}
+        .screen-menu .hf-line[data-n="4"]{justify-content:space-between}
+        .screen-menu .hf-line[data-n="4"] .hf-mon{margin-left:-20px}
+        .screen-menu .hf-line[data-n="4"] .hf-mon:first-child{margin-left:0}
+        .screen-menu .hf-line[data-n="5"]{justify-content:center}
+        .screen-menu .hf-line[data-n="5"] .hf-mon{margin-left:-38px}
+        .screen-menu .hf-line[data-n="5"] .hf-mon:first-child{margin-left:0}
+        .screen-menu .hf-line[data-n="5"] .hf-mon:nth-child(3){transform:translateY(-12px);z-index:3}
       </style>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
@@ -509,13 +516,12 @@ function showHome(save, justStarted = false) {
         </header>
         <div class="home-five">
           <div class="hf-head"><b>首发阵容</b><small>${fiveSlots.filter((x) => x.id).length}/5 人</small></div>
-          <div class="hf-line">
+          <div class="hf-line" data-n="${fiveSlots.filter((x) => x.id).length}">
             ${fiveSlots.filter((x) => x.id).map(({ id }) => {
               const m = save.mons[id];
               const b = getPokemon(m.dex);
               return `<img class="hf-mon" src="./sprites/${m.dex}.png" alt="${b.name}" title="Lv.${m.level} ${b.name}" draggable="false">`;
             }).join("")}
-            ${Array.from({ length: Math.max(0, 5 - fiveSlots.filter((x) => x.id).length) }).map(() => `<span class="hf-empty" aria-hidden="true">+</span>`).join("")}
           </div>
         </div>
         <div class="menu-panel home-menu">
@@ -902,9 +908,9 @@ function showPreMatch(save, mode = "league") {
       <span class="brief-stage">${info.smallName}</span>
       <h2>${info.kind === "elite" ? "四天王挑战" : info.kind === "playoff" ? info.smallName : `第 ${info.round + 1} 轮 · ${gym.name}`}</h2>
       <div class="brief-vs">
-        <div class="brief-side"><span class="brief-emblem home">${coach.slice(0, 2)}</span><b>${coach}队</b><small>战力 ${teamPower}</small></div>
+        <div class="brief-side"><b>${coach}</b><small>战力 ${teamPower}</small></div>
         <span class="brief-vs-txt">对阵</span>
-        <div class="brief-side away" style="--tc:${gym.color}"><span class="brief-emblem">${gym.abbr}</span><b>${gym.name}</b><small>战力 ${info.targetPower}</small></div>
+        <div class="brief-side away" style="--tc:${gym.color}"><b>${info.kind === "elite" ? "四天王" : (GYM_LEADER_CN[(Number(gym.gym) || 1) - 1] || gym.name)}</b><small>${info.kind === "elite" ? "联盟四天王" : gym.name} · 战力 ${info.targetPower}</small></div>
       </div>
       <div class="brief-winrow"><span>预计胜率</span><div class="brief-winbar"><i style="width:${winP}%"></i></div><b style="color:${winP >= 50 ? "var(--good)" : "var(--red)"}">${winP}%</b></div>
       <div class="pms-sec"><b>对手首发</b><div class="pms-opp">${cfg.away.roster.slice(0, 5).map((p) => {
@@ -1264,7 +1270,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=56");
+window.__PC = await import("../engine/readable/play-core.js?v=67");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

@@ -939,7 +939,7 @@
   background: rgba(255, 248, 232, 0.7);
   border: 2px solid var(--r-line);
 }
-.pms-sec > b { color: var(--r-muted); }
+.pms-sec > b { color: var(--r-green); }
 .pms-type-hint {
   border-radius: 4px;
   background: rgba(255, 248, 232, 0.7);

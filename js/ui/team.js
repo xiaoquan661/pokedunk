@@ -4,17 +4,17 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=56";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=55";
-import { openDetail } from "./detail.js?v=61";
-import { ICON } from "./icons.js?v=49";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=67";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=66";
+import { openDetail } from "./detail.js?v=72";
+import { ICON } from "./icons.js?v=60";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
   starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=49";
+} from "../systems/build.js?v=60";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
@@ -141,15 +141,13 @@ export function renderTeam(page, save) {
         .box-rar{font-style:normal;color:var(--rc);font-weight:700}
         .drag-ghost{position:fixed;z-index:1200;pointer-events:none;opacity:.9;transform:translate(-50%,-50%) scale(.86);filter:drop-shadow(0 12px 20px rgba(0,0,0,.65))}
         .team-drag-hint{margin:8px 0 0;text-align:center;font-size:10.5px;color:rgba(173,190,226,.65)}
-        .bond-active{margin:9px 0 0;padding:8px 10px;border-radius:10px;background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.28)}
-        .bond-active>b{display:block;font-size:10.5px;color:var(--gold);letter-spacing:.03em;margin-bottom:5px}
-        .ba-list{display:flex;flex-direction:column;gap:5px}
-        .ba-item{padding-top:5px;border-top:1px solid rgba(245,197,66,.16)}
-        .ba-item:first-child{padding-top:0;border-top:none}
-        .ba-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-        .ba-name{font-size:12px;font-weight:700;color:#fff}
-        .ba-eff{font-size:10.5px;color:var(--gold);flex-shrink:0}
-        .ba-item small{display:block;margin-top:1px;font-size:9.5px;color:var(--text-dim);line-height:1.45}
+        .bond-panel{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+        .bond-item{padding:8px 10px;border-radius:4px;background:var(--r-paper-3,rgba(0,0,0,.2));border:1px solid var(--r-line,rgba(255,255,255,.1));border-left:3px solid var(--r-green,#b8e63c)}
+        .bi-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+        .bi-name{font-size:12px;font-weight:700;color:var(--r-ink,#f2f2f2)}
+        .bi-eff{font-size:10.5px;color:var(--r-green,#b8e63c);flex-shrink:0}
+        .bond-item small{display:block;margin-top:2px;font-size:9.5px;color:var(--r-muted,#9a9a9a);line-height:1.5}
+        .bond-empty{margin:0;padding:10px;border:1px dashed var(--r-line,rgba(255,255,255,.15));border-radius:4px;font-size:10.5px;line-height:1.55;color:var(--r-muted,#9a9a9a)}
       </style>
       <div class="page-head"><button class="back" data-back>‹</button><h2>我的球队</h2><span class="count">${save.team.length}/10</span></div>
       <p style="color:var(--text-dim);font-size:12px">独立存档 · 单机自动保存</p>
@@ -161,7 +159,12 @@ export function renderTeam(page, save) {
 
       <div class="team-h" style="margin:8px 0;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">首发阵容 <small style="color:var(--text-dim);font-weight:400;font-size:11px">STARTING FIVE · ${lineup.length} / 5 人</small></div>
       ${SLOT_ROWS.map((row) => `<div class="lineup-row">${row.map((pos) => slotCard(pos, byPos[pos], per)).join("")}</div>`).join("")}
-      ${active.length ? `<div class="bond-active"><b>羁绊生效中</b><div class="ba-list">${active.map((b) => `<div class="ba-item"><div class="ba-top"><span class="ba-name">${b.name}</span><span class="ba-eff">${BOND_EFFECT[b.id] || ""}</span></div><small>触发：${b.desc} · ${b.progress}</small></div>`).join("")}</div></div>` : ""}
+      <div class="team-h" style="margin:12px 0 8px;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">队伍羁绊 <small style="color:var(--text-dim);font-weight:400;font-size:11px">BONDS · ${active.length} 条生效</small></div>
+      <div class="bond-panel">
+        ${active.length
+          ? active.map((b) => `<div class="bond-item"><div class="bi-top"><span class="bi-name">${b.name}</span><span class="bi-eff">${BOND_EFFECT[b.id] || ""}</span></div><small>${b.desc} · ${b.progress}</small></div>`).join("")
+          : `<p class="bond-empty">当前没有羁绊生效。首发 5 人满足条件后会自动获得加成，条件可在「设置 → 说明 → 队伍羁绊」查看。</p>`}
+      </div>
       <p class="team-drag-hint">直接拖动卡片换位 · 拖到首发槽即可换人 · 推荐位置仅作提示</p>
 
       <div class="team-h" style="margin:14px 0 8px;color:var(--gold);font-weight:700;border-left:3px solid var(--gold);padding-left:8px">替补席 <small style="color:var(--text-dim);font-weight:400;font-size:11px">SUBSTITUTE · ${benchIds.length} 位待命</small></div>

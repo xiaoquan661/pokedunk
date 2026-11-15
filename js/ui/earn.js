@@ -6,11 +6,12 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { writeSave, addMon, hasDex } from "../storage.js?v=56";
+import { writeSave, addMon, hasDex } from "../storage.js?v=67";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=49";
-import { watchRewardedAd } from "../platform/ads.js?v=45";
-import { gameAudio } from "../platform/audio.js?v=50";
+import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=60";
+import { watchRewardedAd } from "../platform/ads.js?v=56";
+import { gameAudio } from "../platform/audio.js?v=61";
+import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=67";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 40;      // 每次看广告奖励（S13：40 × 5 = 200/天）
@@ -24,17 +25,25 @@ const ROOKIE_STARTERS = [
   { dex: 66, pos: "PF" },
   { dex: 74, pos: "C" },
 ];
-/** 一次性新手任务：完成比赛后自选一只开局精灵，4 次补齐 5 人 */
+/** 一次性新手任务：条件简单，直接领篮球币 */
 const ROOKIE_TASKS = [
-  { id: "rookie1", name: "完成 1 场比赛", goal: 1 },
-  { id: "rookie2", name: "完成 2 场比赛", goal: 2 },
-  { id: "rookie3", name: "完成 3 场比赛", goal: 3 },
-  { id: "rookie4", name: "完成 4 场比赛", goal: 4 },
+  { id: "rookie1", name: "完成 1 场比赛", goal: 1, coin: 100, check: (s) => matchCount(s) >= 1 },
+  { id: "rookie2", name: "打赢 1 场比赛", goal: 1, coin: 150, check: (s) => (s.stats?.w || 0) >= 1 },
+  { id: "rookie3", name: "完成 3 场比赛", goal: 3, egg: true, coin: 0, check: (s) => matchCount(s) >= 3 },
 ];
 const monName = (dex) => {
   const r = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
   return r ? String(r[1]).replace(/#\d+$/, "") : "#" + dex;
 };
+let earnToastTimer = null;
+function earnToast(msg, ms = 2600) {
+  let t = document.getElementById("pk-toast");
+  if (!t) { t = document.createElement("div"); t.id = "pk-toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(earnToastTimer);
+  earnToastTimer = setTimeout(() => t.classList.remove("show"), ms);
+}
 
 /** 每日任务定义（check 按 save/daily 判定是否已完成；goal 供展示） */
 const TASKS = [
@@ -135,7 +144,18 @@ export function openDailyTasks(save, onCoins) {
       ".earn-body .pj-btn{padding:7px 14px;border-radius:14px;border:none;font:700 11.5px var(--sport);background:var(--gold);color:#1a2c55}" +
       ".earn-body .pj-btn[disabled]{opacity:.4}" +
       ".earn-body .pj-btn.done{background:rgba(33,208,122,.2);color:var(--good);box-shadow:inset 0 0 0 1px rgba(33,208,122,.5)}" +
-      ".earn-body .pj-note{font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center}";
+      ".earn-body .pj-btn.done[disabled]{opacity:1;filter:none}" +
+      ".earn-body .pj-note{font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center}" +
+      'html[data-ui-theme="retro"] .earn-body .pj-block{background:rgba(255,248,232,.72);border:2px solid #b9ad92;border-radius:4px}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-flbl{color:#1c241e}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-fdesc{color:#575245}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-row{color:#1c241e;border-bottom-color:rgba(28,36,30,.12)}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-row small{color:#4a4436!important}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-coin{color:#b56a16}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-note{color:#575245}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn{background:#1f5c3a;color:#f4ead2}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn.done{background:rgba(31,92,58,.16);color:#1f5c3a;box-shadow:inset 0 0 0 1px #1f5c3a}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn.done[disabled]{opacity:1;filter:none}';
     document.head.appendChild(st);
   }
   const wrap = document.createElement("div");
@@ -201,7 +221,18 @@ export function openEarn(save, onCoins, onRoster) {
       ".earn-body .pj-btn{padding:7px 14px;border-radius:14px;border:none;font:700 11.5px var(--sport);background:var(--gold);color:#1a2c55}" +
       ".earn-body .pj-btn[disabled]{opacity:.4}" +
       ".earn-body .pj-btn.done{background:rgba(33,208,122,.2);color:var(--good);box-shadow:inset 0 0 0 1px rgba(33,208,122,.5)}" +
+      ".earn-body .pj-btn.done[disabled]{opacity:1;filter:none}" +
       ".earn-body .pj-note{font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center}" +
+      'html[data-ui-theme="retro"] .earn-body .pj-block{background:rgba(255,248,232,.72);border:2px solid #b9ad92;border-radius:4px}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-flbl{color:#1c241e}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-fdesc{color:#575245}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-row{color:#1c241e;border-bottom-color:rgba(28,36,30,.12)}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-row small{color:#4a4436!important}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-coin{color:#b56a16}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-note{color:#575245}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn{background:#1f5c3a;color:#f4ead2}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn.done{background:rgba(31,92,58,.16);color:#1f5c3a;box-shadow:inset 0 0 0 1px #1f5c3a}' +
+      'html[data-ui-theme="retro"] .earn-body .pj-btn.done[disabled]{opacity:1;filter:none}' +
       ".rk-pick{position:fixed;inset:0;z-index:960;background:rgba(3,6,14,.82);display:grid;place-items:center;padding:14px}" +
       ".rk-panel{width:min(360px,calc(100vw - 24px));max-height:82vh;overflow:auto;border:1px solid rgba(245,197,66,.45);border-radius:14px;background:linear-gradient(180deg,#1c376e,#0c1730);box-shadow:0 18px 48px rgba(0,0,0,.65);padding:14px;color:#fff}" +
       ".rk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}" +
@@ -227,11 +258,13 @@ export function openEarn(save, onCoins, onRoster) {
     wrap.querySelector("#pj-earn-body").innerHTML = `
       <div class="pj-block">
         <div class="pj-flbl">新手任务</div>
-        <div class="pj-fdesc">完成比赛后自选开局精灵 · 4 次补齐首发${rookies ? "" : "（已集齐，改领 100 币）"}</div>
+        <div class="pj-fdesc">完成简单目标领篮球币，完成 3 场领高级精灵蛋（一次性）</div>
         ${ROOKIE_TASKS.map((t) => {
           const done = !!rk.claimed[t.id];
-          const reached = matches >= t.goal;
-          return `<div class="pj-row"><span>${t.name} <small style="color:rgba(255,255,255,.4)">${done || reached ? "✓" : `(${Math.min(matches, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-rookie="${t.id}" ${done || !reached ? "disabled" : ""}>${done ? "已领取" : reached ? (rookies ? "选精灵" : "领 100 币") : "未完成"}</button></div>`;
+          const reached = t.check(save);
+          const cur = t.id === "rookie2" ? (save.stats?.w || 0) : matches;
+          const reward = t.egg ? "领高级蛋" : `领 +${t.coin} 币`;
+          return `<div class="pj-row"><span>${t.name} <small style="color:rgba(255,255,255,.4)">${done || reached ? "✓" : `(${Math.min(cur, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-rookie="${t.id}" ${done || !reached ? "disabled" : ""}>${done ? "已领取" : reached ? reward : "未完成"}</button></div>`;
         }).join("")}
       </div>
       <div class="pj-block">
@@ -277,14 +310,20 @@ export function openEarn(save, onCoins, onRoster) {
     if (rb && !rb.disabled) {
       const t = ROOKIE_TASKS.find((x) => x.id === rb.dataset.rookie);
       const rk = rookieState(save);
-      if (!t || rk.claimed[t.id] || matchCount(save) < t.goal) return;
-      openRookiePicker(save, t.id, (res) => {
-        rk.claimed[t.id] = true;
-        writeSave(save);
-        if (res?.coin) { gameAudio.play("coin"); onCoins?.(); }
-        onRoster?.();
-        render();
-      });
+      if (!t || rk.claimed[t.id] || !t.check(save)) return;
+      rk.claimed[t.id] = true;
+      if (t.egg) {
+        save.eggs.stock ||= [];
+        save.eggs.stock.push({ eggTier: "premium", dex: rollEggDex(save, "premium") });
+        earnToast(`高级精灵蛋已放入待孵栏（孵化 ${Math.round(EGG_TIERS.premium.hatchMs / 3600000)} 小时）——去孵蛋页开始孵化`);
+      } else {
+        save.coins += t.coin;
+      }
+      writeSave(save);
+      gameAudio.play("coin");
+      onCoins?.();
+      onRoster?.();
+      render();
       return;
     }
     const cb = e.target.closest("[data-claim]");
