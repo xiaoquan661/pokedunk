@@ -3,32 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=34"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=48";
-import { renderDex } from "./ui/dex.js?v=55";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=63";
-import { openSettings } from "./ui/settings.js?v=86";
-import { renderBag } from "./ui/bag.js?v=50";
-import { renderTeam } from "./ui/team.js?v=67";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=110";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=42";
-import { watchRewardedAd } from "./platform/ads.js?v=37";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=47";
-import { settleMatchResult } from "./journey/settle.js?v=70";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=51";
-import { openDaily } from "./ui/daily.js?v=54";
-import { openAchievements } from "./ui/achv-ui.js?v=46";
-import { startTutorial } from "./ui/tutorial.js?v=41";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=49";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=36";
-import { openEarn, bumpDaily } from "./ui/earn.js?v=51";
-import { ACHV } from "./systems/achv.js?v=41";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=41";
-import { playEvolve } from "./ui/anim.js?v=43";
-import { ICON } from "./ui/icons.js?v=41";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=34";
-import { pendingLegend } from "./journey/legend.js?v=37";
-import { openLegendPicker } from "./ui/legend.js?v=38";
+import "./systems/evo-rules.js?v=35"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney } from "./storage.js?v=49";
+import { renderDex } from "./ui/dex.js?v=56";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=64";
+import { openSettings } from "./ui/settings.js?v=87";
+import { renderBag } from "./ui/bag.js?v=51";
+import { renderTeam } from "./ui/team.js?v=68";
+import { openDetail } from "./ui/detail.js?v=54";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=111";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=43";
+import { watchRewardedAd } from "./platform/ads.js?v=38";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=48";
+import { settleMatchResult } from "./journey/settle.js?v=71";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=52";
+import { openDaily } from "./ui/daily.js?v=55";
+import { openAchievements } from "./ui/achv-ui.js?v=47";
+import { startTutorial } from "./ui/tutorial.js?v=42";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=50";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=37";
+import { openEarn, bumpDaily } from "./ui/earn.js?v=52";
+import { ACHV } from "./systems/achv.js?v=42";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=42";
+import { playEvolve } from "./ui/anim.js?v=44";
+import { ICON } from "./ui/icons.js?v=42";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=35";
+import { pendingLegend } from "./journey/legend.js?v=38";
+import { openLegendPicker } from "./ui/legend.js?v=39";
 import {
   getPokemon,
   calcOVR,
@@ -44,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=48";
+} from "../engine/readable/play-core.js?v=49";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -742,7 +743,10 @@ function showPreMatch(save, mode = "league") {
         <div class="brief-side away" style="--tc:${gym.color}"><span class="brief-emblem">${gym.abbr}</span><b>${gym.name}</b><small>战力 ${info.targetPower}</small></div>
       </div>
       <div class="brief-winrow"><span>预计胜率</span><div class="brief-winbar"><i style="width:${winP}%"></i></div><b style="color:${winP >= 50 ? "var(--good)" : "var(--red)"}">${winP}%</b></div>
-      <div class="pms-sec"><b>对手首发</b><div class="pms-opp">${cfg.away.roster.slice(0, 5).map((p) => `<span class="brief-mon" style="--tc:${TYPE_COLORS[p.types?.[0]] || "#5a6a92"}"><span class="bo">${p.ovr}</span><img src="./sprites/${p.dex}.png" alt=""><i>${p.pos}</i></span>`).join("")}</div></div>
+      <div class="pms-sec"><b>对手首发</b><div class="pms-opp">${cfg.away.roster.slice(0, 5).map((p) => {
+        const nm = getPokemon(p.dex).name;
+        return `<button type="button" class="brief-mon" data-pms-dex="${p.dex}" style="--tc:${TYPE_COLORS[p.types?.[0]] || "#5a6a92"}" aria-label="查看 ${nm} 详情"><span class="bo">${p.ovr}</span><img src="./sprites/${p.dex}.png" alt=""><b class="bm-name">${nm}</b><i>${p.pos}</i></button>`;
+      }).join("")}</div></div>
       <div class="pms-type-hint">
         <div class="pth-head"><b>系别克制</b><small>仅列出发动 ×2 的属性优势</small></div>
         ${typeHintLine(typeHints.mine, "good", "我方")}
@@ -765,6 +769,10 @@ function showPreMatch(save, mode = "league") {
   })();
   const stopBg = () => { page.__stopBg?.(); page.__stopBg = null; };
   page.querySelectorAll("[data-pms-back]").forEach((b) => b.addEventListener("click", () => { stopBg(); showHome(loadSave() || save); }));
+  // 对手首发：点击查看只读详情（含八维/必杀/推荐位置）
+  page.querySelectorAll("[data-pms-dex]").forEach((b) =>
+    b.addEventListener("click", () => openDetail(Number(b.dataset.pmsDex), null))
+  );
 
   page.querySelector("#pms-go").addEventListener("click", () => {
     stopBg();
@@ -1086,7 +1094,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=48");
+window.__PC = await import("../engine/readable/play-core.js?v=49");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
