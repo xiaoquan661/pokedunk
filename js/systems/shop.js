@@ -7,8 +7,8 @@
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=44";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=37";
+import { addMon, hasDex } from "../storage.js?v=46";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=39";
 
 const MIN30 = 30 * 60 * 1000;
 const HOUR3 = 3 * 60 * 60 * 1000;
@@ -33,6 +33,8 @@ export const SHOP_LIMITS = {
   berry_premium: 2,
 };
 const emptyBought = () => ({ egg_normal: 0, egg_premium: 0, berry_normal: 0, berry_premium: 0 });
+/** 高级蛋 / 高级树果：不看币，用激励视频领取 */
+const isPremiumAd = (it) => (it.t === "egg" || it.t === "berry") && it.tier === "premium";
 const limitKeyOf = (it) => {
   if (it.t === "egg") return it.tier === "premium" ? "egg_premium" : "egg_normal";
   if (it.t === "berry") return it.tier === "premium" ? "berry_premium" : "berry_normal";
@@ -193,6 +195,7 @@ export function shopList(save) {
       bought,
       left: key ? Math.max(0, limit - bought) : null,
       soldOut: key ? bought >= limit : false,
+      ad: isPremiumAd(it),
     };
   });
 }
@@ -214,6 +217,8 @@ export function shopBuy(save, slot) {
     if (!r.ok) { save.coins += it.price; return { ok: false, error: r.error }; }
     return { ok: true, kind: "mon", dex: it.dex, placed: r.movedTo, first: r.isNewDex, mon: getPokemon(it.dex) };
   }
+
+  if (isPremiumAd(it)) return { ok: false, error: "高级商品需看广告领取" };
 
   if (it.t === "egg") {
     save.eggs.stock ||= [];
@@ -242,6 +247,31 @@ export function shopBuy(save, slot) {
     return { ok: true, kind: "berry", tier: premium ? "premium" : "normal", count: save.bag[bagKey], left: SHOP_LIMITS[key] - bought - 1 };
   }
   return { ok: false, error: "bad-item" };
+}
+
+/**
+ * 看广告领取高级商品（高级蛋 / 高级树果）：不扣币，按每日限领计数。
+ * 返回 { ok, kind, tier, stock/count, left } 或 { ok:false, error }
+ */
+export function shopAdClaim(save, slot) {
+  shopEnsure(save);
+  const it = save.shop.slots[slot];
+  if (!it || !isPremiumAd(it)) return { ok: false, error: "该商品不支持广告领取" };
+  const key = limitKeyOf(it);
+  const limit = SHOP_LIMITS[key];
+  const bought = save.shop.bought?.[key] || 0;
+  if (bought >= limit) return { ok: false, error: `今日限领 ${limit} 个，明天再来` };
+  save.shop.bought[key] = bought + 1;
+  if (it.t === "egg") {
+    const tier = "premium";
+    save.eggs.stock ||= [];
+    save.eggs.stock.push({ eggTier: tier, dex: it.dex ?? rollEggDex(save, tier) });
+    return { ok: true, kind: "egg", tier, stock: save.eggs.stock.length, left: limit - bought - 1 };
+  }
+  const premium = true;
+  const bagKey = premium ? "berryPremium" : "berryNormal";
+  save.bag[bagKey] = (save.bag[bagKey] || 0) + 1;
+  return { ok: true, kind: "berry", tier: "premium", count: save.bag[bagKey], left: limit - bought - 1 };
 }
 
 

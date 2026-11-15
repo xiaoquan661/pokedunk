@@ -35,12 +35,12 @@ export const VISIBLE_THEMES = THEME_SWITCH_ENABLED
 const VISIBLE_VALID = new Set(VISIBLE_THEMES.map((x) => x[0]));
 
 const HREF = {
-  retro: "./css/retro.css?v=35",
-  classic: "./css/classic.css?v=6",
-  valorant: "./css/valorant.css?v=15",
-  stardew: "./css/stardew.css?v=9",
-  terraria: "./css/terraria.css?v=8",
-  black: "./css/black.css?v=16",
+  retro: "./css/retro.css?v=37",
+  classic: "./css/classic.css?v=8",
+  valorant: "./css/valorant.css?v=17",
+  stardew: "./css/stardew.css?v=11",
+  terraria: "./css/terraria.css?v=10",
+  black: "./css/black.css?v=18",
 };
 
 export function loadTheme() {

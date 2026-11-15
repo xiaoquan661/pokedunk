@@ -3,13 +3,13 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=43";
-import { shopList, shopBuy, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=45";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=46";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=37";
-import { watchRewardedAd } from "../platform/ads.js?v=33";
-import { playHatch } from "./anim.js?v=39";
-import { ICON, coinInline } from "./icons.js?v=37";
+import { loadSave, writeSave } from "../storage.js?v=45";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=47";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=48";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=39";
+import { watchRewardedAd } from "../platform/ads.js?v=35";
+import { playHatch } from "./anim.js?v=41";
+import { ICON, coinInline } from "./icons.js?v=39";
 
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];
@@ -70,7 +70,7 @@ export function renderShop(root) {
       <h2>每日商店</h2>
       <span class="count">${coinInline}${save.coins}</span>
     </div>
-    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 高级蛋 ${EGG_TIERS.premium.price} / 普通树果 ${PRICES.berry} / 高级树果 ${PRICES.berryPremium} 币 · 蛋与树果每日限购</p>
+    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 普通树果 ${PRICES.berry} 币 · 高级蛋与高级树果看广告领取（每日限量）</p>
     <div class="shop-tools"><button class="shop-ad" id="shop-refresh">看广告刷新货架（今日剩 ${shopAdRefreshLeft(save)} 次）</button></div>
     <div class="shop-grid">
       ${items.map((it) => {
@@ -83,13 +83,22 @@ export function renderShop(root) {
           </div>`;
         if (it.type === "egg") {
           const t = EGG_TIERS[it.tier] || EGG_TIERS.normal;
+          if (it.ad) {
+            return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.egg}</span>
+              <div class="nm">${t.name}</div><div class="info">看广告 · ${fmtMs(t.hatchMs)} · 限领 ${it.bought}/${it.limit}</div>
+              <button data-ad="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已领完" : "看广告领取"}</button></div>`;
+          }
           return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.egg}</span>
             <div class="nm">${t.name}</div><div class="info">${coinInline}${it.price} · 孵化 ${fmtMs(t.hatchMs)} · 限购${it.bought}/${it.limit}</div>
             <button data-buy="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已购完" : `购买（剩 ${it.left}）`}</button></div>`;
         }
-        const premium = it.tier === "premium";
+        if (it.ad) {
+          return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.berry}</span>
+            <div class="nm">高级树果</div><div class="info">看广告 · +${BERRY_XP.premium} XP · 限领 ${it.bought}/${it.limit}</div>
+            <button data-ad="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已领完" : "看广告领取"}</button></div>`;
+        }
         return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.berry}</span>
-          <div class="nm">${premium ? "高级树果" : "普通树果"}</div><div class="info">${coinInline}${it.price} · +${BERRY_XP[premium ? "premium" : "normal"]} XP · 限购${it.bought}/${it.limit}</div>
+          <div class="nm">普通树果</div><div class="info">${coinInline}${it.price} · +${BERRY_XP.normal} XP · 限购${it.bought}/${it.limit}</div>
           <button data-buy="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已购完" : `购买（剩 ${it.left}）`}</button></div>`;
       }).join("")}
     </div>`;
@@ -103,6 +112,31 @@ export function renderShop(root) {
       else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个，今日还可买 ${r.left} 个）`);
       writeSave(save);
       renderShop(root); // 重渲染刷新币数/置灰
+    })
+  );
+
+  root.querySelectorAll("[data-ad]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      if (b.disabled) return;
+      const orig = b.textContent;
+      b.disabled = true;
+      b.textContent = "播放中…";
+      const ad = await watchRewardedAd("shop_premium");
+      if (!ad.ok) {
+        b.disabled = false;
+        b.textContent = orig;
+        return toast(ad.message || "广告暂不可用");
+      }
+      const r = shopAdClaim(save, Number(b.dataset.ad));
+      if (!r.ok) {
+        toast(r.error);
+        renderShop(root);
+        return;
+      }
+      if (r.kind === "egg") toast(`高级蛋已放入背包（待孵 ${r.stock} 颗，今日还可领 ${r.left} 颗）——去孵蛋页选择孵化`, 3200);
+      else toast(`高级树果已入背包（共 ${r.count} 个，今日还可领 ${r.left} 个）`);
+      writeSave(save);
+      renderShop(root);
     })
   );
 
