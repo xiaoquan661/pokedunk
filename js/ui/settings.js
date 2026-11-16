@@ -5,11 +5,12 @@
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=62";
-import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=79";
-import { BONDS } from "../systems/build.js?v=61";
-import { EGG_TIERS } from "../systems/shop.js?v=69";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=68";
+import { gameAudio } from "../platform/audio.js?v=64";
+import { resetSave } from "../storage.js?v=71";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=81";
+import { BONDS } from "../systems/build.js?v=63";
+import { EGG_TIERS } from "../systems/shop.js?v=71";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=70";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -145,7 +146,7 @@ function tabGuide() {
 }
 function tabSave() {
   return '<div class="pj-block"><div class="pj-flbl">危险区</div><div class="pj-fdesc">清空难度/时长等本机偏好（不影响生涯存档）</div><button class="pj-btn red" id="pj-set-reset">重置本机设置</button></div>' +
-    '<div class="pj-block"><div class="pj-flbl">生涯存档</div><div class="pj-fdesc">单机自动存档（浏览器本地）。如需完全重开生涯，请清空浏览器站点数据。</div></div>';
+    '<div class="pj-block"><div class="pj-flbl">生涯存档</div><div class="pj-fdesc">单机自动存档（浏览器本地）。清除后从选择本命伙伴重新开始，队伍、精灵、徽章与赛季进度都会清空，不可恢复。</div><button class="pj-btn red" id="pj-set-wipe">清除生涯存档</button></div>';
 }
 
 const CSS =
@@ -247,6 +248,19 @@ export function openSettings() {
       }
       saveSet({ autoSubs: true, autoSwitch: false, introMode: "full" });
       renderBody(wrap);
+      return;
+    }
+    // 清除生涯存档：二次确认后回选伙伴开局
+    const wipe = e.target.closest("#pj-set-wipe");
+    if (wipe) {
+      if (wipe.dataset.arm !== "1") {
+        wipe.dataset.arm = "1";
+        wipe.textContent = "再点一次确认清空";
+        setTimeout(() => { if (!wipe.isConnected) return; wipe.dataset.arm = ""; wipe.textContent = "清除生涯存档"; }, 3000);
+        return;
+      }
+      resetSave();
+      location.reload();
     }
   });
   document.body.appendChild(wrap);

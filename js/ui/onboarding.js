@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=68";
+import { loadSave, writeSave } from "../storage.js?v=71";
 
 const STEPS = [
   {
@@ -50,6 +50,16 @@ const STEPS = [
     action: "完成引导",
   },
 ];
+
+/** 新手之路进行中：开局导引只讲顶部常驻入口 */
+const NEWBIE_STEP = {
+  screen: "home",
+  target: '[data-go="newbie"]',
+  title: "新手之路",
+  text: "顶部这条「新手之路」会一直显示。点进去跟着步骤走：完成操作教程 → 领取教程伙伴 → 去商店买 2 只 → 凑齐 5 人首发，就能开始第一场比赛。",
+  action: "知道了",
+};
+const stepsFor = (save) => (save?.newbie && !save.newbie.done ? [NEWBIE_STEP] : STEPS);
 
 const CSS = `
 .nb-layer{position:fixed;inset:0;z-index:1250;pointer-events:none}
@@ -126,26 +136,28 @@ export function mountGuide(screen, save, opts = {}) {
   if (!g) { teardown(); return false; }
 
   if (screen !== "home") { teardown(); return false; }
-  const idx = Math.max(0, Math.min(STEPS.length - 1, g.step));
+  const steps = stepsFor(save);
+  const idx = Math.max(0, Math.min(steps.length - 1, g.step));
   const resume = false;
 
   teardown();
-  build(screen, idx, save, g, { ...opts, resume });
+  build(screen, idx, save, g, { ...opts, resume, steps });
   return true;
 }
 
 function build(screen, idx, save, g, opts) {
   ensureCss();
-  const step = STEPS[idx];
+  const steps = opts.steps || STEPS;
+  const step = steps[idx];
   const root = opts.root;
-  const last = idx === STEPS.length - 1;
+  const last = idx === steps.length - 1;
   const hasAction = !!step.action && !opts.resume;
   const layer = document.createElement("div");
   layer.className = "nb-layer" + (screen === "result" ? " nb-result" : "");
   layer.innerHTML = `
     <div class="nb-hole" hidden></div>
     <div class="nb-card" role="dialog" aria-live="polite">
-      <div class="nb-meta"><span class="nb-count">${opts.resume ? "继续指引" : `新手指引 ${idx + 1} / ${STEPS.length}`}</span><button class="nb-skip" type="button" data-nb="skip">跳过指引</button></div>
+      <div class="nb-meta"><span class="nb-count">${opts.resume ? "继续指引" : `新手指引 ${idx + 1} / ${steps.length}`}</span><button class="nb-skip" type="button" data-nb="skip">跳过指引</button></div>
       <h3></h3><p></p>
       ${hasAction ? `<button class="nb-done" type="button" data-nb="done">${step.action}</button>` : `<div class="nb-foot">${opts.resume ? "点高亮按钮继续" : "完成高亮操作后自动继续"}</div>`}
     </div>`;

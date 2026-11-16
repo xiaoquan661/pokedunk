@@ -1348,11 +1348,11 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
   font-family: var(--r-font);
 }
 .result-screen {
-  align-items: flex-start;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
+  align-items: center;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
 }
 .result-screen .rs-card {
-  margin: 0 auto;
+  margin: auto;
   padding: 30px 24px 26px;
   background: #fff8e8;
   border: 3px solid #1c241e;

@@ -33,8 +33,8 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { ensureSeason } from "./journey/season.js?v=62";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=61";
+import { ensureSeason } from "./journey/season.js?v=64";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=63";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -76,10 +76,39 @@ export function loadSave() {
     for (const m of Object.values(s.mons || {})) { try { ensureMonBuild(m); } catch {} }
     try { ensureLineupSlots(s); } catch {}
     try { ensureSeason(s); } catch {}
+    // 老档迁移：补「新手之路」状态（老档没有 newbie 字段，顶部入口和缺人引导都不会出现）
+    try { ensureNewbieBackfill(s); } catch {}
     return s;
   } catch {
     return null;
   }
+}
+
+/**
+ * 老档补新手之路（一次性迁移）：
+ * - 首发已满 5 人：直接标记完成，不打扰老玩家
+ * - 首发不足 5 人：跳过操作教程（老玩家不需要重学），补上皮卡丘/伊布，再按剩余缺口走商店
+ */
+function ensureNewbieBackfill(s) {
+  if (s.newbie) return;
+  const starters = () => s.team.slice(0, 5).filter((id) => s.mons[id] && !s.benched?.[id]);
+  if (starters().length >= 5) {
+    s.newbie = { v: 1, tutorialDone: true, giftDone: true, shopBuys: 2, shopPrompted: true, done: true };
+    return;
+  }
+  s.newbie = { v: 1, tutorialDone: true, giftDone: true, shopBuys: 0, shopPrompted: true, done: false };
+  for (const dex of [25, 133]) {
+    if (hasDex(s, dex)) continue;
+    addMon(s, dex, { from: "tutorial" });
+  }
+  try { ensureLineupSlots(s); } catch {}
+  if (starters().length >= 5) {
+    s.newbie.shopBuys = 2;
+  } else if (s.coins < 300) {
+    // 保证还差人时能买得起两只（老档可能只剩几十币）
+    s.coins = 300;
+  }
+  writeSave(s);
 }
 
 /** 写档：当前档滚入备份键，再写新值。全部异常吞掉（localStorage 满/禁用时不崩游戏） */

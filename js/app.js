@@ -3,33 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=54"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=68";
-import { renderDex } from "./ui/dex.js?v=75";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=83";
-import { openSettings } from "./ui/settings.js?v=106";
-import { renderBag } from "./ui/bag.js?v=70";
-import { renderTeam } from "./ui/team.js?v=87";
-import { openDetail } from "./ui/detail.js?v=73";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=130";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=62";
-import { watchRewardedAd } from "./platform/ads.js?v=57";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=67";
-import { settleMatchResult } from "./journey/settle.js?v=90";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=71";
-import { openDaily } from "./ui/daily.js?v=74";
-import { openAchievements } from "./ui/achv-ui.js?v=66";
-import { startTutorial } from "./ui/tutorial.js?v=61";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=69";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=56";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=71";
-import { ACHV } from "./systems/achv.js?v=61";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=61";
-import { playEvolve } from "./ui/anim.js?v=63";
-import { ICON } from "./ui/icons.js?v=61";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=54";
-import { pendingLegend } from "./journey/legend.js?v=57";
-import { openLegendPicker } from "./ui/legend.js?v=58";
+import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=71";
+import { renderDex } from "./ui/dex.js?v=77";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=85";
+import { openSettings } from "./ui/settings.js?v=109";
+import { renderBag } from "./ui/bag.js?v=72";
+import { renderTeam } from "./ui/team.js?v=89";
+import { openDetail } from "./ui/detail.js?v=75";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=132";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
+import { watchRewardedAd } from "./platform/ads.js?v=59";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=69";
+import { settleMatchResult } from "./journey/settle.js?v=92";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=73";
+import { openDaily } from "./ui/daily.js?v=76";
+import { openAchievements } from "./ui/achv-ui.js?v=68";
+import { startTutorial } from "./ui/tutorial.js?v=63";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=58";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=73";
+import { ACHV } from "./systems/achv.js?v=63";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=63";
+import { playEvolve } from "./ui/anim.js?v=65";
+import { ICON } from "./ui/icons.js?v=63";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=56";
+import { pendingLegend } from "./journey/legend.js?v=59";
+import { openLegendPicker } from "./ui/legend.js?v=60";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=68";
+} from "../engine/readable/play-core.js?v=70";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -114,15 +114,7 @@ function startNewbieTutorial(save) {
   writeSave(s);
   startTutorial(app, s, {
     onDone: () => grantTutorialGift(s),
-    onExit: () => {
-      const cur = loadSave() || s;
-      showHome(cur);
-      if (cur.newbie && !cur.newbie.done && cur.newbie.giftDone && !cur.newbie.shopPrompted) {
-        cur.newbie.shopPrompted = true;
-        writeSave(cur);
-        setTimeout(() => showSub(renderShop, loadSave() || cur), 500);
-      }
-    },
+    onExit: () => showHome(loadSave() || s),
   });
 }
 
@@ -495,18 +487,26 @@ function showHome(save, justStarted = false) {
         .screen-menu .hf-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
         .screen-menu .hf-head b{font:700 13px var(--sport);color:var(--text,#1c241e)}
         .screen-menu .hf-head small{font-size:10px;color:var(--text-dim,#575245)}
-        .screen-menu .hf-line{display:flex;align-items:flex-end;justify-content:center;min-height:118px;padding:2px 4px 0}
+        .screen-menu .hf-line{display:flex;align-items:flex-end;justify-content:center;min-height:118px;padding:2px 4px 0;box-sizing:border-box}
         .screen-menu .hf-mon{width:102px;height:102px;image-rendering:pixelated;filter:drop-shadow(0 4px 5px rgba(0,0,0,.42));position:relative;flex-shrink:0}
         .screen-menu .hf-line[data-n="2"]{justify-content:space-around}
         .screen-menu .hf-line[data-n="3"]{justify-content:space-between}
         .screen-menu .hf-line[data-n="3"] .hf-mon:nth-child(2){transform:translateY(-12px);z-index:3}
         .screen-menu .hf-line[data-n="4"]{justify-content:space-between}
-        .screen-menu .hf-line[data-n="4"] .hf-mon{margin-left:-20px}
+        .screen-menu .hf-line[data-n="4"] .hf-mon{margin-left:-24px}
         .screen-menu .hf-line[data-n="4"] .hf-mon:first-child{margin-left:0}
         .screen-menu .hf-line[data-n="5"]{justify-content:center}
-        .screen-menu .hf-line[data-n="5"] .hf-mon{margin-left:-38px}
+        .screen-menu .hf-line[data-n="5"] .hf-mon{margin-left:-43px}
         .screen-menu .hf-line[data-n="5"] .hf-mon:first-child{margin-left:0}
         .screen-menu .hf-line[data-n="5"] .hf-mon:nth-child(3){transform:translateY(-12px);z-index:3}
+        .screen-menu .newbie-top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:9px;width:calc(100% - 24px);margin:6px 12px 0;padding:9px 12px;border:2px solid var(--gold,#f5c542);border-radius:5px;background:linear-gradient(135deg,color-mix(in srgb,var(--gold,#f5c542) 26%,var(--panel,#0f1420)),var(--panel,#0f1420));color:var(--text,#fff);text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.28);box-sizing:border-box}
+        .screen-menu .newbie-top .nt-ico{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:4px;background:var(--gold,#f5c542);color:#1c241e}
+        .screen-menu .newbie-top .nt-ico svg{width:19px;height:19px}
+        .screen-menu .newbie-top .nt-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+        .screen-menu .newbie-top .nt-txt b{font-size:12.5px;color:var(--text,#fff);letter-spacing:.02em}
+        .screen-menu .newbie-top .nt-txt b em{font-style:normal;font-size:9.5px;color:var(--gold,#f5c542);margin-left:4px;font-weight:700}
+        .screen-menu .newbie-top .nt-txt small{font-size:10px;color:var(--text-dim,#c9c0a8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .screen-menu .newbie-top .nt-arrow{flex-shrink:0;font-size:11px;font-weight:700;color:var(--gold,#f5c542)}
       </style>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
@@ -515,6 +515,11 @@ function showHome(save, justStarted = false) {
         <div class="spacer"></div>
         <div class="coin-chip plain">${save.coach.name}</div>
       </div>
+      ${newbieActive(save) ? `<button class="newbie-top" data-go="newbie">
+        <span class="nt-ico">${LINE_ICON.tutorial}</span>
+        <span class="nt-txt"><b>新手之路 <em>${newbieStep(save)}/4</em></b><small>${newbieStepText(save)}</small></span>
+        <span class="nt-arrow">继续 ›</span>
+      </button>` : ""}
       <div class="menu-in">
         <header class="title">
           <h1 class="logo"><span class="logo-poke">口袋</span><span class="logo-jam">灌篮</span></h1>
@@ -539,11 +544,6 @@ function showHome(save, justStarted = false) {
             <span class="hm-ico">${LINE_ICON.daily}</span>
             <span class="hm-txt"><b>每日挑战</b><small>今日 ${daily.mod.name} · 最高分 ${daily.best || "未挑战"}</small></span>
           </button>
-          ${newbieActive(save) ? `<button class="hm-sub newbie-quest" data-go="newbie">
-            <span class="hm-ico">${LINE_ICON.tutorial}</span>
-            <span class="hm-txt"><b>新手之路</b><small>${newbieStepText(save)}</small></span>
-          </button>` : ""}
-
           <div class="hm-grid">
             <button class="hm-item" data-go="achv">
               <span class="hm-ico">${LINE_ICON.trophy}</span>
@@ -648,8 +648,9 @@ function showHome(save, justStarted = false) {
     })
   );
 
-  // 新玩家局外指引（主页 → 赛季 → 赛前 → 结算）；新手之路进行中不叠加，避免打断流程
-  if (!newbieActive(loadSave() || save)) setTimeout(() => startOnboarding(sc, loadSave() || save), 420);
+  // 新玩家局外指引：新手之路教程完成后再出现一条专门的入口说明；旧流程照常
+  const gs = loadSave() || save;
+  if (!gs.newbie || gs.newbie.done || gs.newbie.tutorialDone) setTimeout(() => startOnboarding(sc, gs), 420);
 }
 
 /* ================= 赛季赛程弹窗（9 队单循环 + 季后赛 + 四天王） ================= */
@@ -1275,7 +1276,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=68");
+window.__PC = await import("../engine/readable/play-core.js?v=70");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
