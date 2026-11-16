@@ -12,27 +12,27 @@ const AWAY_DEXES = [16, 19, 21, 23, 27];
 
 const DRILLS = [
   {
-    id: "movement", title: "移动", metric: "move", target: 6, time: 32, keys: ["摇杆"],
+    id: "movement", title: "移动", metric: "move", target: 2, time: 32, keys: ["摇杆"],
     intro: "先熟悉脚步：拖动摇杆，移动到发光点。",
     tip: "斜向切入更快，别只走直线。",
   },
   {
-    id: "layups", title: "上篮", metric: "reps", target: 4, time: 38, keys: ["X"],
-    intro: "靠近篮筐后按 X 投篮上篮，先做 4 个。",
+    id: "layups", title: "上篮", metric: "reps", target: 2, time: 38, keys: ["X"],
+    intro: "靠近篮筐后按 X 投篮上篮，先做 2 个。",
     tip: "离篮筐太远会变成跳投，先贴近再出手。",
   },
   {
-    id: "jumpshots", title: "跳投", metric: "reps", target: 4, time: 42, keys: ["X"],
+    id: "jumpshots", title: "跳投", metric: "reps", target: 2, time: 42, keys: ["X"],
     intro: "按住 X 蓄力，力度条进入绿区时松开。",
     tip: "绿区松开必进；过早或过晚都会降低命中。",
   },
   {
-    id: "passing", title: "传球", metric: "reps", target: 6, time: 34, keys: ["A"],
+    id: "passing", title: "传球", metric: "reps", target: 2, time: 34, keys: ["A"],
     intro: "按 A 传球，把球送到空位队友手里。",
     tip: "传球会自动寻找空位，也可以配合摇杆指向。",
   },
   {
-    id: "alleyoop", title: "空接", metric: "reps", target: 3, time: 38, keys: ["RB", "A"],
+    id: "alleyoop", title: "空接", metric: "reps", target: 2, time: 38, keys: ["RB", "A"],
     intro: "按住 RB 加速，再按 A 向篮筐抛空接。",
     tip: "先加速再传球，队友会起跳接球扣篮。",
   },
@@ -42,8 +42,8 @@ const DRILLS = [
     tip: "别轻易起跳，先卡住突破路线。",
   },
   {
-    id: "steals", title: "抢断", metric: "reps", target: 3, time: 34, keys: ["B"],
-    intro: "靠近持球人，按 B 完成 3 次抢断。",
+    id: "steals", title: "抢断", metric: "reps", target: 2, time: 34, keys: ["B"],
+    intro: "靠近持球人，按 B 完成 2 次抢断。",
     tip: "离得太远会挥空，贴身再按。",
   },
 ];
@@ -58,12 +58,12 @@ const CONTROLS = [
 ];
 
 const CSS = `
-.screen-match .tut-strip{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:35;display:flex;align-items:center;gap:8px;padding:9px 10px 10px;border:2px solid #b8e63c;border-radius:3px;background:#0a0a0a;box-shadow:4px 4px 0 rgba(0,0,0,.6);pointer-events:none}
-.screen-match .tut-strip .tut-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.screen-match .tut-strip .tut-step{font-size:10px;font-weight:700;letter-spacing:.08em;color:#b8e63c;display:flex;align-items:center;gap:5px}
+.screen-match .tut-strip{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:35;display:flex;flex-wrap:wrap;align-items:center;gap:8px;row-gap:5px;padding:9px 10px 10px;border:2px solid #b8e63c;border-radius:3px;background:#0a0a0a;box-shadow:4px 4px 0 rgba(0,0,0,.6);pointer-events:none}
+.screen-match .tut-strip .tut-text{flex:1 1 120px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.screen-match .tut-strip .tut-step{font-size:10px;font-weight:700;letter-spacing:.08em;color:#b8e63c;display:flex;flex-wrap:wrap;align-items:center;gap:5px;line-height:1.45}
 .screen-match .tut-key{display:inline-block;min-width:18px;padding:1px 5px;border:1px solid #b8e63c;border-radius:3px;background:rgba(184,230,60,.12);color:#b8e63c;font:700 9px/1.5 var(--sport);letter-spacing:0;text-align:center}
 .screen-match .tut-strip .tut-hint{font-size:12px;line-height:1.35;color:#f2f2f2}
-.screen-match .tut-strip .tut-acts{display:flex;gap:5px;flex-shrink:0}
+.screen-match .tut-strip .tut-acts{display:flex;gap:5px;flex-shrink:0;margin-left:auto}
 .screen-match .tut-strip button{pointer-events:auto;border:2px solid #3a3a3a;border-radius:3px;background:#121212;color:#f2f2f2;font:700 10px var(--sport);padding:7px 9px}
 .screen-match .tut-strip button.ghost{border-color:#262626;background:#0d0d0d;color:#9a9a9a}
 .screen-match .tut-strip .tut-prog{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#8fbf2a,#b8e63c);transform-origin:left;transform:scaleX(0);transition:transform .15s}
@@ -257,6 +257,8 @@ export function startTutorial(root, save, actions = {}) {
     if (engine) engine.paused = true;
     let reward = "";
     if (!rewarded) { rewarded = true; reward = actions.onDone?.() || ""; }
+    // 提前切回菜单音乐：把音频初始化挪到结算页显示期间，返回主页时不再额外卡顿
+    gameAudio.setTrack("menu");
     const summary = DRILLS.map((d, i) => `<li><span>${i + 1}. ${d.title}</span><span>${i < idx || (i === idx && phase === "done") ? "✓" : "—"}</span></li>`).join("");
     const done = page.querySelector(".tut-done");
     done.innerHTML = `<div class="panel">

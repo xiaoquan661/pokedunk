@@ -19,7 +19,7 @@ import { settleMatchResult } from "./journey/settle.js?v=92";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=73";
 import { openDaily } from "./ui/daily.js?v=76";
 import { openAchievements } from "./ui/achv-ui.js?v=68";
-import { startTutorial } from "./ui/tutorial.js?v=63";
+import { startTutorial } from "./ui/tutorial.js?v=67";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=58";
 import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=73";
@@ -80,6 +80,17 @@ function newbieStepText(save) {
   if (step === 2) return `第 2 步 · 商店买精灵 ${save.newbie.shopBuys || 0}/2`;
   if (step === 3) return `第 3 步 · 首发凑齐 ${lineupSize(save)}/5`;
   return "第 4 步 · 开始第一场比赛";
+}
+
+/** 打完第一场正式比赛即视为走完新手之路：顶部入口彻底隐藏（不管从哪个入口进的比赛） */
+function syncNewbieDone(save) {
+  const nb = save?.newbie;
+  if (!nb || nb.done) return false;
+  const played = (save.stats?.w || 0) + (save.stats?.l || 0);
+  if (!nb.tutorialDone || lineupSize(save) < 5 || played < 1) return false;
+  nb.done = true;
+  writeSave(save);
+  return true;
 }
 
 function grantTutorialGift(save) {
@@ -459,6 +470,7 @@ function showHome(save, justStarted = false) {
   gameAudio.setTrack("menu");
   // 商店/孵蛋等子页会自己读档并写盘——返回主页时必须取最新存档，否则旧对象会覆盖刚发生的购买/孵化
   save = loadSave() || save;
+  syncNewbieDone(save);
   app.replaceChildren();
   // 展示精灵：优先「更换」选择的精灵，否则队伍首位
   // 主页展示：首发五人（只读，不再提供「更换」）
@@ -585,14 +597,20 @@ function showHome(save, justStarted = false) {
   app.append(sc);
 
   // 球场实时背景（fixed 铺满视口，内容滚动于其上——参考图二）
+  // 先让主界面完成一帧绘制，再初始化演示比赛，避免从教程/比赛返回时卡一下
   const canvas = sc.querySelector(".attract-canvas");
-  (async () => {
-    const demo = demoMatch();
-    await preloadSprites([...demo.cfg.home.roster, ...demo.cfg.away.roster]);
-    const renderer = new Renderer(canvas);
-    const stopBg = attractLoopFor(canvas, demo, renderer);
-    sc.__stopBg = stopBg;
-  })();
+  const startAttractBg = () => {
+    if (!sc.isConnected) return;
+    (async () => {
+      const demo = demoMatch();
+      await preloadSprites([...demo.cfg.home.roster, ...demo.cfg.away.roster]);
+      if (!sc.isConnected) return;
+      const renderer = new Renderer(canvas);
+      const stopBg = attractLoopFor(canvas, demo, renderer);
+      sc.__stopBg = stopBg;
+    })();
+  };
+  requestAnimationFrame(() => setTimeout(startAttractBg, 40));
 
   sc.querySelector("#home-badges")?.addEventListener("click", () => {
     openBadgeDetail(loadSave() || save);
