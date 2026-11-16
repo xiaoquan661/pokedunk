@@ -3,13 +3,13 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=66";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=68";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=69";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=60";
-import { watchRewardedAd } from "../platform/ads.js?v=56";
-import { playHatch } from "./anim.js?v=62";
-import { ICON, coinInline } from "./icons.js?v=60";
+import { loadSave, writeSave } from "../storage.js?v=67";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=69";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=70";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=61";
+import { watchRewardedAd } from "../platform/ads.js?v=57";
+import { playHatch } from "./anim.js?v=63";
+import { ICON, coinInline } from "./icons.js?v=61";
 
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];

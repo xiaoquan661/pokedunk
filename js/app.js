@@ -3,33 +3,33 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=53"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=67";
-import { renderDex } from "./ui/dex.js?v=74";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=82";
-import { openSettings } from "./ui/settings.js?v=105";
-import { renderBag } from "./ui/bag.js?v=69";
-import { renderTeam } from "./ui/team.js?v=86";
-import { openDetail } from "./ui/detail.js?v=72";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=129";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=61";
-import { watchRewardedAd } from "./platform/ads.js?v=56";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=66";
-import { settleMatchResult } from "./journey/settle.js?v=89";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=70";
-import { openDaily } from "./ui/daily.js?v=73";
-import { openAchievements } from "./ui/achv-ui.js?v=65";
-import { startTutorial } from "./ui/tutorial.js?v=60";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=68";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=55";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=70";
-import { ACHV } from "./systems/achv.js?v=60";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=60";
-import { playEvolve } from "./ui/anim.js?v=62";
-import { ICON } from "./ui/icons.js?v=60";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=53";
-import { pendingLegend } from "./journey/legend.js?v=56";
-import { openLegendPicker } from "./ui/legend.js?v=57";
+import "./systems/evo-rules.js?v=54"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=68";
+import { renderDex } from "./ui/dex.js?v=75";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=83";
+import { openSettings } from "./ui/settings.js?v=106";
+import { renderBag } from "./ui/bag.js?v=70";
+import { renderTeam } from "./ui/team.js?v=87";
+import { openDetail } from "./ui/detail.js?v=73";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=130";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=62";
+import { watchRewardedAd } from "./platform/ads.js?v=57";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=67";
+import { settleMatchResult } from "./journey/settle.js?v=90";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=71";
+import { openDaily } from "./ui/daily.js?v=74";
+import { openAchievements } from "./ui/achv-ui.js?v=66";
+import { startTutorial } from "./ui/tutorial.js?v=61";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=69";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=56";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=71";
+import { ACHV } from "./systems/achv.js?v=61";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=61";
+import { playEvolve } from "./ui/anim.js?v=63";
+import { ICON } from "./ui/icons.js?v=61";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=54";
+import { pendingLegend } from "./journey/legend.js?v=57";
+import { openLegendPicker } from "./ui/legend.js?v=58";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=67";
+} from "../engine/readable/play-core.js?v=68";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -98,12 +98,14 @@ function grantTutorialGift(save) {
   }
   // 极端情况下（已经拥有这两只）补金币，避免流程断掉
   if (missing) s.coins += missing * 200;
+  // 新手补给：保证接下来一定买得起 2 只商店精灵，避免先去买蛋/树果后卡死
+  s.coins += 200;
   ensureLineupSlots(s);
   s.newbie.tutorialDone = true;
   s.newbie.giftDone = true;
   writeSave(s);
-  if (!got.length) return "教程伙伴已经在你队里了，已补发 400 篮球币。";
-  return `获得伙伴：${got.join("、")}（已加入队伍）${missing ? " · 重复伙伴折算 400 币" : ""}`;
+  if (!got.length) return "教程伙伴已经在你队里了，已补发 600 篮球币。";
+  return `获得伙伴：${got.join("、")}（已加入队伍） · 新手补给 +200 篮球币`;
 }
 
 function startNewbieTutorial(save) {
@@ -195,12 +197,14 @@ function ensureLineupGateCss() {
     ".lineup-gate p b{color:#f5c542}" +
     ".lineup-gate .lg-gate-acts{display:flex;gap:7px}" +
     ".lineup-gate .lg-gate-acts button{flex:1;padding:9px 4px;font-size:12px;border:2px solid #b8e63c;border-radius:3px;background:#b8e63c;color:#101010;font:700 12px var(--sport);white-space:nowrap}" +
+    ".lineup-gate .lg-gate-newbie{display:block;width:100%;margin-top:8px;padding:10px 6px;border:2px solid #b8e63c;border-radius:3px;background:#b8e63c;color:#101010;font:700 12px var(--sport)}" +
     ".lineup-gate .lg-gate-close{width:100%;margin-top:9px;padding:8px;border:1px solid #3a3a3a;border-radius:3px;background:#121212;color:#bbb;font:700 11px var(--sport)}" +
     'html[data-ui-theme="retro"] .lineup-gate .lg-gate-card{background:#f4ead2;border-color:#1c241e;color:#1c241e;box-shadow:8px 8px 0 rgba(28,36,30,.35)}' +
     'html[data-ui-theme="retro"] .lineup-gate h3{border-bottom-color:#1f5c3a;color:#1c241e}' +
     'html[data-ui-theme="retro"] .lineup-gate p{color:#3a443c}' +
     'html[data-ui-theme="retro"] .lineup-gate p b{color:#b56a16}' +
     'html[data-ui-theme="retro"] .lineup-gate .lg-gate-acts button{background:#1f5c3a;border-color:#1c241e;color:#f4ead2;box-shadow:3px 3px 0 rgba(28,36,30,.3)}' +
+    'html[data-ui-theme="retro"] .lineup-gate .lg-gate-newbie{background:#1f5c3a;border-color:#1c241e;color:#f4ead2;box-shadow:3px 3px 0 rgba(28,36,30,.3)}' +
     'html[data-ui-theme="retro"] .lineup-gate .lg-gate-close{background:#fff8e8;border-color:#b9ad92;color:#575245}';
   document.head.appendChild(st);
 }
@@ -270,6 +274,7 @@ function openLineupGate(save, opts = {}) {
       <button class="pk-btn-gold" data-lg-shop>去商店</button>
       <button class="pk-btn-gold" data-lg-egg>去孵蛋</button>
     </div>
+    ${newbieActive(s) ? `<button class="lg-gate-newbie" data-lg-newbie>去「新手之路」快速组队</button>` : ""}
     <button class="lg-gate-close" data-lg-close>稍后再说</button>
   </div>`;
   document.body.appendChild(ov);
@@ -279,6 +284,7 @@ function openLineupGate(save, opts = {}) {
     if (e.target.closest("[data-lg-team]")) { leave(); showTeam(loadSave() || s); return; }
     if (e.target.closest("[data-lg-shop]")) { leave(); bumpDaily("visit"); showSub(renderShop, loadSave() || s); return; }
     if (e.target.closest("[data-lg-egg]")) { leave(); bumpDaily("visit"); showSub(renderEgg, loadSave() || s); return; }
+    if (e.target.closest("[data-lg-newbie]")) { leave(); openNewbieQuest(loadSave() || s); return; }
   });
 }
 
@@ -610,7 +616,6 @@ function showHome(save, justStarted = false) {
     b.addEventListener("click", () => {
       const go = b.dataset.go;
       if (go === "match") {
-        if (newbieActive(save) && newbieStep(save) < 4) { openNewbieQuest(save); return; }
         if (!hasFullLineup(save)) { openLineupGate(save); return; }
         sc.__stopBg?.(); openSeasonBoard(save);
       }
@@ -1270,7 +1275,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=67");
+window.__PC = await import("../engine/readable/play-core.js?v=68");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
