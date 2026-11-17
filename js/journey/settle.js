@@ -9,32 +9,58 @@
 import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=83";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=72";
-import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=73";
-import { ACHV } from "../systems/achv.js?v=64";
-import { bumpDaily } from "../ui/earn.js?v=74";
+import { monPrice } from "../systems/shop.js?v=73";
+import { ACHV } from "../systems/achv.js?v=65";
+import { bumpDaily } from "../ui/earn.js?v=76";
 import { currentMatchInfo, recordResult } from "./season.js?v=69";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh } from "../systems/build.js?v=66";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=66";
 import { offerLegendReward } from "./legend.js?v=59";
 
-const SIGN_CHANCE = 0.25;
+const CONTRACT_CHANCE = 0.3; // 真实比赛胜利后出现精灵合同的概率
+const CONTRACT_DISCOUNT = 0.6; // 合同价 = 商店价 × 60%
 // S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高
 const KIND_COIN = { league: 0.7, playoff: 1.5, final: 2.0, elite: 3.0 };
 const KIND_XP = { league: 5.0, playoff: 7.0, final: 8.0, elite: 8.0 };
 
-/** 战胜签约：胜利后概率收服对手一名上场精灵 */
-function trySign(save, engine) {
-  if (Math.random() >= SIGN_CHANCE) return null;
-  const roster = engine.teams[1].roster;
-  if (!roster?.length) return null;
-  const pick = roster[Math.floor(Math.random() * roster.length)];
-  const name = getPokemon(pick.dex).name;
-  if (hasDex(save, pick.dex)) {
-    const refund = LEGENDARY_DEX.has(pick.dex) ? DUPE_REFUND_LEGEND : DUPE_REFUND;
-    save.coins += refund;
-    return { dex: pick.dex, name, dup: true, coin: refund };
+/**
+ * 战胜后的精灵合同：从普通+稀有的未结缘精灵中抽 1 只，按商店价 6 折出售。
+ * 不来自对手阵容、不出传说、不直接白送，也不产生重复返币。
+ */
+function rollContract(save) {
+  if (Math.random() >= CONTRACT_CHANCE) return null;
+  const rows = window.__PJ_DEX_ROWS || [];
+  const pool = rows.filter((r) => {
+    const dex = r[0];
+    if (LEGENDARY_DEX.has(dex)) return false;
+    if (hasDex(save, dex)) return false;
+    return true;
+  });
+  if (!pool.length) return null;
+  const row = pool[Math.floor(Math.random() * pool.length)];
+  const dex = row[0];
+  const name = String(row[1] ?? getPokemon(dex).name).replace(/#\d+$/, "");
+  const basePrice = monPrice(dex);
+  const price = Math.max(30, Math.round((basePrice * CONTRACT_DISCOUNT) / 5) * 5);
+  return { dex, name, basePrice, price, rarity: rarityOf(dex) };
+}
+
+/** 签下合同：扣币、入队/仓库、点亮签约成就 */
+export function signContract(save, offer) {
+  if (!offer) return { ok: false, error: "没有可签的合同" };
+  if (hasDex(save, offer.dex)) return { ok: false, error: "已经与这只精灵结缘了" };
+  if (save.coins < offer.price) return { ok: false, error: `篮球币不足（需 ${offer.price}）` };
+  const before = save.coins;
+  save.coins -= offer.price;
+  const r = addMon(save, offer.dex, { from: "sign" });
+  if (!r.ok) {
+    save.coins = before;
+    return { ok: false, error: r.error || "签约失败" };
   }
-  const r = addMon(save, pick.dex, { from: "sign" });
-  return r.ok ? { dex: pick.dex, name, dup: false, movedTo: r.movedTo } : null;
+  save.flags = save.flags || {};
+  save.flags.sign1 = true;
+  bumpDaily("sign");
+  writeSave(save);
+  return { ok: true, movedTo: r.movedTo, coins: save.coins };
 }
 
 /** 单个个体吃 XP（含升级循环+进化判定），返回播报；动画事件写入 anims */
@@ -130,8 +156,8 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     if (mon) xpEvents.push(...grantXp(save, id, mon, xp, anims));
   });
 
-  // 4. 战胜签约
-  const sign = won && engine?.teams?.[1]?.roster ? trySign(save, engine) : null;
+  // 4. 精灵合同：仅真实比赛胜利后概率出现，模拟/退出不触发
+  const contract = won && !simulated && !quit ? rollContract(save) : null;
 
   // 5. 赛程推进（联赛/季后赛/四天王），再发传说/道具
   const seasonNo = info.season || save.journey?.season?.no || 1;
@@ -152,11 +178,9 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   }
   const after = currentMatchInfo(save, mode);
 
-  // 6. 每日活跃 / 成就
+  // 6. 每日活跃 / 成就（签约成就在真正买下合同时点亮）
   bumpDaily("match");
-  if (sign) bumpDaily("sign");
   save.flags = save.flags || {};
-  if (sign) save.flags.sign1 = true;
   ACHV.evaluateMatch(save, { won, margin });
 
   writeSave(save);
@@ -174,7 +198,7 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     seasonEnded: advance.seasonEnded,
     legendReward,
     nextLabel: after ? after.label : (mode === "elite" ? "四天王已通关" : "赛季结束"),
-    sign,
+    contract,
     simulated,
     levelKind: info.kind,
     smallName: info.smallName,

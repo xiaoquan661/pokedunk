@@ -50,7 +50,7 @@ const TASKS = [
   { id: "play1",  name: "打一场比赛",     goal: 1, coin: 30,  check: (s) => (daily().cnt.match || 0) >= 1 },
   { id: "play3",  name: "打三场比赛",     goal: 3, coin: 60,  check: (s) => (daily().cnt.match || 0) >= 3 },
   { id: "feed2",  name: "投喂树果 2 次",  goal: 2, coin: 30,  check: (s) => (daily().cnt.feed || 0) >= 2 },
-  { id: "sign1",  name: "战胜签约 1 只",  goal: 1, coin: 80,  check: (s) => (daily().cnt.sign || 0) >= 1 },
+  { id: "sign1",  name: "签下精灵合同 1 只",  goal: 1, coin: 80,  check: (s) => (daily().cnt.sign || 0) >= 1 },
   { id: "visit",  name: "逛一逛商店/孵蛋", goal: 1, coin: 20, check: (s) => (daily().cnt.visit || 0) >= 1 },
 ];
 
@@ -186,7 +186,7 @@ export function openDailyTasks(save, onCoins) {
           return `<div class="pj-row"><span>${t.name} <small style="opacity:.55">${cnt >= t.goal ? "✓" : `(${Math.min(cnt, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-task-claim="${t.id}" ${can ? "" : "disabled"}>${done ? "已领取" : `领 +${t.coin} 币`}</button></div>`;
         }).join("")}
       </div>
-      <p class="pj-note">打比赛、投喂树果、战胜签约为主要来源</p>`;
+      <p class="pj-note">打比赛、投喂树果、签下胜利后的精灵合同为主要来源</p>`;
   };
   wrap.addEventListener("click", (e) => {
     if (e.target === wrap || e.target.closest("[data-back]")) { wrap.remove(); return; }

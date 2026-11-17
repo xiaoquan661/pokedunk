@@ -137,7 +137,7 @@ function tabGuide() {
       <div class="pj-guide-row"><b>赛季轮换</b><span>赛季结束进入下一赛季</span><small>重置排名、徽章和季后赛；保留队伍、等级、训练、金币和图鉴。</small></div>
     </div>
     <div class="pj-block"><div class="pj-flbl">孵蛋概率</div><div class="pj-fdesc">购买时确定精灵；普通蛋 1%、高级蛋 3% 独立概率孵出传说。未拥有优先。</div>${eggs}
-    <div class="pj-guide-row"><b>传说获取</b><span>普通蛋 1% / 高级蛋 3% · 联赛冠军/四天王共享 2 选 1 · 战胜签约</span><small>每赛季 2 只传说；联赛冠军和四天王共享该池，先完成 2 选 1，后完成拿剩下 1 只。重复传说折算 200 币。</small></div></div>
+    <div class="pj-guide-row"><b>传说获取</b><span>普通蛋 1% / 高级蛋 3% · 联赛冠军/四天王共享 2 选 1 · 战胜后的精灵合同</span><small>每赛季 2 只传说；联赛冠军和四天王共享该池，先完成 2 选 1，后完成拿剩下 1 只。重复传说折算 200 币。</small></div></div>
     <div class="pj-block"><div class="pj-flbl">系别克制</div><div class="pj-fdesc">以该属性进攻时：×2 克制 / ×0.5 弱效 / ×0 无效。克制影响抢位推撞成功率，以及地震/冰冻类必杀的击退与减速；不影响投篮基础命中。多属性攻击取最高倍率。</div>
       <div class="type-chart">${typeChartHtml()}</div>
     </div>

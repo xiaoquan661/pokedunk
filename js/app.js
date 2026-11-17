@@ -7,7 +7,7 @@ import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加
 import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=72";
 import { renderDex } from "./ui/dex.js?v=78";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=87";
-import { openSettings } from "./ui/settings.js?v=110";
+import { openSettings } from "./ui/settings.js?v=111";
 import { renderBag } from "./ui/bag.js?v=72";
 import { renderTeam } from "./ui/team.js?v=90";
 import { openDetail } from "./ui/detail.js?v=83";
@@ -15,15 +15,15 @@ import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=152";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";
 import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=69";
-import { settleMatchResult } from "./journey/settle.js?v=94";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=96";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=80";
 import { openDaily } from "./ui/daily.js?v=84";
-import { openAchievements } from "./ui/achv-ui.js?v=70";
+import { openAchievements } from "./ui/achv-ui.js?v=71";
 import { startTutorial } from "./ui/tutorial.js?v=78";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=59";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=74";
-import { ACHV } from "./systems/achv.js?v=64";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=76";
+import { ACHV } from "./systems/achv.js?v=65";
 import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=66";
 import { playEvolve } from "./ui/anim.js?v=67";
 import { ICON } from "./ui/icons.js?v=63";
@@ -1151,9 +1151,14 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
         ${r.champion ? `<p class="res-line res-gold">${ICON.trophy}<span>联赛总冠军！奖杯、400 币与赛季 MVP 已入库</span></p>` : ""}
         ${r.legendReward ? `<p class="res-line res-gold"><span>✦</span><span>赛季传说已解锁：${r.legendReward.choices.length} 选 1，本赛季还可领 ${r.legendReward.claims || 1} 只</span></p>` : ""}
         ${r.itemGained ? `<p class="res-line res-gold">${GIFT_SVG}<span>获得道具：${r.itemName}</span></p>` : ""}
-        ${r.sign ? (r.sign.dup
-          ? `<p class="res-line">${SIGN_SVG}<span>对手 ${r.sign.name} 想加入，但已结缘 → 折算 +${r.sign.coin} 币</span></p>`
-          : `<p class="res-line res-good">${SIGN_SVG}<span>战胜签约！${r.sign.name} 加入了你的${r.sign.movedTo === "team" ? "队伍" : "仓库"}！</span></p>`) : ""}
+        ${r.contract ? `<div class="res-contract" id="res-contract-card">
+          <img src="./sprites/${r.contract.dex}.png" alt="">
+          <div class="rc-info">
+            <b>${SIGN_SVG}精灵合同 · ${r.contract.name}</b>
+            <small>${r.contract.rarity} · 商店价 <s>${r.contract.basePrice}</s> → 合同价 <em>${r.contract.price}</em> 币</small>
+          </div>
+          <button class="pk-btn-gold" id="res-contract"${save.coins < r.contract.price ? " disabled" : ""}>${save.coins < r.contract.price ? `币不足 ${r.contract.price}` : `签 下 ${r.contract.price} 币`}</button>
+        </div>` : ""}
         ${r.xpEvents.length ? `<div class="res-xp">${r.xpEvents.map((e) => `<p class="res-line">${UP_SVG}<span>${e}</span></p>`).join("")}</div>` : ""}
       </div>
       <div class="rs-actions">
@@ -1196,6 +1201,19 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
         btn.textContent = "✦ 赛季传说已领取";
       },
     });
+  });
+  page.querySelector("#res-contract")?.addEventListener("click", (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    const res = signContract(loadSave() || save, r.contract);
+    if (!res.ok) {
+      btn.disabled = false;
+      btn.textContent = res.error;
+      return;
+    }
+    const card = btn.closest(".res-contract");
+    card?.classList.add("signed");
+    btn.textContent = `已签约 · 加入${res.movedTo === "team" ? "队伍" : "仓库"}`;
   });
   page.querySelector("#res-fk")?.addEventListener("click", () => showMatch(loadSave() || save, "elite"));
   page.querySelector("#res-home").addEventListener("click", () => showHome(loadSave() || save));

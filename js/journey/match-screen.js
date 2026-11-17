@@ -11,7 +11,7 @@
  */
 import { calcOVR } from "../../engine/readable/play-core.js?v=83";
 import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=83";
-import { loadSet } from "../ui/settings.js?v=110";
+import { loadSet } from "../ui/settings.js?v=111";
 import { STAT_KEYS } from "./gyms.js?v=60";
 import { currentMatchInfo, matchSeed } from "./season.js?v=69";
 import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=66";

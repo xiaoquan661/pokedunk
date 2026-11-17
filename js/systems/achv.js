@@ -92,7 +92,7 @@ const defs = [
   { id: "coll30",  name: "结缘三十", desc: "与 30 种精灵结缘",             check: (s) => Object.keys(s.dex).length >= 30 },
   { id: "rich1k",  name: "小康教练", desc: "持有 1000 篮球币",             check: (s) => s.coins >= 1000 },
   { id: "w10",     name: "十胜教头", desc: "生涯取得 10 场胜利",           check: (s) => s.stats.w >= 10 },
-  { id: "sign1",   name: "签约达人", desc: "首次通过战胜签约收服精灵",      check: (s) => !!s.flags?.sign1 },
+  { id: "sign1",   name: "签约达人", desc: "首次签下胜利后的精灵合同",      check: (s) => !!s.flags?.sign1 },
 ];
 
 /** 所有进化后的形态（作为其他形态的进化目标出现） */
