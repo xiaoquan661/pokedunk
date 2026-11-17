@@ -156,8 +156,8 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     if (mon) xpEvents.push(...grantXp(save, id, mon, xp, anims));
   });
 
-  // 4. 精灵合同：仅真实比赛胜利后概率出现，模拟/退出不触发
-  const contract = won && !simulated && !quit ? rollContract(save) : null;
+  // 4. 精灵合同：真实比赛或一键模拟胜利后都有概率出现，退出不触发
+  const contract = won && !quit ? rollContract(save) : null;
 
   // 5. 赛程推进（联赛/季后赛/四天王），再发传说/道具
   const seasonNo = info.season || save.journey?.season?.no || 1;
