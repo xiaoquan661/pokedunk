@@ -7,7 +7,7 @@ import { loadSave, writeSave } from "../storage.js?v=72";
 import { gameAudio } from "../platform/audio.js?v=64";
 import {
   dailyPreview, dailyMissionRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=80";
+} from "../journey/daily.js?v=81";
 
 let toastTimer = null;
 function toast(msg, ms = 2400) {

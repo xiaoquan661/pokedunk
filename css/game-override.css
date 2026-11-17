@@ -37,6 +37,12 @@
   .game .rot-btn{top:calc(var(--safe-t, 0px) + 166px)}
 }
 
+/* —— 战斗播报：移到计分板下方的黑边区域，不再挡住球场中央 —— */
+.game.has-touch .battle{top:calc(max(8px,var(--safe-t,0px)) + 202px) !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 24px);padding:5px 10px;transform:translate(-50%,-6px);opacity:0}
+.game.has-touch .battle.show{transform:translate(-50%,0);opacity:1}
+.game.rot .battle{top:46px !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 180px);padding:4px 9px;transform:translate(-50%,-6px);opacity:0}
+.game.rot .battle.show{transform:translate(-50%,0);opacity:1}
+
 /* —— 横屏 CSS 兜底（方向锁不可用时）：旋转整个 .game 容器 ——
    触屏摇杆/按键是 .game 的子元素，随容器一起旋转。
    container-type:size 让内部 .stage 用 cqw/cqh 取"旋转后的视口"：

@@ -6,7 +6,7 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=83";
+import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=84";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=72";
 import { monPrice } from "../systems/shop.js?v=73";

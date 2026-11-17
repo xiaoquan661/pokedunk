@@ -9,8 +9,8 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=83";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=83";
+import { calcOVR } from "../../engine/readable/play-core.js?v=84";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=84";
 import { loadSet } from "../ui/settings.js?v=111";
 import { STAT_KEYS } from "./gyms.js?v=60";
 import { currentMatchInfo, matchSeed } from "./season.js?v=69";

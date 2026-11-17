@@ -3120,9 +3120,11 @@ function un(a) {
     board: "HOME OF THE ".concat(e, " ★ PALLET TOWN ★ WHERE IT ALL BEGINS"),
   };
 }
+// 场边走马灯：改成简短的操作/机制提示，代替广告文案
+const BOARD_TIPS = "推满摇杆冲刺 ★ 发白瞬间松手 ★ 抢断要贴身 ★ 盖帽看准起跳 ★ 必杀槽满释放 ★ 防守卡住突破线 ★ 24 秒内出手";
 function ms(a) {
   var e;
-  return (e = ds[a.name]) != null
+  const base = (e = ds[a.name]) != null
     ? e
     : {
         venue: "".concat(a.name, " Arena"),
@@ -3132,10 +3134,10 @@ function ms(a) {
         lines: "#faf7ee",
         logo: "pokeball",
         floorText: a.name.toUpperCase(),
-        board: "".concat(a.name.toUpperCase(), " ★ POKé JAM ★ SILPH CO. ★ POKé MART"),
         boardColor: "#ffcb05",
         crowd: [a.color, a.color, ...hn],
       };
+  return { ...base, board: BOARD_TIPS };
 }
 let saveKeyRoute = (function () {
   try {
