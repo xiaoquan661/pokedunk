@@ -4,20 +4,20 @@
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
 import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=72";
-import { renderDex } from "./ui/dex.js?v=78";
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=73";
+import { renderDex } from "./ui/dex.js?v=79";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=87";
 import { openSettings } from "./ui/settings.js?v=111";
 import { renderBag } from "./ui/bag.js?v=72";
-import { renderTeam } from "./ui/team.js?v=90";
-import { openDetail } from "./ui/detail.js?v=83";
+import { renderTeam } from "./ui/team.js?v=91";
+import { openDetail } from "./ui/detail.js?v=84";
 import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=156";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";
 import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=70";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=97";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=83";
-import { openDaily } from "./ui/daily.js?v=87";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=98";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=84";
+import { openDaily } from "./ui/daily.js?v=88";
 import { openAchievements } from "./ui/achv-ui.js?v=71";
 import { startTutorial } from "./ui/tutorial.js?v=81";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";

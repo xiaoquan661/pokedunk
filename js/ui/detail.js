@@ -11,7 +11,7 @@ import {
   trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
 } from "../systems/build.js?v=66";
-import { loadSave, writeSave, moveMon } from "../storage.js?v=72";
+import { loadSave, writeSave, moveMon } from "../storage.js?v=73";
 import { BERRY_XP } from "../systems/shop.js?v=73";
 import { bumpDaily } from "./earn.js";
 import { playEvolve } from "./anim.js?v=67";
@@ -71,12 +71,12 @@ function evoHtml(dex, save) {
   const { tiers, levels } = evoFamily(dex);
   if (tiers.length < 2) return "";
   const seen = save?.dex || {};
+  const encountered = save?.seen || {};
   const owned = new Set(Object.values(save?.mons || {}).map((m) => m.dex));
   const node = (id) => {
     const cur = id === dex;
-    // 只看图鉴是否已结缘：未结缘统一剪影 + 问号；已结缘才显示立绘与名字
-    // 已拥有但图鉴未记录的旧档也视为已结缘，避免自己的精灵被剪影化
-    const has = !!seen[id] || owned.has(id);
+    // 已结缘或赛场上遇见过才显示立绘与名字；否则剪影 + 问号
+    const has = !!seen[id] || !!encountered[id] || owned.has(id);
     return `<button type="button" class="evo-node${cur ? " cur" : ""}${has ? "" : " sil"}" data-evo="${id}"${cur || !has ? " disabled" : ""}>
       <img src="./sprites/${id}.png" alt="" loading="lazy">
       <b>${has ? monName(id) : "？？？"}</b>
@@ -122,7 +122,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const where = monId != null ? (save.team.includes(monId) ? "roster" : "box") : null;
 
   // 未结缘且未在球场上遇见 → 只展示黑色剪影与问号，不泄露任何资料
-  const known = !!save.dex?.[dexNo] || Object.values(save.mons || {}).some((m) => m.dex === dexNo);
+  const known = !!save.dex?.[dexNo] || !!save.seen?.[dexNo] || Object.values(save.mons || {}).some((m) => m.dex === dexNo);
   if (!known) {
     const ov = document.createElement("div");
     ov.className = "detail-wrap";

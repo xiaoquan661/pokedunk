@@ -5,11 +5,11 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=72";
+import { loadSave, writeSave } from "../storage.js?v=73";
 import { gameAudio } from "../platform/audio.js?v=64";
 import { getPokemon } from "../../engine/readable/play-core.js?v=85";
 import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
-import { openDetail } from "./detail.js?v=83";
+import { openDetail } from "./detail.js?v=84";
 import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=62";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
@@ -37,6 +37,17 @@ const ownedSet = () => {
   return set;
 };
 
+/** 赛场上遇见过 / 已结缘的精灵（用于图鉴立绘和资料解锁） */
+const seenSet = () => {
+  const s = loadSave();
+  const set = {};
+  if (!s) return set;
+  if (s.dex) for (const k of Object.keys(s.dex)) set[Number(k)] = 1;
+  if (s.seen) for (const k of Object.keys(s.seen)) set[Number(k)] = 1;
+  for (const m of Object.values(s.mons || {})) if (m?.dex) set[m.dex] = 1;
+  return set;
+};
+
 /** dex → 主属性（缓存查询） */
 const typeCache = {};
 function typeOf(dex) {
@@ -47,9 +58,9 @@ function typeOf(dex) {
   return typeCache[dex];
 }
 
-function cardHtml(r, owned) {
+function cardHtml(r, owned, seen) {
   const dex = r[0], name = String(r[1]).replace(/#\d+$/, "");
-  const has = !!owned[dex];
+  const has = !!seen[dex];
   const color = has ? TYPE_COLORS_ZH(dex) : "rgba(255,255,255,.14)";
   const rarity = rarityOf(dex);
   return (
@@ -68,7 +79,7 @@ function TYPE_COLORS_ZH(dex) {
 }
 const TYPE_COLOR_MAP = { Normal: "#a8a878", Fire: "#ee8130", Water: "#6390f0", Electric: "#f7d02c", Grass: "#7ac74c", Ice: "#96d9d6", Fighting: "#c22e28", Poison: "#a33ea1", Ground: "#e2bf65", Flying: "#a98ff3", Psychic: "#f95587", Bug: "#a6b91a", Rock: "#b6a136", Ghost: "#735797", Dragon: "#6f35fc", Dark: "#705746", Steel: "#b7b7ce", Fairy: "#d685ad" };
 
-function renderGrid(root, owned) {
+function renderGrid(root, owned, seen) {
   const body = root.querySelector("#dex-grid");
   let list;
   if (curFilter === "all") list = ROWS;
@@ -81,7 +92,7 @@ function renderGrid(root, owned) {
     list = ROWS.filter((r) => typeOf(r[0]) === t);
   }
   body.innerHTML = list.length
-    ? list.map((r) => cardHtml(r, owned)).join("")
+    ? list.map((r) => cardHtml(r, owned, seen)).join("")
     : '<div class="dex-empty">这里还没有收集记录。<br>比赛签约、孵蛋和商店获得的精灵会点亮图鉴。</div>';
 }
 
@@ -142,6 +153,7 @@ function milestoneHtml(save) {
 /** 渲染图鉴页到 root（全屏页，主界面菜单项进入） */
 export function renderDex(root) {
   const owned = ownedSet();
+  const seen = seenSet();
   const got = ROWS.filter((r) => owned[r[0]]).length;
   const save = loadSave() || { dex: {} };
   root.innerHTML = `
@@ -166,7 +178,7 @@ export function renderDex(root) {
     <div class="dex-chips type-chips">${chipsHtml(owned)}</div>
     <div class="dex-grid" id="dex-grid"></div>`;
 
-  renderGrid(root, owned);
+  renderGrid(root, owned, seen);
 
   // 只绑定一次：renderDex 会被 onClose 重入，重复绑定会导致一次点击叠多层详情
   if (root.__dexBound) return;
@@ -202,7 +214,7 @@ export function renderDex(root) {
     if (cb) {
       curFilter = cb.dataset.f;
       root.querySelectorAll(".dex-chips button").forEach((b) => b.classList.toggle("on", b === cb));
-      renderGrid(root, ownedSet()); // 每次点击取最新存档，避免闭包持有旧收集状态
+      renderGrid(root, ownedSet(), seenSet()); // 每次点击取最新存档，避免闭包持有旧收集状态
     }
   });
 }

@@ -13,7 +13,7 @@ import {
 } from "../../engine/readable/play-core.js?v=85";
 import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=156";
 import { teamPower, STAT_KEYS } from "../systems/build.js?v=66";
-import { writeSave } from "../storage.js?v=72";
+import { writeSave, markSeen } from "../storage.js?v=73";
 
 const FIRST_WIN_COINS = 100;
 
@@ -248,6 +248,9 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
     coins += FIRST_WIN_COINS;
     save.coins += coins;
   }
+  const seen = [];
+  for (const team of engine.teams || []) for (const p of team.roster || []) if (p?.dex) seen.push(p.dex);
+  markSeen(save, seen);
   writeSave(save);
   return {
     quit: false, won, myScore, oppScore, score, detail, simulated,

@@ -80,6 +80,8 @@ export function loadSave() {
     try { ensureNewbieBackfill(s); } catch {}
     // 旧版把「新手之路」期间的单条提示当成整段界面导引完成，通关后不再出现首次主页导引
     try { ensureHomeGuideV2(s); } catch {}
+    // 图鉴「遇见」记录：已拥有的精灵至少算遇见过
+    try { ensureSeen(s); } catch {}
     return s;
   } catch {
     return null;
@@ -124,6 +126,26 @@ function ensureHomeGuideV2(s) {
   s.guideV2 = 1;
   if (s.newbie?.done && s.guide?.done) s.guide = { v: 1, step: 0, done: false };
   writeSave(s);
+}
+
+/** 图鉴遇见记录：own dex 与已拥有个体都算遇见过 */
+function ensureSeen(s) {
+  s.seen ||= {};
+  for (const k of Object.keys(s.dex || {})) s.seen[k] ||= s.dex[k];
+  for (const m of Object.values(s.mons || {})) if (m?.dex) s.seen[m.dex] ||= Date.now();
+}
+
+/** 记录在赛场上遇见的精灵（不改变结缘/拥有状态） */
+export function markSeen(save, dexes) {
+  if (!save) return false;
+  save.seen ||= {};
+  let added = false;
+  for (const dex of dexes || []) {
+    if (!dex || save.seen[dex]) continue;
+    save.seen[dex] = Date.now();
+    added = true;
+  }
+  return added;
 }
 
 /** 写档：当前档滚入备份键，再写新值。全部异常吞掉（localStorage 满/禁用时不崩游戏） */

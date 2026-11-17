@@ -5,8 +5,8 @@
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
 import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=85";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=72";
-import { openDetail } from "./detail.js?v=83";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=73";
+import { openDetail } from "./detail.js?v=84";
 import { ICON } from "./icons.js?v=63";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,

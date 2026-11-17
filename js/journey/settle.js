@@ -8,7 +8,7 @@
  */
 import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=85";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=72";
+import { recordEvolution, writeSave, addMon, hasDex, markSeen } from "../storage.js?v=73";
 import { monPrice } from "../systems/shop.js?v=73";
 import { ACHV } from "../systems/achv.js?v=65";
 import { bumpDaily } from "../ui/earn.js?v=76";
@@ -182,6 +182,12 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   bumpDaily("match");
   save.flags = save.flags || {};
   ACHV.evaluateMatch(save, { won, margin });
+  // 赛场遇见：双方阵容都写入图鉴的「遇见」记录
+  if (engine?.teams) {
+    const seen = [];
+    for (const team of engine.teams) for (const p of team.roster || []) if (p?.dex) seen.push(p.dex);
+    markSeen(save, seen);
+  }
 
   writeSave(save);
   return {

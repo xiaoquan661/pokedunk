@@ -12,7 +12,7 @@
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
 import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=85";
-import { addMon } from "../storage.js?v=72";
+import { addMon } from "../storage.js?v=73";
 import { LEGENDARY_DEX } from "../systems/build.js?v=66";
 
 export const LEGEND_DUPE_COINS = 200;
