@@ -47,6 +47,31 @@
 .game:not(.rot) .stage{width:100%;max-width:100%}
 .game.rot .stage canvas.court{width:100%;height:100%}
 
+/* 横屏（CSS 旋转兜底）专用布局：逻辑尺寸约为 844×390，
+   不能再沿用竖屏的偏移，否则顶部按钮与四键会挤在一起 */
+.game.rot .pcard{top:8px;left:8px;width:228px;transform:none;transform-origin:top left}
+.game.rot .pcard img{width:46px;height:46px}
+.game.rot .pcard .pname{font-size:.82rem;line-height:1.1}
+.game.rot .pcard .povr{font-size:.62rem}
+.game.rot .pcard .bar{height:8px}
+.game.rot .bug{top:8px;max-width:calc(100% - 420px);font-size:.72rem}
+.game.rot .sim-btn{top:52px;right:8px;left:auto;bottom:auto;height:32px;font-size:11px}
+.game.rot .rot-btn{top:92px;right:8px;left:auto;bottom:auto;height:32px;font-size:11px}
+.game.rot .pause-btn{top:8px;right:8px}
+/* 四键收进右下角 210×170 区域，避免顶到右上角按钮 */
+.game.rot .touch .btns{right:8px;bottom:8px;width:210px;height:170px}
+.game.rot .touch .tb[data-b="shoot"]{right:10px;bottom:10px;width:96px;height:96px}
+.game.rot .touch .tb[data-b="shoot"] b{width:34px;height:34px}
+.game.rot .touch .tb[data-b="shoot"] span:not(.pd-ico){font-size:12px}
+.game.rot .touch .tb[data-b="pass"]{right:118px;bottom:2px;width:64px;height:64px}
+.game.rot .touch .tb[data-b="pass"] b{width:22px;height:22px}
+.game.rot .touch .tb[data-b="steal"]{right:6px;bottom:112px;width:54px;height:54px}
+.game.rot .touch .tb[data-b="steal"] b{width:20px;height:20px}
+.game.rot .touch .tb[data-b="steal"] span:not(.pd-ico){font-size:10px}
+.game.rot .touch .tb[data-b="special"]{right:100px;bottom:112px;width:60px;height:60px}
+.game.rot .touch .tb[data-b="special"] b{width:22px;height:22px}
+.game.rot .touch .tb[data-b="special"] span:not(.pd-ico){font-size:10px}
+
 /* —— 详情页能力条：original.css 在 main.css 之后加载会覆盖 .rt，
    这里（最后加载）重新定稿：金色渐变填充 —— */
 .ratings .rt i{height:7px;background:rgba(0,0,0,.35);border-radius:3px;border:1px solid rgba(245,197,66,.35)}
