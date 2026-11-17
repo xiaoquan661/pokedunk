@@ -14,14 +14,14 @@ import { openDetail } from "./ui/detail.js?v=84";
 import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=156";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=71";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=72";
 import { settleMatchResult, signContract } from "./journey/settle.js?v=99";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=84";
 import { openDaily } from "./ui/daily.js?v=88";
 import { openAchievements } from "./ui/achv-ui.js?v=71";
 import { startTutorial } from "./ui/tutorial.js?v=81";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=59";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=60";
 import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=76";
 import { ACHV } from "./systems/achv.js?v=65";
 import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=66";
@@ -532,7 +532,7 @@ function showHome(save, justStarted = false) {
       </style>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
-        <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>${badge}</b>/8</button>
+        <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>S${season.no} · ${badge}/8</b></button>
         <button class="guide-chip" id="home-guide" type="button" title="新手指引">导引</button>
         <div class="spacer"></div>
         <div class="coin-chip plain">${save.coach.name}</div>

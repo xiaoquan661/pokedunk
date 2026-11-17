@@ -519,6 +519,9 @@ export function syncLegacy(save, s) {
   j.gymBadges = badges;
   j.stage = s.phase === "done" ? "done" : "league";
   j.seasonNo = s.no;
+  // 每个赛季的徽章独立留档，跨赛季不重置已获得的记录
+  j.badgeSeasons ||= {};
+  j.badgeSeasons[s.no] = { no: s.no, badges: [...s.badges], champion: !!s.champion };
 }
 
 export function progressLabel(save) {

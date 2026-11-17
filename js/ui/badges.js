@@ -40,6 +40,9 @@ export function badgeMedal(id, size = 64, opts = {}) {
 }
 
 const CSS = `
+.bd-seasons{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
+.bd-seasons button{flex:0 0 auto;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);font:700 11px var(--sport,sans-serif)}
+.bd-seasons button.on{border-color:var(--gold,#f5c542);background:rgba(245,197,66,.16);color:var(--gold,#f5c542)}
 .bd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
 .bd-card{display:flex;align-items:center;gap:8px;padding:9px 8px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.045);min-width:0}
 .bd-card.locked{opacity:.5;filter:grayscale(.7)}
@@ -84,34 +87,54 @@ function badgeRecord(s, venue) {
   return list[list.length - 1] || null;
 }
 
-/** 徽章详情页：8 枚道馆徽章 + 获取状态 */
+/** 徽章详情页：按赛季分别展示 8 枚道馆徽章，旧赛季记录不重置 */
 export function openBadgeDetail(save, opts = {}) {
   ensureCss();
-  const s = save?.journey?.season || {};
-  const got = new Set(s.badges || []);
-  const count = GYM_BADGES.filter((g) => got.has(g.badge)).length;
+  const cur = save?.journey?.season || {};
+  const archive = save?.journey?.badgeSeasons || {};
+  const seasons = Object.values({ ...archive, [cur.no || 1]: { no: cur.no || 1, badges: cur.badges || [], champion: !!cur.champion } })
+    .sort((a, b) => (b.no || 0) - (a.no || 0));
+  let picked = cur.no || seasons[0]?.no || 1;
 
   const wrap = document.createElement("div");
   wrap.className = "pj-scrim page-modal";
   wrap.style.cssText = "position:fixed;inset:0;z-index:1100;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
-    <div class="page-head"><button class="back" data-bd-back>‹</button><h2>道馆徽章</h2><span class="count">${count} / 8</span></div>
+    <div class="page-head"><button class="back" data-bd-back>‹</button><h2>道馆徽章</h2><span class="count" data-bd-count></span></div>
     <p class="page-sub">击败道馆馆主获得徽章 · 集齐 8 枚挑战四天王</p>
-    <div class="bd-grid">
-      ${GYM_BADGES.map((g, i) => {
-        const has = got.has(g.badge);
-        const rec = badgeRecord(s, i);
-        const sub = has ? (rec ? `S${rec.season || s.no} · ${rec.myScore}:${rec.oppScore}${rec.sim ? " 模拟" : ""}` : "已获得") : "击败馆主后获得";
-        return `<div class="bd-card ${has ? "got" : "locked"}">
-          ${badgeMedal(g.badge, 56, { earned: has })}
-          <div class="bd-info"><b>${g.venueCn}</b><span>${g.badgeCn}</span><small>${sub}</small></div>
-        </div>`;
-      }).join("")}
+    <div class="bd-seasons">
+      ${seasons.map((x) => `<button type="button" data-bd-season="${x.no}">S${x.no}</button>`).join("")}
     </div>
-    <p class="bd-note">徽章会随赛季重置，成长与图鉴会保留。</p>
+    <div class="bd-grid" data-bd-grid></div>
+    <p class="bd-note">每个赛季独立记录；已经获得的赛季徽章不会重置。</p>
   </div></div>`;
-  const close = () => { wrap.remove(); opts.onClose?.(); };
-  wrap.addEventListener("click", (e) => { if (e.target === wrap || e.target.closest("[data-bd-back]")) close(); });
+
+  const grid = wrap.querySelector("[data-bd-grid]");
+  const countEl = wrap.querySelector("[data-bd-count]");
+  const paint = () => {
+    const data = seasons.find((x) => Number(x.no) === Number(picked)) || seasons[0] || { no: picked, badges: [] };
+    const got = new Set(data.badges || []);
+    const count = GYM_BADGES.filter((g) => got.has(g.badge)).length;
+    countEl.textContent = `S${data.no} · ${count} / 8`;
+    wrap.querySelectorAll("[data-bd-season]").forEach((b) => b.classList.toggle("on", Number(b.dataset.bdSeason) === Number(data.no)));
+    grid.innerHTML = GYM_BADGES.map((g, i) => {
+      const has = got.has(g.badge);
+      const rec = Number(data.no) === Number(cur.no) ? badgeRecord(cur, i) : null;
+      const sub = has
+        ? (rec ? `S${rec.season || data.no} · ${rec.myScore}:${rec.oppScore}${rec.sim ? " 模拟" : ""}` : `S${data.no} · 已获得`)
+        : "击败馆主后获得";
+      return `<div class="bd-card ${has ? "got" : "locked"}">
+        ${badgeMedal(g.badge, 56, { earned: has })}
+        <div class="bd-info"><b>${g.venueCn}</b><span>${g.badgeCn}</span><small>${sub}</small></div>
+      </div>`;
+    }).join("");
+  };
+  paint();
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap || e.target.closest("[data-bd-back]")) { wrap.remove(); opts.onClose?.(); return; }
+    const sb = e.target.closest("[data-bd-season]");
+    if (sb) { picked = Number(sb.dataset.bdSeason); paint(); }
+  });
   (document.getElementById("stage")||document.body).appendChild(wrap);
 }
 
