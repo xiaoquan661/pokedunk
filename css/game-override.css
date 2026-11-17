@@ -65,7 +65,7 @@
 .game.rot .rot-btn{top:92px;right:8px;left:auto;bottom:auto;height:32px;font-size:11px}
 .game.rot .pause-btn{top:8px;right:8px}
 /* 四键整体贴紧物理右下角；摇杆不动 */
-.game.rot.has-touch .touch .btns{left:auto;top:auto;right:2px;bottom:-18px;width:210px;height:170px}
+.game.rot.has-touch .touch .btns{left:auto;top:auto;right:2px;bottom:6px;width:210px;height:170px}
 .game.rot.has-touch .touch .tb[data-b="shoot"]{right:10px;bottom:10px;width:96px;height:96px}
 .game.rot.has-touch .touch .tb[data-b="shoot"] b{width:34px;height:34px}
 .game.rot.has-touch .touch .tb[data-b="shoot"] span:not(.pd-ico){font-size:12px}
