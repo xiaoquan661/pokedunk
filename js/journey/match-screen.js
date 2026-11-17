@@ -95,7 +95,8 @@ function createPortraitCamera(root) {
   const canvas = root.querySelector(".game canvas.court") || root.querySelector(".game canvas");
   const ZOOM = 1.7;
   const ZOOM_SPEC = 1.55;
-  const LIFT = 90; // 整体上移，给下方蓄力条/按键留出干净的控制带
+  const WIDE = 1.3; // 左右视野再扩大 30%
+  const LIFT = 30; // 视野变宽后减少上移，避免只看到球场底边
   let tx = 0, ty = 0, primed = false;
 
   // 与引擎 gs.proj 同一投影：canvas 逻辑 480×270，x∈[0,94] 横向、y∈[0,50] 纵深
@@ -125,14 +126,17 @@ function createPortraitCamera(root) {
       const w = ball.owner === user ? 0.5 : ball.owner ? 0.6 : 0.75;
       target = { x: bp.x * w + up.x * (1 - w), y: bp.y * w + up.y * (1 - w) };
     }
-    // 短屏自动降一档推进倍率，保证球场底边、蓄力条、按键弧三层不重叠
+    // 短屏自动降一档推进倍率，保证球场底边、蓄力条、按键弧三层不重叠；
+    // 再除以 WIDE，使左右可见范围扩大 30%
     const H = game.clientHeight || 763;
-    const fit = Math.max(1.25, Math.min(ZOOM, (H - 430) / 196));
-    const zoom = user ? fit : Math.min(ZOOM_SPEC, fit);
+    const fit = Math.max(1, Math.min(ZOOM, (H - 430) / 196) / WIDE);
+    const zoom = user ? fit : Math.min(ZOOM_SPEC / WIDE, fit);
     const cw = canvas.clientWidth || 480;
     const ch = canvas.clientHeight || 270;
     if (!cw || !ch) return;
-    const T = { x: (target.x / 480) * cw, y: (target.y / 270) * ch };
+    // 纵向固定在中线：镜头只做左右跟随，不随球员前后移动或运球上下晃动
+    const fixedY = proj(47, 25, 0).y;
+    const T = { x: (target.x / 480) * cw, y: (fixedY / 270) * ch };
     const C = { x: cw / 2, y: ch / 2 };
     // 视野内允许的最大偏移：保证放大后画面边缘不露底
     const k = (zoom - 1) / (2 * zoom);
@@ -143,10 +147,9 @@ function createPortraitCamera(root) {
     if (!primed) {
       tx = wantX; ty = wantY; primed = true;
     } else {
-      const ax = 1 - Math.exp(-fpsDt * 6);   // 横向跟拍：跟得紧
-      const ay = 1 - Math.exp(-fpsDt * 2.2); // 纵向：慢跟随，只表现前后场推移
+      const ax = 1 - Math.exp(-fpsDt * 6); // 仅横向跟拍
       tx += (wantX - tx) * ax;
-      if (Math.abs(wantY - ty) > 1.2) ty += (wantY - ty) * ay; // 小死区过滤残余抖动
+      ty = wantY; // 纵向完全锁死
     }
     canvas.style.transformOrigin = "50% 50%";
     canvas.style.willChange = "transform";
