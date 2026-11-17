@@ -986,9 +986,11 @@ function showPreMatch(save, mode = "league") {
   mountGuide("prematch", loadSave() || save, { root: page });
 }
 
-/** 新手判定：没有任何比赛记录且未看过引导 */
+/** 新手判定：没有任何比赛记录、未看过引导，且没有走过新手之路的操作教程 */
 function isRookie(save) {
   if (!save?.journey || save.journey.guideDone) return false;
+  // 新手之路里已经完整教过移动/投篮/传球/抢断/冲刺/必杀，第一场正式比赛不再重复弹操作导引
+  if (save.newbie?.tutorialDone || save.newbie?.done) return false;
   const games = (save.stats?.w || 0) + (save.stats?.l || 0);
   const results = save.journey.season?.results?.length || 0;
   return games === 0 && results === 0;
