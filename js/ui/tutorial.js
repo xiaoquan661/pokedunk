@@ -97,6 +97,21 @@ const CSS = `
 .screen-match .tut-sum li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #242424}
 .screen-match .tut-sum li:last-child{border-bottom:none}
 .screen-match .tut-reward{margin:0 0 10px;padding:8px 10px;border:1px dashed #b8e63c;border-radius:3px;color:#eaffb0;font-size:12px;line-height:1.5;text-align:left}
+/* 教程完成：皮卡丘 / 伊布加入队伍 */
+.screen-match .tut-gift{position:relative;margin:2px 0 12px;padding:10px 8px 12px;border:1px solid rgba(184,230,60,.5);border-radius:4px;background:radial-gradient(120% 100% at 50% 0%,rgba(184,230,60,.18),rgba(184,230,60,.03) 68%,transparent);overflow:hidden}
+.screen-match .tut-gift::after{content:"";position:absolute;top:-60%;left:-40%;width:40%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:rotate(18deg);animation:tutGiftSweep 1.8s .35s ease-in-out both;pointer-events:none}
+.screen-match .tut-gift-title{display:block;margin-bottom:9px;font:700 13px var(--sport);letter-spacing:.14em;color:#b8e63c;animation:tutGiftTitle .45s ease both}
+.screen-match .tut-gift-row{display:flex;justify-content:center;gap:12px}
+.screen-match .tut-gift-card{position:relative;width:94px;padding:7px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid #b8e63c;border-radius:4px;background:linear-gradient(180deg,#18200c,#0b0e07);opacity:0;transform:translateY(18px) scale(.55);animation:tutGiftIn .6s cubic-bezier(.2,1.5,.35,1) forwards;animation-delay:var(--d);box-shadow:0 0 14px rgba(184,230,60,.22)}
+.screen-match .tut-gift-card img{position:relative;z-index:1;width:56px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 9px rgba(255,203,5,.7));animation:tutGiftBob 2s ease-in-out infinite}
+.screen-match .tut-gift-card b{position:relative;z-index:1;font:700 12px var(--sport);color:#f4f1e8;line-height:1.2}
+.screen-match .tut-gift-card small{position:relative;z-index:1;font-size:9.5px;color:#b8e63c;letter-spacing:.06em;line-height:1.2}
+.screen-match .tut-gift-halo{position:absolute;left:50%;top:35px;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;background:radial-gradient(circle,rgba(255,203,5,.46),rgba(255,203,5,0) 70%);animation:tutGiftHalo 1.8s ease-in-out infinite}
+@keyframes tutGiftIn{0%{opacity:0;transform:translateY(18px) scale(.5) rotate(-6deg)}70%{opacity:1;transform:translateY(-2px) scale(1.06) rotate(2deg)}100%{opacity:1;transform:none}}
+@keyframes tutGiftBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes tutGiftHalo{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes tutGiftTitle{0%{opacity:0;letter-spacing:.5em}100%{opacity:1;letter-spacing:.14em}}
+@keyframes tutGiftSweep{0%{left:-45%}100%{left:125%}}
 
 /* —— 复古主题：黑底保留，文字改米色、强调色改复古琥珀，边框改米色 —— */
 html[data-ui-theme="retro"] .screen-match .tut-strip{border-color:#f4ead2;background:rgba(8,10,9,.88);box-shadow:4px 4px 0 rgba(0,0,0,.6)}
@@ -126,6 +141,11 @@ html[data-ui-theme="retro"] .screen-match .tut-done-acts button{border-color:#f4
 html[data-ui-theme="retro"] .screen-match .tut-done-acts button.primary{background:#e9b45f;border-color:#f4ead2;color:#1c241e}
 html[data-ui-theme="retro"] .screen-match .tut-sum li{border-bottom-color:rgba(244,234,210,.2)}
 html[data-ui-theme="retro"] .screen-match .tut-reward{border-color:#e9b45f;color:#f4ead2}
+html[data-ui-theme="retro"] .screen-match .tut-gift{border-color:rgba(244,234,210,.45);background:radial-gradient(120% 100% at 50% 0%,rgba(233,180,95,.18),rgba(233,180,95,.03) 68%,transparent)}
+html[data-ui-theme="retro"] .screen-match .tut-gift-title{color:#e9b45f}
+html[data-ui-theme="retro"] .screen-match .tut-gift-card{border-color:#f4ead2;background:linear-gradient(180deg,#fff8e8,#f1e2c2);box-shadow:0 0 14px rgba(233,180,95,.25)}
+html[data-ui-theme="retro"] .screen-match .tut-gift-card b{color:#1c241e}
+html[data-ui-theme="retro"] .screen-match .tut-gift-card small{color:#8a5200}
 `;
 
 function ensureCss() {
@@ -138,6 +158,12 @@ function ensureCss() {
 
 function statsEmpty() {
   return { reps: 0, defendS: 0, elapsed: 0 };
+}
+
+function giftName(dex) {
+  const r = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
+  if (r) return String(r[1]).replace(/#\d+$/, "");
+  return ({ 25: "皮卡丘", 133: "伊布" })[dex] || "新伙伴";
 }
 
 function configFor(drill) {
@@ -280,17 +306,33 @@ export function startTutorial(root, save, actions = {}) {
     if (finished) return;
     finished = true;
     if (engine) engine.paused = true;
-    let reward = "";
-    if (!rewarded) { rewarded = true; reward = actions.onDone?.() || ""; }
+    let gift = null;
+    if (!rewarded) { rewarded = true; gift = actions.onDone?.() || null; }
+    const giftDex = Array.isArray(gift?.got) ? gift.got : [];
+    const reward = typeof gift === "string" ? gift : gift?.text || "";
     // 提前切回菜单音乐：把音频初始化挪到结算页显示期间，返回主页时不再额外卡顿
     gameAudio.setTrack("menu");
     const summary = DRILLS.map((d, i) => `<li><span>${i + 1}. ${d.title}</span><span>${i < idx || (i === idx && phase === "done") ? "✓" : "—"}</span></li>`).join("");
+    const giftHtml = giftDex.length
+      ? `<div class="tut-gift">
+          <b class="tut-gift-title">新伙伴加入！</b>
+          <div class="tut-gift-row">${giftDex.map((dex, i) => `
+            <div class="tut-gift-card" style="--d:${(0.15 + i * 0.22).toFixed(2)}s">
+              <span class="tut-gift-halo"></span>
+              <img src="./sprites/${dex}.png" alt="">
+              <b>${giftName(dex)}</b>
+              <small>已加入队伍</small>
+            </div>`).join("")}
+          </div>
+        </div>`
+      : "";
     const done = page.querySelector(".tut-done");
     done.innerHTML = `<div class="panel">
       <h2>教程完成</h2>
+      ${giftHtml}
       <ul class="tut-sum">${summary}</ul>
       ${reward ? `<p class="tut-reward">${reward}</p>` : ""}
-      <p>${reward ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : "现在可以去打一场真正的比赛了。"}</p>
+      <p>${giftDex.length ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : reward ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : "现在可以去打一场真正的比赛了。"}</p>
       <div class="tut-done-acts">
         <button class="primary" data-done="exit">返回主页</button>
         <button data-done="again">重新训练</button>

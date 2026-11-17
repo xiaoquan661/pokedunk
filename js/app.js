@@ -19,7 +19,7 @@ import { settleMatchResult } from "./journey/settle.js?v=93";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=77";
 import { openDaily } from "./ui/daily.js?v=81";
 import { openAchievements } from "./ui/achv-ui.js?v=69";
-import { startTutorial } from "./ui/tutorial.js?v=73";
+import { startTutorial } from "./ui/tutorial.js?v=75";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=59";
 import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=74";
@@ -104,7 +104,7 @@ function grantTutorialGift(save) {
     if (r.ok) {
       const m = s.mons[r.id];
       m.pos = getPokemon(dex).pos;
-      got.push(getPokemon(dex).name);
+      got.push(dex);
     } else missing++;
   }
   // 极端情况下（已经拥有这两只）补金币，避免流程断掉
@@ -115,8 +115,8 @@ function grantTutorialGift(save) {
   s.newbie.tutorialDone = true;
   s.newbie.giftDone = true;
   writeSave(s);
-  if (!got.length) return "教程伙伴已经在你队里了，已补发 600 篮球币。";
-  return `获得伙伴：${got.join("、")}（已加入队伍） · 新手补给 +200 篮球币`;
+  if (!got.length) return { text: "教程伙伴已经在你队里了，已补发 600 篮球币。", got: [] };
+  return { text: `新手补给 +200 篮球币`, got: [...got] };
 }
 
 function startNewbieTutorial(save) {
