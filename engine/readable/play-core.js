@@ -8030,7 +8030,7 @@ class lr {
     let r = null,
       i = 0,
       l = 0;
-    const c = 46;
+    const c = 69; // 摇杆行程：与放大后的 156px 底盘匹配
     (s.addEventListener("pointerdown", (d) => {
       (d.preventDefault(), (r = d.pointerId), s.setPointerCapture(r));
       const f = s.getBoundingClientRect(),
