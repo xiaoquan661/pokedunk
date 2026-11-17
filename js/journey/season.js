@@ -57,6 +57,8 @@ function emptySeason(no, history = []) {
     playoffs: null,
     fourKings: { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false },
     badges: [],
+    contracts: 0,
+    contractWins: 0,
     champion: false,
     history,
   };

@@ -16,18 +16,25 @@ import { currentMatchInfo, recordResult } from "./season.js?v=69";
 import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=66";
 import { offerLegendReward } from "./legend.js?v=59";
 
-const CONTRACT_CHANCE = 0.3; // 真实比赛胜利后出现精灵合同的概率
 const CONTRACT_DISCOUNT = 0.6; // 合同价 = 商店价 × 60%
+const CONTRACTS_PER_SEASON = 2;
+const CONTRACT_WIN_STEPS = [2, 5]; // 赛季第 2、5 场胜利各一张
 // S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高
 const KIND_COIN = { league: 0.7, playoff: 1.5, final: 2.0, elite: 3.0 };
 const KIND_XP = { league: 5.0, playoff: 7.0, final: 8.0, elite: 8.0 };
 
 /**
- * 战胜后的精灵合同：从普通+稀有的未结缘精灵中抽 1 只，按商店价 6 折出售。
- * 不来自对手阵容、不出传说、不直接白送，也不产生重复返币。
+ * 战胜后的精灵合同：每个赛季固定 2 张，分别在第 2、5 场胜利后出现。
+ * 从普通+稀有的未结缘精灵中抽 1 只，按商店价 6 折出售；不出传说，不重复返币。
  */
 function rollContract(save) {
-  if (Math.random() >= CONTRACT_CHANCE) return null;
+  const season = save.journey?.season;
+  if (!season) return null;
+  const issued = season.contracts || 0;
+  const wins = season.contractWins || 0;
+  if (issued >= CONTRACTS_PER_SEASON) return null;
+  const due = wins >= CONTRACT_WIN_STEPS[Math.min(issued, CONTRACT_WIN_STEPS.length - 1)];
+  if (!due) return null;
   const rows = window.__PJ_DEX_ROWS || [];
   const pool = rows.filter((r) => {
     const dex = r[0];
@@ -41,6 +48,7 @@ function rollContract(save) {
   const name = String(row[1] ?? getPokemon(dex).name).replace(/#\d+$/, "");
   const basePrice = monPrice(dex);
   const price = Math.max(30, Math.round((basePrice * CONTRACT_DISCOUNT) / 5) * 5);
+  season.contracts = issued + 1;
   return { dex, name, basePrice, price, rarity: rarityOf(dex) };
 }
 
@@ -101,6 +109,10 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   const oppScore = engine ? engine.score[1] : 0;
   const won = !quit && engine ? myScore > oppScore : false;
   const margin = Math.min(10, Math.abs(myScore - oppScore));
+  if (won) {
+    const season = save.journey?.season;
+    if (season) season.contractWins = (season.contractWins || 0) + 1;
+  }
 
   // 赛前信息（推进前读取）
   const info = currentMatchInfo(save, mode) || {
