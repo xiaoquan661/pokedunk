@@ -1349,7 +1349,7 @@ html[data-ui-theme="retro"] .daily-body .dh-tag { color: var(--r-ink); }
 }
 .result-screen {
   align-items: center;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
+  padding-top: calc(var(--safe-t, 0px) + 18px);
 }
 .result-screen .rs-card {
   margin: auto;
@@ -1664,31 +1664,24 @@ html[data-ui-theme="retro"] .game .sim-btn[disabled] {
 
 /* 触屏按键 */
 html[data-ui-theme="retro"] .game .touch .tb {
-  border: 2px solid var(--r-ink);
-  background: rgba(244, 234, 210, 0.92);
+  border: 3px solid var(--r-ink);
+  background: rgba(244, 234, 210, 0.95);
   color: var(--r-ink);
-  border-radius: 4px;
+  border-radius: 50%;
   box-shadow: 3px 3px 0 rgba(28, 36, 30, 0.35);
 }
-html[data-ui-theme="retro"] .game .touch .tb.xa,
-html[data-ui-theme="retro"] .game .touch .tb.xb,
-html[data-ui-theme="retro"] .game .touch .tb.xx,
-html[data-ui-theme="retro"] .game .touch .tb.xy {
-  background: linear-gradient(rgba(var(--xc), 0.22), rgba(var(--xc), 0.22)), var(--r-paper);
-  border-color: rgba(var(--xc), 0.85);
-}
+html[data-ui-theme="retro"] .game .touch .tb.xa { background: rgba(31, 92, 58, 0.16); border-color: #1f5c3a; color: #1f5c3a; }
+html[data-ui-theme="retro"] .game .touch .tb.xb { background: rgba(179, 58, 47, 0.14); border-color: #b33a2f; color: #8f2a21; }
+html[data-ui-theme="retro"] .game .touch .tb.xx { background: rgba(233, 180, 95, 0.35); border-color: #b5761f; color: #4a2c05; }
+html[data-ui-theme="retro"] .game .touch .tb.xy { background: rgba(31, 92, 58, 0.12); border-color: #1f5c3a; color: #1f5c3a; }
 html[data-ui-theme="retro"] .game .touch .tb b,
 html[data-ui-theme="retro"] .game .touch .tb span { color: inherit; text-shadow: none; }
-html[data-ui-theme="retro"] .game .touch .tb.turbo {
-  background: var(--r-paper-2);
-  border-color: var(--r-ink);
-}
 html[data-ui-theme="retro"] .game .touch .tb.special.ready {
-  background: var(--r-green);
+  background: #e9b45f;
   border-color: var(--r-ink);
-  color: var(--r-paper);
+  color: #1c241e;
 }
-html[data-ui-theme="retro"] .game .touch .tb.special.ready b { color: var(--r-paper); }
+html[data-ui-theme="retro"] .game .touch .tb.special.ready b { color: #1c241e; }
 html[data-ui-theme="retro"] .game .touch .stick-base {
   border: 3px dashed rgba(28, 36, 30, 0.5);
   background: rgba(244, 234, 210, 0.3);

@@ -34,14 +34,26 @@ const CSS =
   ".hatch-ring{position:absolute;left:calc(50% - 85px);top:calc(50% - 85px);width:170px;height:170px;border:3px solid #f5c542;border-radius:50%;opacity:0}" +
   ".hatch-ring.on{animation:hRing .6s ease-out forwards}" +
   "@keyframes hRing{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.9)}}" +
-  ".hatch-card{width:100%;margin:14px auto 0;background:linear-gradient(180deg,#1c376e,#12224a);border:2px solid #f5c542;border-radius:14px;padding:14px 16px;opacity:0;transform:translateY(14px);transition:.3s;pointer-events:none}" +
+  ".hatch-card{width:100%;margin:14px auto 0;background:#101010;border:2px solid #f5c542;border-radius:6px;padding:16px 18px 14px;opacity:0;transform:translateY(14px);transition:.3s;pointer-events:none;box-shadow:7px 7px 0 rgba(0,0,0,.6);text-align:center}" +
   ".hatch-card.on{opacity:1;transform:none;pointer-events:auto}" +
-  ".hc-t{font-size:20px;font-weight:800;color:#f5c542;text-shadow:0 2px 4px rgba(0,0,0,.45)}" +
-  ".hc-s{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px}" +
-  ".hc-xp{margin-top:10px;text-align:left;background:rgba(0,0,0,.25);border-radius:10px;padding:9px 12px}" +
-  ".hc-xp .row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0}" +
-  ".hc-xp .row b{color:#f5c542}" +
-  ".hc-xp .up{color:#21d07a;font-weight:700}" +
+  ".hc-kicker{display:block;font:700 9px var(--sport,sans-serif);letter-spacing:.24em;color:#f5c542;opacity:.85;margin-bottom:4px}" +
+  ".hc-t{font:800 23px var(--sport,sans-serif);color:#f5c542;letter-spacing:.05em;text-shadow:none}" +
+  ".hc-s{font-size:12px;color:#b9b9b9;margin-top:6px;line-height:1.6}" +
+  ".hc-xp{margin-top:12px;text-align:left;background:#151515;border:1px solid #2c2c2c;border-radius:4px;padding:9px 12px}" +
+  ".hc-xp .row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;color:#d8d8d8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}" +
+  ".hc-xp .row:last-child{border-bottom:none}" +
+  ".hc-xp .row b{color:#b8e63c;font-weight:700}" +
+  ".hc-xp .up{color:#b8e63c;font-weight:700}" +
+  ".hc-btn{display:block;width:100%;margin-top:12px;padding:11px 14px;border-radius:4px;border:2px solid #b8e63c;background:#b8e63c;color:#101010;font:700 13px var(--sport,sans-serif)}" +
+  ".hc-btn:active{transform:translateY(1px)}" +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hatch-card{background:#fff8e8;border:3px solid #1c241e;border-radius:4px;box-shadow:7px 7px 0 rgba(28,36,30,.28)}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-kicker{color:#8a5200}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-t{color:#1c241e}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-s{color:#575245}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-xp{background:#f4ead2;border-color:#b9ad92}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-xp .row{color:#3a443c;border-bottom-color:rgba(28,36,30,.15)}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-xp .row b{color:#1f5c3a}' +
+  'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-btn{background:#1f5c3a;border-color:#1c241e;color:#f4ead2;box-shadow:3px 3px 0 rgba(28,36,30,.3)}' +
   ".hatch-skip{position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:11px}" +
   ".hatch-ov.end .hatch-skip{display:none}" +
   ".hatch-ov .pulse{opacity:1 !important;animation:ePulse .5s ease-in-out 3}" +
@@ -111,9 +123,9 @@ function buildOverlay(id) {
     '<div class="hshell top"></div><div class="hshell bot"></div>' +
     '<img class="hatch-mon" src="" alt="">' +
     "</div>" +
-    '<div class="hatch-card"><div class="hc-badge">传说降临</div><div class="hc-t"></div><div class="hc-s"></div><div class="hc-xp" hidden></div><button class="pj-btn" style="margin-top:10px;padding:8px 16px;border-radius:14px;border:none;background:#f5c542;color:#1a2c55;font:700 12px var(--sport, sans-serif)">确认</button></div></div>' +
+    '<div class="hatch-card"><div class="hc-badge">传说降临</div><span class="hc-kicker">LEVEL UP</span><div class="hc-t"></div><div class="hc-s"></div><div class="hc-xp" hidden></div><button class="hc-btn" type="button">确 认</button></div></div>' +
     '<p class="hatch-skip">点击任意处跳过</p>';
-  document.body.appendChild(ov);
+  (document.getElementById("stage")||document.body).appendChild(ov);
   return ov;
 }
 

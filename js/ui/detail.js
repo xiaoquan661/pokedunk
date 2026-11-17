@@ -5,16 +5,16 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=70";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=80";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=64";
+} from "../systems/build.js?v=66";
 import { loadSave, writeSave, moveMon } from "../storage.js?v=71";
 import { BERRY_XP } from "../systems/shop.js?v=71";
 import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=61";
+import { playEvolve } from "./anim.js?v=67";
 import { ICON } from "./icons.js?v=63";
 import { xpToNext } from "../../engine/growth.js";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
@@ -248,7 +248,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
     }
   });
 
-  document.body.appendChild(ov);
+  (document.getElementById("stage")||document.body).appendChild(ov);
 }
 
 

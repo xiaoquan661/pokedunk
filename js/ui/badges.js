@@ -112,7 +112,7 @@ export function openBadgeDetail(save, opts = {}) {
   </div></div>`;
   const close = () => { wrap.remove(); opts.onClose?.(); };
   wrap.addEventListener("click", (e) => { if (e.target === wrap || e.target.closest("[data-bd-back]")) close(); });
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
 }
 
 /** 徽章获得动画：奖牌放大 + 金色光芒；点击收下后移除 */
@@ -139,7 +139,7 @@ export function playBadgeGrant(badgeId, opts = {}) {
     if (e.target === layer || e.target.closest("[data-bgr-close]")) close();
   });
   const show = () => {
-    document.body.appendChild(layer);
+    (document.getElementById("stage")||document.body).appendChild(layer);
     try { opts.onShow?.(); } catch (_) {}
   };
   if (opts.delay) setTimeout(show, opts.delay); else show();

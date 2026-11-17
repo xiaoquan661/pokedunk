@@ -5,12 +5,15 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=70";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=80";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
 export const STAT_KEYS = ["spd", "sht", "ins", "pas", "def", "blk", "reb", "hnd"];
 export const STAT_ZH = { spd: "速度", sht: "投篮", ins: "终结", pas: "传球", def: "防守", blk: "盖帽", reb: "篮板", hnd: "控球" };
+/** 引擎随机加点文案（"+1 Finishing"）→ 中文（"+1 终结"） */
+const STAT_EN_ZH = { Speed: "速度", Shooting: "投篮", Finishing: "终结", Passing: "传球", "Perimeter D": "防守", Blocking: "盖帽", Rebounding: "篮板", Handles: "控球" };
+export const growthZh = (msg) => String(msg).replace(/^(\+\d+\s+)(.+)$/, (m, p1, en) => p1 + (STAT_EN_ZH[en.trim()] || en));
 export const TRAIN_MAX = 40;
 export const ITEM_MAX = 20;
 export const ITEM_PER_TYPE = 4;

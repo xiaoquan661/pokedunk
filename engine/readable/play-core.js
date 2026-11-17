@@ -1427,7 +1427,7 @@ function Gr(a, e, t) {
   return !!s && Math.hypot(a.x - s.x, a.y - s.y) <= nn;
 }
 const rt = 0.8,
-  rn = 0.62,
+  rn = 0.78,
   $s = 1;
 function Ot(a) {
   return new Set(a.map((e) => e.pos)).size === 5 ? 2 : 0;
@@ -1915,10 +1915,12 @@ class MatchEngine {
         p >= 1)
       ) {
         const y = t.to.team;
+        // 跳球定格 1.6 秒：等现场播报读完再开球，避免文字挡住玩家视野
         ((this.tipoff = null),
           (s.noPickup = 0),
           (this.tipWinner = y),
-          (this.phase = "live"),
+          (this.phase = "tip"),
+          (this.phaseT = 1.6),
           (this.offense = 1 - y),
           this.giveBall(t.to),
           this.updateUser(!0));
@@ -2107,12 +2109,17 @@ class MatchEngine {
     }
   }
   shotClockViolation() {
-    const e = this.ball;
-    if ((this.events.push({ kind: "shotclock", team: this.offense }), this.sfx.push("shotclock"), e.owner)) {
+    const e = this.ball,
+      next = 1 - this.offense;
+    if ((this.events.push({ kind: "shotclock", team: next }), this.sfx.push("shotclock"), e.owner)) {
       const t = e.owner;
-      ((e.owner = null), (e.mode = "loose"), (e.vx = 0), (e.vy = 0), (e.vz = 3), (e.x = t.x), (e.y = t.y));
+      ((e.owner = null), (e.mode = "loose"), (e.vx = 0), (e.vy = 0), (e.vz = 0), (e.x = t.x), (e.y = t.y));
     }
-    ((e.fromShot = -1), this.setOffense(1 - this.offense), (this.phase = "dead"), (this.phaseT = 1));
+    ((e.fromShot = -1),
+      this.setOffense(next),
+      (this.__serveTeam = next),
+      (this.phase = "dead"),
+      (this.phaseT = 1.2));
   }
   inbound() {
     if (this.drillId) return this.stageDrill();
@@ -2125,7 +2132,19 @@ class MatchEngine {
       const o = dist2d(n.x, n.y, e.x, e.y);
       o < s && ((s = o), (t = n));
     }
-    (t != null || (t = this.teamPlayers(this.offense)[0]),
+    t != null || (t = this.teamPlayers(this.offense)[0]);
+    // 24 秒违例后的重发球：接球人站到本方后场发球点，由对方（新进攻方）重新进攻
+    if (this.__serveTeam === this.offense && t) {
+      const bx = hoopXOf(1 - this.offense);
+      t.x = bx + (bx > COURT_MID_X ? -8 : 8);
+      t.y = COURT_MID_Y;
+      t.vx = 0;
+      t.vy = 0;
+      t.vz = 0;
+      t.z = 0;
+      t.state = "free";
+    }
+    ((this.__serveTeam = null),
       (this.phase = "live"),
       (this.shotClock = 24),
       this.giveBall(t, !0),
@@ -6056,7 +6075,8 @@ class gs {
       this.court || this.useCourt((i = e.cfg.court) != null ? i : ms(e.teams[0])),
       this.drawArena(s),
       this.drawFloor(s),
-      this.drawMarkers(s, e));
+      this.drawMarkers(s, e),
+      this.drawStealRing(e, t));
     for (const l of e.players) this.shadow(s, l.x, l.y, l.z, 1.1 * l.size);
     const o = e.ball;
     this.shadow(s, o.x, o.y, o.z, 0.6);
@@ -6073,6 +6093,48 @@ class gs {
       this.drawUserMarker(s, e),
       s.restore(),
       this.flash > 0 && ((s.fillStyle = "rgba(255,255,255,".concat(this.flash * 2.5, ")")), s.fillRect(0, 0, ce, Le)));
+  }
+  /**
+   * 抢断判定圈：操控球员脚下的范围（真实判定半径 4.6，加速推挤 4.8）。
+   * 低存在感设计：只有对手靠近才淡入，细描边 + 极淡填充，不做高饱和红块。
+   */
+  drawStealRing(e, dt) {
+    const u = e.user,
+      o = e.ball && e.ball.owner;
+    let target = 0,
+      threat = false,
+      R = 4.6;
+    if (u && o && o.team !== u.team && u.state !== "dunk" && u.state !== "stun") {
+      R = e.inputs && e.inputs[u.team] && e.inputs[u.team].turbo ? 4.8 : 4.6;
+      const d = dist2d(u.x, u.y, o.x, o.y);
+      // 距离 10 → 3.5 之间淡入，避免整场都挂着一个圈
+      target = Math.max(0, Math.min(1, (10 - d) / 6.5));
+      if (u.stealCd > 0.05) target *= 0.55;
+      threat = d <= R + 0.4;
+    }
+    this.stealA = (this.stealA || 0) + (target - (this.stealA || 0)) * Math.min(1, (dt || 0.016) * 7);
+    const a = this.stealA || 0;
+    if (a < 0.02) return;
+    const ctx = this.ctx,
+      pts = [];
+    for (let i = 0; i < 40; i++) {
+      const ang = (i / 40) * Math.PI * 2,
+        p = this.proj(u.x + Math.cos(ang) * R, u.y + Math.sin(ang) * R, 0);
+      pts.push(p);
+    }
+    const pulse = 0.5 + 0.5 * Math.sin(this.t * 4.5);
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) i ? ctx.lineTo(pts[i].x, pts[i].y) : ctx.moveTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    // 极淡的底：只提示范围，不抢画面
+    ctx.fillStyle = `rgba(255,120,110,${(threat ? 0.055 + 0.02 * pulse : 0.03) * a})`;
+    ctx.fill();
+    ctx.lineWidth = threat ? 2 : 1.4;
+    ctx.strokeStyle = `rgba(255,132,120,${(threat ? 0.5 + 0.18 * pulse : 0.26) * a})`;
+    ctx.setLineDash(threat ? [] : [7, 6]);
+    ctx.stroke();
+    ctx.restore();
   }
   drawArena(e) {
     ((e.fillStyle = "#0b0e22"), e.fillRect(0, 0, ce, Le));
@@ -6946,7 +7008,7 @@ class di {
   }
 }
 function Aa() {
-  return '\n    <div class="controls">\n      <h3>触屏操作</h3>\n      <ul class="touch-help">\n        <li><b>移动</b>：按住左下摇杆拖动</li>\n        <li><b>右侧按钮</b>：投篮 / 传球 / 抢断 / 加速 / 必杀（攻防自动互换）</li>\n        <li><b>投篮</b>：按住蓄力，力度条变绿的瞬间松开 = 完美出手必进</li>\n        <li><b>必杀</b>：槽蓄满后点必杀键，放出招牌招式</li>\n      </ul>\n    </div>';
+  return '\n    <div class="controls">\n      <h3>触屏操作</h3>\n      <ul class="touch-help">\n        <li><b>移动</b>：按住左下摇杆拖动；推满外圈自动冲刺</li>\n        <li><b>右侧按钮</b>：投篮 / 盖帽、传球 / 换防、抢断、必杀（攻防自动互换）</li>\n        <li><b>投篮</b>：按住蓄力，按键充满发白的瞬间松开 = 完美出手必进</li>\n        <li><b>必杀</b>：槽蓄满后点必杀键，放出招牌招式</li>\n      </ul>\n    </div>';
 }
 function mi(a, e = {}) {
   return '\n    <div class="game-settings">\n      <div class="field">Difficulty\n        <div class="seg" id="difficulty">\n          '
@@ -7510,7 +7572,7 @@ class Ga {
           this.say("空中接力给到 ".concat(U(t.player), "!"));
           break;
         case "shotclock":
-          this.say("进攻时间违例！");
+          this.say("进攻时间违例！交换球权，对方后场发球。");
           break;
         case "quarter":
           this.banner(t.label, t.sub, 2.2);
@@ -7521,8 +7583,7 @@ class Ga {
           break;
         case "jumpball":
           this.say(
-            "".concat(U(t.winner), " 跳球胜过 ").concat(U(t.loser), "!"),
-            "".concat(AB(this.g.teams[t.winner.team]), " 球权。"),
+            "跳球：".concat(U(t.winner), " 胜过 ").concat(U(t.loser), "，").concat(AB(this.g.teams[t.winner.team]), " 球权。"),
           );
           break;
         case "final":
@@ -7945,6 +8006,7 @@ class lr {
         '\n      <div class="stick-zone"><div class="stick-base"><div class="stick-knob"></div></div></div>\n      <div class="btns">\n        <button class="tb turbo" data-b="turbo"><b>RB</b><span>加速</span></button>\n        <button class="tb special xy" data-b="special"><b>Y</b><span>必杀</span></button>\n        <button class="tb shoot xx" data-b="shoot"><b>X</b><span>投篮</span></button>\n        <button class="tb steal xb" data-b="steal"><b>B</b><span>抢断</span></button>\n        <button class="tb pass xa" data-b="pass"><b>A</b><span>传球</span></button>\n      </div>'),
       e.appendChild(t),
       (this.touchRoot = t),
+      (e.__touchPad = this),
       t.querySelectorAll(".tb").forEach((d) => {
         var p;
         const f = d.dataset.b;
@@ -8301,6 +8363,7 @@ function wi(a, e, t, s, n, o = {}) {
     h = l.querySelector('[data-a="announcer"]'),
     d = a.querySelector(".loading"),
     f = new MatchEngine(e),
+    _dbg = (r.__matchEngine = f),
     u = o.online,
     m = a.querySelector(".net-status"),
     p = a.querySelector(".net-ping");

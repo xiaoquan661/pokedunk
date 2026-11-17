@@ -10,17 +10,17 @@
 }
 
 /* 一键模拟 + 横竖屏切换：收进右上角，在暂停键下方竖排（竖屏顶部不再与记分板堆叠） */
-.game .sim-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#f5c542;font-size:12px}
+.game .sim-btn{position:absolute;top:calc(var(--safe-t, 0px) + 52px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#f5c542;font-size:12px}
 .game .sim-btn[disabled]{color:var(--text-dim);opacity:.7}
-.game .rot-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 94px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#fff;font-size:12px}
+.game .rot-btn{position:absolute;top:calc(var(--safe-t, 0px) + 94px);right:10px;left:auto;bottom:auto;z-index:7;height:36px;padding:0 12px;border-radius:8px;border:2px solid var(--line);background:#0a0d1fb3;color:#fff;font-size:12px}
 
 /* 竖屏窄屏（样机 390×844）：角色卡第一行左，计分板独占第二行通栏居中，
    模拟/横屏按钮下移到计分板下方，避免挤占计分板宽度 */
 @media (max-width:700px){
-  .game.has-touch .pcard{top:max(6px,env(safe-area-inset-top,0px))}
-  .game.has-touch .bug{top:calc(max(8px,env(safe-area-inset-top,0px)) + 70px);max-width:calc(100vw - 24px)}
-  .game .sim-btn{top:calc(env(safe-area-inset-top,0px) + 112px)}
-  .game .rot-btn{top:calc(env(safe-area-inset-top,0px) + 152px)}
+  .game.has-touch .pcard{top:max(6px,var(--safe-t, 0px))}
+  .game.has-touch .bug{top:calc(max(8px,var(--safe-t, 0px)) + 70px);max-width:calc(100% - 24px)}
+  .game .sim-btn{top:calc(var(--safe-t, 0px) + 112px)}
+  .game .rot-btn{top:calc(var(--safe-t, 0px) + 152px)}
 }
 
 /* 竖屏战斗：左上角当前精灵状态卡放大（原版 200px + scale(.85) 过小） */
@@ -32,9 +32,9 @@
   .game.has-touch .pcard .povr{font-size:.66rem}
   .game.has-touch .pcard .bar{height:9px}
   .game.has-touch .pcard .bar b{font-size:.44rem;line-height:9px;padding-left:5px}
-  .game.has-touch .bug{top:calc(max(8px,env(safe-area-inset-top,0px)) + 84px)}
-  .game .sim-btn{top:calc(env(safe-area-inset-top,0px) + 126px)}
-  .game .rot-btn{top:calc(env(safe-area-inset-top,0px) + 166px)}
+  .game.has-touch .bug{top:calc(max(8px,var(--safe-t, 0px)) + 84px)}
+  .game .sim-btn{top:calc(var(--safe-t, 0px) + 126px)}
+  .game .rot-btn{top:calc(var(--safe-t, 0px) + 166px)}
 }
 
 /* —— 横屏 CSS 兜底（方向锁不可用时）：旋转整个 .game 容器 ——
@@ -43,6 +43,8 @@
    cqw=原视口高（横屏宽），cqh=原视口宽（横屏高）。 */
 .game.rot{container-type:size;top:0;left:100vw;width:100dvh;height:100vw;transform:rotate(90deg);transform-origin:0 0;background:#05060f}
 .game.rot .stage{width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;position:relative}
+/* 竖屏：舞台宽度只能取容器逻辑宽度（不能再用 100vw，缩放舞台内 vw 是物理视口） */
+.game:not(.rot) .stage{width:100%;max-width:100%}
 .game.rot .stage canvas.court{width:100%;height:100%}
 
 /* —— 详情页能力条：original.css 在 main.css 之后加载会覆盖 .rt，
@@ -57,3 +59,53 @@
 
 /* —— 全局禁用态统一（各页按钮不再各自漂移） —— */
 button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
+
+/* ============================================================
+   竖屏触屏操控层（四键弧形热区 + 图标 + 独立蓄力条）
+   ============================================================ */
+.game.has-touch .touch .btns{position:absolute;inset:0;width:auto;height:auto}
+.game.has-touch .touch .tb{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border-radius:50%;border:2px solid rgba(255,255,255,.38);
+  background:rgba(10,13,31,.58);color:#f4f1e8;
+  font-family:var(--sport);padding:0;touch-action:none;
+  box-shadow:inset 0 -4px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+  transition:transform .06s ease,filter .06s ease,background .12s ease;
+}
+.game.has-touch .touch .tb::before{content:"";position:absolute;inset:-6px;border-radius:50%}
+.game.has-touch .touch .tb b{display:flex;align-items:center;justify-content:center;width:28px;height:28px;line-height:1}
+.game.has-touch .touch .tb b svg{width:100%;height:100%;display:block}
+.game.has-touch .touch .tb span:not(.pd-ico){font-size:11px;line-height:1;letter-spacing:.08em;font-weight:700}
+.game.has-touch .touch .tb.on{transform:scale(.94);filter:brightness(1.2)}
+.game.has-touch .touch .tb .pd-def{display:none}
+.game.has-touch .touch .tb.pd-def .pd-atk{display:none}
+.game.has-touch .touch .tb.pd-def .pd-def{display:block}
+
+.game.has-touch .touch .tb[data-b="shoot"]{right:22px;bottom:78px;width:100px;height:100px;border-color:#ffcb05;background:rgba(255,203,5,.16);color:#ffd75e}
+.game.has-touch .touch .tb[data-b="shoot"] b{width:38px;height:38px}
+.game.has-touch .touch .tb[data-b="shoot"] span:not(.pd-ico){font-size:12.5px}
+.game.has-touch .touch .tb[data-b="shoot"].on{background:rgba(255,203,5,.32)}
+.game.has-touch .touch .tb[data-b="pass"]{right:136px;bottom:50px;width:72px;height:72px;border-color:#5b9dff;background:rgba(59,111,216,.22);color:#cfe0ff}
+.game.has-touch .touch .tb[data-b="pass"] b{width:24px;height:24px}
+.game.has-touch .touch .tb[data-b="steal"]{right:112px;bottom:172px;width:64px;height:64px;border-color:#ff8a7f;background:rgba(224,64,64,.18);color:#ffd3ce}
+.game.has-touch .touch .tb[data-b="steal"] b{width:22px;height:22px}
+.game.has-touch .touch .tb[data-b="special"]{right:10px;bottom:196px;width:72px;height:72px;border-color:#b8e63c;background:rgba(184,230,60,.14);color:#e6ffb0}
+.game.has-touch .touch .tb[data-b="special"] b{width:24px;height:24px}
+.game.has-touch .touch .tb[data-b="special"].ready{border-color:#ffcb05;background:#ffb900f2;color:#1a1400;animation:pdPulse .5s infinite alternate}
+@keyframes pdPulse{from{box-shadow:0 0 0 0 rgba(255,185,0,.45),inset 0 -4px rgba(0,0,0,.25)}to{box-shadow:0 0 16px 4px rgba(255,185,0,.65),inset 0 -4px rgba(0,0,0,.25)}}
+
+/* 摇杆推满：冲刺态 */
+.game.has-touch .touch.pd-sprint .stick-base{border-color:#ffcb05;box-shadow:0 0 0 4px rgba(255,203,5,.14),0 0 18px rgba(255,203,5,.45)}
+.game.has-touch .touch.pd-sprint .stick-knob{background:rgba(255,203,5,.9)}
+.game.has-touch .touch.pd-sprint .stick-base::after{content:"冲刺";position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:700 10px var(--sport);color:#ffcb05;white-space:nowrap;letter-spacing:.1em}
+
+/* 蓄力反馈：不再单独出横条，直接灌进投篮键（底部向上填充 + 完美区高亮） */
+.game.has-touch .touch .tb[data-b="shoot"]{overflow:hidden}
+.game.has-touch .touch .tb .pd-charge{position:absolute;left:0;right:0;bottom:0;height:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,224,138,.6),rgba(255,203,5,.32));border-top:2px solid rgba(255,255,255,.9);box-shadow:0 0 8px rgba(255,203,5,.5)}
+.game.has-touch .touch .tb[data-b="shoot"] > b,
+.game.has-touch .touch .tb[data-b="shoot"] > span{position:relative;z-index:1}
+.game.has-touch .touch .tb[data-b="shoot"].pd-perfect{border-color:#fff;box-shadow:0 0 18px rgba(255,255,255,.85),inset 0 -4px rgba(0,0,0,.2)}
+.game.has-touch .touch .tb[data-b="shoot"].pd-perfect .pd-charge{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.2));border-top-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.8)}
+html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"].pd-perfect{border-color:#fff8e8}
+html[data-ui-theme="retro"] .game.has-touch .touch .tb{border-color:#e9b45f;background:rgba(20,24,20,.72);color:#f4ead2}
+html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-color:#e9b45f;background:rgba(233,180,95,.18);color:#ffe0a8}

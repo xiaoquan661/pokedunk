@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设备适配自检</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #101014; overflow: hidden; }
+  #frame { position: absolute; left: 50%; top: 0; border: 0; background: #000; transform-origin: top center; }
+  #label { position: fixed; left: 6px; bottom: 6px; z-index: 9; max-width: 96vw; padding: 6px 8px; border-radius: 4px; background: rgba(0,0,0,.72); color: #d8d8d8; font: 11px/1.5 Consolas, monospace; white-space: pre; }
+</style>
+</head>
+<body>
+<div id="label"></div>
+<script>
+  var q = new URLSearchParams(location.search);
+  var w = +q.get("w") || 390;
+  var h = +q.get("h") || 844;
+  var dpr = q.get("dpr") || "1";
+  var safet = q.get("safet") || "0";
+  var safeb = q.get("safeb") || "0";
+  var dev = q.get("dev") || "device";
+  var s = Math.min(1, (innerWidth - 8) / w, (innerHeight - 8) / h);
+  var f = document.createElement("iframe");
+  f.id = "frame";
+  f.width = w;
+  f.height = h;
+  f.style.transform = "translateX(-50%) scale(" + s + ")";
+  f.src = "../index.html?dev=1&safet=" + safet + "&safeb=" + safeb;
+  document.body.appendChild(f);
+  document.getElementById("label").textContent =
+    dev + "  " + w + "x" + h + "  DPR " + dpr + "  safe " + safet + "/" + safeb + "  preview " + s.toFixed(2) + "x";
+  window.__frame = f;
+  window.__preview = s;
+</script>
+</body>
+</html>

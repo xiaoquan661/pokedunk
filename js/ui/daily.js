@@ -122,6 +122,6 @@ export function openDaily(save, actions = {}) {
     }
   });
   wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
   render();
 }

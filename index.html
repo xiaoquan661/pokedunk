@@ -4,16 +4,115 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>口袋灌篮</title>
-<link rel="stylesheet" href="./css/main.css?v=49" />
-<link rel="stylesheet" href="./css/original.css?v=32" />
-<link rel="stylesheet" href="./css/game-override.css?v=42" />
-<link rel="stylesheet" href="./css/menu-legacy.css?v=120" />
-<link id="ui-theme-style" rel="stylesheet" href="./css/black.css?v=43" />
+<style>
+  /* ===== 跨设备等比缩放舞台：以 390×844 设计稿为基准，只整体缩放，不重排 ===== */
+  html, body { height: 100%; background: #05060f; overflow: hidden; }
+  :root { --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); }
+  #stage {
+    position: fixed;
+    left: 50%;
+    top: var(--stage-top, 0px);
+    width: 390px;
+    height: var(--stage-h, 844px);
+    transform: translateX(-50%) scale(var(--stage-s, 1));
+    transform-origin: top center;
+    overflow: hidden;
+    /* 安全区由舞台整体让位，舞台内部不再重复留白 */
+    --safe-t: 0px;
+    --safe-b: 0px;
+    --sat: 0px;
+  }
+  /* 局内「横屏」按钮触发的旋转模式：交还给物理视口，沿用原有 100dvh/100vw 布局 */
+  #stage.rot-live { left: 0; top: 0; width: 100%; height: 100%; transform: none; transform-origin: 0 0; overflow: visible; --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); }
+  #app { height: 100%; }
+  /* 竖屏提示：仅横屏且未主动使用局内横屏时出现 */
+  #rotate-hint {
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: #05060f; color: #f4f1e8; text-align: center; padding: 24px;
+    font-family: "FusionPixel", "PingFang SC", "Microsoft YaHei", monospace;
+  }
+  #rotate-hint[hidden] { display: none; }
+  #rotate-hint .rh-icon { width: 64px; height: 64px; color: #ffcb05; animation: rh-tilt 2.2s ease-in-out infinite; }
+  #rotate-hint b { font-size: 20px; color: #ffcb05; letter-spacing: 2px; }
+  #rotate-hint small { font-size: 13px; color: #9aa0c0; line-height: 1.6; }
+  @keyframes rh-tilt { 0%, 45% { transform: rotate(0deg); } 65%, 100% { transform: rotate(90deg); } }
+</style>
+<link rel="stylesheet" href="./css/main.css?v=50" />
+<link rel="stylesheet" href="./css/original.css?v=33" />
+<link rel="stylesheet" href="./css/game-override.css?v=51" />
+<link rel="stylesheet" href="./css/menu-legacy.css?v=122" />
+<link id="ui-theme-style" rel="stylesheet" href="./css/black.css?v=45" />
 <link rel="stylesheet" href="./css/battle-ui.css?v=33" />
-<script>try{var __all=new URLSearchParams(location.search).get("themes")==="1";var __saved=localStorage.getItem("pokedunk.uiTheme")||"black";var __ok=__all?["retro","black","classic","valorant","stardew","terraria"]:["retro","black"];var __t=__ok.indexOf(__saved)>=0?__saved:"black";var __map={retro:"./css/retro.css?v=57",classic:"./css/classic.css?v=32",valorant:"./css/valorant.css?v=41",stardew:"./css/stardew.css?v=35",terraria:"./css/terraria.css?v=34",black:"./css/black.css?v=43"};document.getElementById("ui-theme-style").href=__map[__t]||__map.black;document.documentElement.dataset.uiTheme=__t;}catch(e){}</script>
+<script>try{var __all=new URLSearchParams(location.search).get("themes")==="1";var __saved=localStorage.getItem("pokedunk.uiTheme")||"black";var __ok=__all?["retro","black","classic","valorant","stardew","terraria"]:["retro","black"];var __t=__ok.indexOf(__saved)>=0?__saved:"black";var __map={retro:"./css/retro.css?v=59",classic:"./css/classic.css?v=32",valorant:"./css/valorant.css?v=41",stardew:"./css/stardew.css?v=35",terraria:"./css/terraria.css?v=34",black:"./css/black.css?v=45"};document.getElementById("ui-theme-style").href=__map[__t]||__map.black;document.documentElement.dataset.uiTheme=__t;}catch(e){}</script>
 </head>
 <body>
-<div id="app"></div>
+<div id="stage"><div id="app"></div></div>
+<div id="rotate-hint" hidden>
+  <svg class="rh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.2"/><path d="M10 5.2h4"/><circle cx="12" cy="18.4" r="0.8" fill="currentColor" stroke="none"/></svg>
+  <b>请竖屏体验</b>
+  <small>本游戏仅支持竖屏<br />旋转手机即可继续</small>
+</div>
+<script>
+/* 舞台等比缩放：宽度按 390 设计稿等比，高度扣除刘海/Home 条安全区后换算成逻辑高度 */
+(function () {
+  var DESIGN_W = 390;
+  var stage = document.getElementById("stage");
+  var hint = document.getElementById("rotate-hint");
+  if (!stage) return;
+  var probe = null;
+  function insets() {
+    // 调试/设备联调：?safet=47&safeb=34 可模拟刘海与 Home 条
+    var q = new URLSearchParams(location.search);
+    var dt = parseFloat(q.get("safet"));
+    var db = parseFloat(q.get("safeb"));
+    if (isFinite(dt) || isFinite(db)) {
+      return { top: isFinite(dt) ? dt : 0, bottom: isFinite(db) ? db : 0 };
+    }
+    if (!probe) {
+      probe = document.createElement("div");
+      probe.setAttribute("aria-hidden", "true");
+      probe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);";
+      document.body.appendChild(probe);
+    }
+    var cs = getComputedStyle(probe);
+    return {
+      top: parseFloat(cs.paddingTop) || 0,
+      bottom: parseFloat(cs.paddingBottom) || 0,
+    };
+  }
+  function apply() {
+    if (document.querySelector(".game.rot")) {
+      stage.classList.add("rot-live");
+      hint.hidden = true;
+      return;
+    }
+    stage.classList.remove("rot-live");
+    var w = window.innerWidth || 390;
+    var h = window.innerHeight || 844;
+    if (w > h + 2) {
+      hint.hidden = false;
+      return;
+    }
+    hint.hidden = true;
+    var ins = insets();
+    var availH = Math.max(320, h - ins.top - ins.bottom);
+    var s = Math.max(0.75, Math.min(1.25, w / DESIGN_W));
+    var logicalH = availH / s;
+    stage.style.setProperty("--stage-top", ins.top + "px");
+    stage.style.setProperty("--stage-s", String(s));
+    stage.style.setProperty("--stage-h", logicalH + "px");
+    document.documentElement.style.setProperty("--stage-h-logical", logicalH + "px");
+    document.documentElement.style.setProperty("--stage-s-logical", String(s));
+    window.__stageInfo = { w: w, h: h, scale: s, logicalH: logicalH, safeTop: ins.top, safeBottom: ins.bottom };
+  }
+  window.__stageApply = apply;
+  apply();
+  window.addEventListener("resize", apply);
+  window.addEventListener("orientationchange", function () { setTimeout(apply, 120); });
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", apply);
+})();
+</script>
 <script src="./js/platform/lamps-rewarded-video-bridge.js"></script>
 <script src="./js/platform/lamps-rewarded-video-platform.js"></script>
 <script src="./js/platform/lamps-status-bar-bridge.js"></script>
@@ -21,7 +120,7 @@
 <script>window.addEventListener("orientationchange",function(){try{window.LampsGame&&window.LampsGame.applyStatusBarSafeTop&&window.LampsGame.applyStatusBarSafeTop()}catch(e){}});</script>
 <script src="./js/zh.js?v=58"></script>
 <script src="./js/dex-data.js?v=56"></script>
-<script type="module" src="./js/app.js?v=287"></script>
+<script type="module" src="./js/app.js?v=303"></script>
 </body>
 </html>
 

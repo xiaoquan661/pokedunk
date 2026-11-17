@@ -4,9 +4,9 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=70";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=80";
 import { moveMon, writeSave, loadSave } from "../storage.js?v=71";
-import { openDetail } from "./detail.js?v=75";
+import { openDetail } from "./detail.js?v=76";
 import { ICON } from "./icons.js?v=63";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
@@ -14,7 +14,7 @@ import {
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
   starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=63";
+} from "../systems/build.js?v=66";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */

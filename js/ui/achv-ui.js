@@ -76,7 +76,7 @@ export function openAchievements() {
     const tb = e.target.closest(".pj-tabs button");
     if (tb) { curTab = tb.dataset.tab; renderList(wrap, curTab); }
   });
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
   renderList(wrap, curTab);
 }
 

@@ -8,7 +8,7 @@
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
 import { addMon, hasDex } from "../storage.js?v=71";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=63";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=66";
 
 const MIN30 = 30 * 60 * 1000;
 const HOUR3 = 3 * 60 * 60 * 1000;

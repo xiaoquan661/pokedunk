@@ -9,12 +9,12 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=73";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=73";
-import { loadSet } from "../ui/settings.js?v=108";
+import { calcOVR } from "../../engine/readable/play-core.js?v=80";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=80";
+import { loadSet } from "../ui/settings.js?v=110";
 import { STAT_KEYS } from "./gyms.js?v=60";
 import { currentMatchInfo, matchSeed } from "./season.js?v=69";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=63";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=66";
 import { createMatchHype } from "../ui/match-hype.js?v=64";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
@@ -86,12 +86,165 @@ export async function simulateCurrentMatch(save, mode = "league") {
 }
 
 /**
+ * 竖屏镜头：放大球场并跟随「球 + 操控角色」加权中点。
+ * 只对 canvas 做 CSS transform（球场、球员、特效一起缩放），HUD/摇杆不受影响。
+ * 局内横屏（.game.rot）时恢复整场俯视。
+ */
+function createPortraitCamera(root) {
+  const game = root.querySelector(".game");
+  const canvas = root.querySelector(".game canvas.court") || root.querySelector(".game canvas");
+  const ZOOM = 1.7;
+  const ZOOM_SPEC = 1.55;
+  const LIFT = 90; // 整体上移，给下方蓄力条/按键留出干净的控制带
+  let tx = 0, ty = 0, primed = false;
+
+  // 与引擎 gs.proj 同一投影：canvas 逻辑 480×270，x∈[0,94] 横向、y∈[0,50] 纵深
+  const proj = (x, y, z = 0) => {
+    const n = Math.max(0, Math.min(1, y / 50));
+    const o = 5.9 + 2.1 * n;
+    return { x: 240 + (x - 47) * o, y: 98 + 160 * n - z * o * 0.95 };
+  };
+
+  function frame(engine, dt) {
+    if (!canvas) return;
+    const fpsDt = Math.min(0.05, dt || 1 / 60);
+    if (game?.classList.contains("rot")) {
+      if (canvas.style.transform) canvas.style.transform = "";
+      primed = false;
+      return;
+    }
+    const ball = engine?.ball;
+    if (!ball) return;
+    // 只取地面坐标：忽略运球弹跳 / 起跳高度，避免镜头随球上下抖动
+    const bp = proj(ball.x, ball.y, 0);
+    const user = engine.user;
+    let target = bp;
+    if (user) {
+      const up = proj(user.x, user.y, 0);
+      // 持球时偏向两者中点；球脱手/飞行时更跟球，避免投篮出画
+      const w = ball.owner === user ? 0.5 : ball.owner ? 0.6 : 0.75;
+      target = { x: bp.x * w + up.x * (1 - w), y: bp.y * w + up.y * (1 - w) };
+    }
+    // 短屏自动降一档推进倍率，保证球场底边、蓄力条、按键弧三层不重叠
+    const H = game.clientHeight || 763;
+    const fit = Math.max(1.25, Math.min(ZOOM, (H - 430) / 196));
+    const zoom = user ? fit : Math.min(ZOOM_SPEC, fit);
+    const cw = canvas.clientWidth || 480;
+    const ch = canvas.clientHeight || 270;
+    if (!cw || !ch) return;
+    const T = { x: (target.x / 480) * cw, y: (target.y / 270) * ch };
+    const C = { x: cw / 2, y: ch / 2 };
+    // 视野内允许的最大偏移：保证放大后画面边缘不露底
+    const k = (zoom - 1) / (2 * zoom);
+    const dx = Math.max(-cw * k, Math.min(cw * k, C.x - T.x));
+    const dy = Math.max(-ch * k, Math.min(ch * k, C.y - T.y));
+    const wantX = dx * zoom;
+    const wantY = dy * zoom - LIFT;
+    if (!primed) {
+      tx = wantX; ty = wantY; primed = true;
+    } else {
+      const ax = 1 - Math.exp(-fpsDt * 6);   // 横向跟拍：跟得紧
+      const ay = 1 - Math.exp(-fpsDt * 2.2); // 纵向：慢跟随，只表现前后场推移
+      tx += (wantX - tx) * ax;
+      if (Math.abs(wantY - ty) > 1.2) ty += (wantY - ty) * ay; // 小死区过滤残余抖动
+    }
+    canvas.style.transformOrigin = "50% 50%";
+    canvas.style.willChange = "transform";
+    canvas.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${zoom})`;
+  }
+
+  return { frame };
+}
+
+/**
  * 挂载比赛屏到 root。
  * onFinal(engine, cfg, quit, simulated)
  */
+const TOUCH_ICONS = {
+  // 篮球（投篮）
+  ball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M3.4 12h17.2M12 3.2v17.6M6 6c3 3 3 9 0 12M18 6c-3 3-3 9 0 12"/></svg>',
+  // 封盖手掌（防守）
+  block: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 20v-5.5M7.5 14.5V8a1.7 1.7 0 0 1 3.4 0v4.5"/><path d="M10.9 12.5V6.6a1.7 1.7 0 0 1 3.4 0v5.9"/><path d="M14.3 12.5V8.6a1.7 1.7 0 0 1 3.4 0V15c0 3.2-2.2 5-5.2 5H10"/></svg>',
+  // 双向传球箭头
+  pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h10"/><path d="m10 5 3.5 3.5L10 12"/><path d="M20.5 15.5h-10"/><path d="m14 12 3.5 3.5L14 19"/></svg>',
+  // 手 + 球（抢断）
+  steal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="16.2" cy="8.2" r="3.4"/><path d="M7.6 20v-5.2M7.6 14.8V9.6a1.6 1.6 0 0 1 3.2 0v3.6"/><path d="M10.8 13.2V8.4a1.6 1.6 0 0 1 3.2 0v4.6"/></svg>',
+  // 闪电（必杀）
+  special: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2 4.6 13.8h5.6L9 22l9.4-12.2h-5.7L13.2 2Z"/></svg>',
+};
+
+/** 竖屏操控层：四键弧形、图标+中文、摇杆推满冲刺、独立蓄力条 */
+function createTouchUI(root) {
+  const game = root.querySelector(".game");
+  const touch = game?.querySelector(".touch");
+  if (!touch) return { frame() {} };
+  const pad = game.__touchPad || null;
+
+  touch.querySelector('.tb[data-b="turbo"]')?.remove();
+
+  const put = (b, html) => {
+    const btn = touch.querySelector(`.tb[data-b="${b}"]`);
+    const bEl = btn?.querySelector("b");
+    if (bEl) bEl.innerHTML = html;
+    return btn;
+  };
+  put("pass", TOUCH_ICONS.pass);
+  put("steal", TOUCH_ICONS.steal);
+  put("special", TOUCH_ICONS.special);
+  const shootBtn = put("shoot", `<span class="pd-ico pd-atk">${TOUCH_ICONS.ball}</span><span class="pd-ico pd-def">${TOUCH_ICONS.block}</span>`);
+  const shootSpan = shootBtn?.querySelector("span:not(.pd-ico)");
+  const syncDef = () => {
+    if (!shootSpan) return;
+    // 引擎防守态写的是「起跳」，统一显示「盖帽」；已经是「盖帽」时保持防守图标
+    const def = shootSpan.textContent.includes("起跳") || shootSpan.textContent.includes("盖帽");
+    if (def && shootSpan.textContent !== "盖帽") shootSpan.textContent = "盖帽";
+    shootBtn.classList.toggle("pd-def", def);
+  };
+  if (shootSpan) {
+    new MutationObserver(syncDef).observe(shootSpan, { childList: true, characterData: true, subtree: true });
+    syncDef();
+  }
+
+  // 蓄力反馈：不再单独出横条，直接填充投篮键
+  const charge = document.createElement("i");
+  charge.className = "pd-charge";
+  shootBtn?.appendChild(charge);
+
+  let sprint = false;
+  function frame(engine) {
+    if (pad) {
+      const m = Math.hypot(pad.touchMove?.x || 0, pad.touchMove?.y || 0);
+      if (!sprint && m >= 0.9) {
+        sprint = true;
+        touch.classList.add("pd-sprint");
+        try { navigator.vibrate?.(8); } catch {}
+      } else if (sprint && m < 0.72) {
+        sprint = false;
+        touch.classList.remove("pd-sprint");
+      }
+      if (pad.touchBtn.turbo !== sprint) pad.touchBtn.turbo = sprint;
+    }
+    const u = engine?.user;
+    const charging = !!(u && u.state === "shoot" && u.meter > 0);
+    if (!charging) {
+      if (charge) charge.style.height = "0%";
+      shootBtn?.classList.remove("pd-perfect");
+      return;
+    }
+    const gw = engine.greenWindow?.(u) || 0.03;
+    const v = Math.max(0, Math.min(1, u.meter));
+    if (charge) charge.style.height = (v * 100).toFixed(1) + "%";
+    const perfect = u.meter >= 0.8 - gw && u.meter <= 0.8 + gw;
+    shootBtn?.classList.toggle("pd-perfect", perfect);
+  }
+  return { frame };
+}
+
 export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
   const spectator = !!opts.spectator;
   let hype = null;
+  let camera = null;
+  let touchUI = null;
   const handle = startMatchLoop(
     root,
     cfg,
@@ -103,10 +256,32 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
       spectator,
       onFrame: (engine, events, input, dt) => {
         hype?.onFrame(engine, events);
+        camera?.frame(engine, dt);
+        touchUI?.frame(engine, dt);
         opts.onFrame?.(engine, events, input, dt);
       },
     }
   );
+
+  // 竖屏镜头推进 + 自动跟随（球与操控角色的加权中点）
+  camera = createPortraitCamera(root);
+  touchUI = createTouchUI(root);
+
+  // 暂停菜单：新增「重新开始」（同一对阵重开一局，不计负）
+  if (!spectator) {
+    const actions = root.querySelector(".pause-menu .pause-actions");
+    if (actions) {
+      const restart = document.createElement("button");
+      restart.type = "button";
+      restart.className = "btn";
+      restart.textContent = "重新开始";
+      restart.addEventListener("click", () => {
+        try { handle.stop(); } catch {}
+        mountMatch(root, { ...cfg, seed: (Number(cfg.seed) || 0) + 1 }, audio, onFinal, opts);
+      });
+      actions.insertBefore(restart, actions.querySelector('[data-a="quit"]'));
+    }
+  }
 
   if (!spectator && cfg.specialFx !== false) hype = createMatchHype(root);
 
@@ -146,6 +321,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     if (game.classList.contains("rot")) {
       game.classList.remove("rot");
       rotBtn.textContent = "横屏";
+      try { window.__stageApply?.(); } catch {}
       try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {}
       try { screen.orientation && screen.orientation.unlock(); } catch {}
       return;
@@ -167,6 +343,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     } catch {}
     if (!locked) game.classList.add("rot");
     rotBtn.textContent = "竖屏";
+    try { window.__stageApply?.(); } catch {}
   });
   root.querySelector(".game")?.appendChild(rotBtn);
 

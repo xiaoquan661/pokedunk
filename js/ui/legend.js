@@ -97,5 +97,5 @@ export function openLegendPicker(save, pending, opts = {}) {
   });
 
   renderPick();
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
 }

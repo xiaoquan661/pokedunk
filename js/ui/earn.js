@@ -8,7 +8,7 @@
  */
 import { writeSave, addMon, hasDex } from "../storage.js?v=71";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=63";
+import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
 import { watchRewardedAd } from "../platform/ads.js?v=59";
 import { gameAudio } from "../platform/audio.js?v=64";
 import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=70";
@@ -108,7 +108,7 @@ function openRookiePicker(save, taskId, done) {
         </button>`;
       }).join("")}</div>
     </div>`;
-  document.body.appendChild(layer);
+  (document.getElementById("stage")||document.body).appendChild(layer);
   layer.addEventListener("click", (e) => {
     if (e.target === layer || e.target.closest("[data-rk-close]")) { layer.remove(); return; }
     const card = e.target.closest("[data-rk-dex]");
@@ -203,7 +203,7 @@ export function openDailyTasks(save, onCoins) {
     onCoins?.();
     render();
   });
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
   render();
 }
 
@@ -340,7 +340,7 @@ export function openEarn(save, onCoins, onRoster) {
       render();
     }
   });
-  document.body.appendChild(wrap);
+  (document.getElementById("stage")||document.body).appendChild(wrap);
   render();
 }
 

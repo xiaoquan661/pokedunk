@@ -7,9 +7,9 @@
  */
 import { loadSave, writeSave } from "../storage.js?v=71";
 import { gameAudio } from "../platform/audio.js?v=64";
-import { getPokemon } from "../../engine/readable/play-core.js?v=70";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=63";
-import { openDetail } from "./detail.js?v=75";
+import { getPokemon } from "../../engine/readable/play-core.js?v=80";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
+import { openDetail } from "./detail.js?v=76";
 import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=62";
 
 const ROWS = window.__PJ_DEX_ROWS || [];

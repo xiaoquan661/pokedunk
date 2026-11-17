@@ -6,14 +6,14 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=70";
+import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=80";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=71";
 import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=71";
 import { ACHV } from "../systems/achv.js?v=63";
-import { bumpDaily } from "../ui/earn.js?v=73";
+import { bumpDaily } from "../ui/earn.js?v=74";
 import { currentMatchInfo, recordResult } from "./season.js?v=69";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX } from "../systems/build.js?v=64";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh } from "../systems/build.js?v=66";
 import { offerLegendReward } from "./legend.js?v=59";
 
 const SIGN_CHANCE = 0.25;
@@ -46,7 +46,7 @@ function grantXp(save, monId, mon, amount, anims) {
     mon.xp -= xpToNext(mon.level);
     if (mon.level >= 99) { mon.xp = 0; break; }
     mon.level++;
-    const growth = rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random);
+    const growth = rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random).map(growthZh);
     events.push(`${getPokemon(mon.dex).name} 升到 Lv.${mon.level}（${growth.join("、") || "无加点"}）`);
     const evo = EVOLUTIONS[mon.dex];
     if (evo && mon.level >= evo.level && evo.to.length) {
