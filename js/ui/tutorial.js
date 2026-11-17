@@ -17,24 +17,24 @@ const DRILLS = [
     tip: "斜向切入更快，别只走直线。",
   },
   {
-    id: "layups", title: "上篮", metric: "reps", target: 2, time: 38, keys: ["X"],
-    intro: "靠近篮筐后按 X 投篮上篮，先做 2 个。",
+    id: "layups", title: "上篮", metric: "reps", target: 2, time: 38, keys: ["投篮"],
+    intro: "靠近篮筐后按投篮键上篮，先做 2 个。",
     tip: "离篮筐太远会变成跳投，先贴近再出手。",
   },
   {
-    id: "jumpshots", title: "跳投", metric: "reps", target: 2, time: 42, keys: ["X"],
-    intro: "按住 X 蓄力，力度条进入绿区时松开。",
-    tip: "绿区松开必进；过早或过晚都会降低命中。",
+    id: "jumpshots", title: "跳投", metric: "reps", target: 2, time: 42, keys: ["投篮"],
+    intro: "按住投篮键蓄力，按键填满发白的瞬间松开。",
+    tip: "发白瞬间松开必进；过早或过晚都会降低命中。",
   },
   {
-    id: "passing", title: "传球", metric: "reps", target: 2, time: 34, keys: ["A"],
-    intro: "按 A 传球，把球送到空位队友手里。",
+    id: "passing", title: "传球", metric: "reps", target: 2, time: 34, keys: ["传球"],
+    intro: "按传球键，把球送到空位队友手里。",
     tip: "传球会自动寻找空位，也可以配合摇杆指向。",
   },
   {
-    id: "alleyoop", title: "空接", metric: "reps", target: 2, time: 38, keys: ["RB", "A"],
-    intro: "按住 RB 加速，再按 A 向篮筐抛空接。",
-    tip: "先加速再传球，队友会起跳接球扣篮。",
+    id: "alleyoop", title: "空接", metric: "reps", target: 2, time: 38, keys: ["摇杆推满", "传球"],
+    intro: "把左下摇杆推满外圈自动冲刺，再按传球向篮筐抛空接。",
+    tip: "先推满摇杆冲刺再传球，队友会起跳接球扣篮。",
   },
   {
     id: "defense", title: "防守", metric: "defend", target: 12, time: 30, keys: ["摇杆"],
@@ -42,19 +42,18 @@ const DRILLS = [
     tip: "别轻易起跳，先卡住突破路线。",
   },
   {
-    id: "steals", title: "抢断", metric: "reps", target: 2, time: 34, keys: ["B"],
-    intro: "靠近持球人，按 B 完成 2 次抢断。",
+    id: "steals", title: "抢断", metric: "reps", target: 2, time: 34, keys: ["抢断"],
+    intro: "靠近持球人，按抢断键完成 2 次抢断。",
     tip: "离得太远会挥空，贴身再按。",
   },
 ];
 
 const CONTROLS = [
-  ["摇杆", "移动 / 防守跟人"],
-  ["X", "投篮 · 按住蓄力"],
-  ["A", "传球 · 空接时抛球"],
-  ["B", "抢断"],
-  ["RB", "加速"],
-  ["Y", "必杀技"],
+  ["摇杆", "移动 / 防守跟人 · 推满外圈自动冲刺"],
+  ["投篮", "投篮 / 盖帽 · 按住蓄力"],
+  ["传球", "传球 / 换防 · 空接时抛球"],
+  ["抢断", "抢断"],
+  ["必杀", "必杀技（槽满后）"],
 ];
 
 const CSS = `
@@ -357,7 +356,7 @@ export function startTutorial(root, save, actions = {}) {
       <i class="tut-prog"></i>
     </div><div class="tut-intro"><div class="panel">
       <h2>先认识按键</h2>
-      <p class="tut-intro-sub">比赛中随时会用到下面这些按钮。</p>
+      <p class="tut-intro-sub">比赛中随时会用到下面这些操作。</p>
       <ul class="tut-keys">${CONTROLS.map(([k, t]) => `<li><i>${k}</i><span>${t}</span></li>`).join("")}</ul>
       <button class="tut-begin" type="button" data-tut="begin">开始训练</button>
     </div></div><div class="tut-result" hidden></div><div class="tut-done" hidden></div>`);

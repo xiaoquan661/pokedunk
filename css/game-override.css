@@ -94,10 +94,11 @@ button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
 .game.has-touch .touch .tb[data-b="special"].ready{border-color:#ffcb05;background:#ffb900f2;color:#1a1400;animation:pdPulse .5s infinite alternate}
 @keyframes pdPulse{from{box-shadow:0 0 0 0 rgba(255,185,0,.45),inset 0 -4px rgba(0,0,0,.25)}to{box-shadow:0 0 16px 4px rgba(255,185,0,.65),inset 0 -4px rgba(0,0,0,.25)}}
 
-/* 摇杆推满：冲刺态 */
+/* 摇杆推满：自动冲刺（无独立加速键） */
+.game.has-touch .touch .stick-base::after{content:"推满冲刺";position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:700 10px var(--sport);color:#8f96b8;white-space:nowrap;letter-spacing:.1em;opacity:.7}
 .game.has-touch .touch.pd-sprint .stick-base{border-color:#ffcb05;box-shadow:0 0 0 4px rgba(255,203,5,.14),0 0 18px rgba(255,203,5,.45)}
 .game.has-touch .touch.pd-sprint .stick-knob{background:rgba(255,203,5,.9)}
-.game.has-touch .touch.pd-sprint .stick-base::after{content:"冲刺";position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:700 10px var(--sport);color:#ffcb05;white-space:nowrap;letter-spacing:.1em}
+.game.has-touch .touch.pd-sprint .stick-base::after{content:"冲刺";color:#ffcb05;opacity:1}
 
 /* 蓄力反馈：不再单独出横条，直接灌进投篮键（底部向上填充 + 完美区高亮） */
 .game.has-touch .touch .tb[data-b="shoot"]{overflow:hidden}

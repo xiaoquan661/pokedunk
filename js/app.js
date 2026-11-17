@@ -19,7 +19,7 @@ import { settleMatchResult } from "./journey/settle.js?v=93";
 import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=73";
 import { openDaily } from "./ui/daily.js?v=77";
 import { openAchievements } from "./ui/achv-ui.js?v=69";
-import { startTutorial } from "./ui/tutorial.js?v=67";
+import { startTutorial } from "./ui/tutorial.js?v=68";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=59";
 import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=74";
@@ -173,7 +173,7 @@ function openNewbieQuest(save) {
     <div class="page-head"><button class="back" data-back>‹</button><h2>新手之路</h2><span class="count">${lineup}/5 首发</span></div>
     <p class="page-sub">跟着步骤走，凑齐 5 人首发就能开始第一场比赛。</p>
     <div class="pk-panel" style="padding:4px 12px">
-      ${row(!!nb.tutorialDone, "完成操作教程", "学习移动、投篮、传球、抢断、加速与必杀")}
+      ${row(!!nb.tutorialDone, "完成操作教程", "学习移动、投篮、传球、抢断、推满摇杆冲刺与必杀")}
       ${row(!!nb.giftDone, "领取教程伙伴", "皮卡丘、伊布加入队伍")}
       ${row(buys >= 2, "在每日商店购买 2 只精灵", `已购买 ${buys}/2`)}
       ${row(lineup >= 5, "首发阵容达到 5 人", `当前 ${lineup}/5`)}
@@ -241,7 +241,7 @@ function openGuideMenu(save) {
     </button>
     <button class="guide-opt" data-guide-tut>
       <b>操作教程</b>
-      <small>进入练习赛，学习移动、投篮、传球、抢断、加速与必杀</small>
+      <small>进入练习赛，学习移动、投篮、传球、抢断、推满摇杆冲刺与必杀</small>
     </button>
   </div></div>`;
   wrap.addEventListener("click", (e) => {
@@ -994,8 +994,8 @@ function showRookieGuide(page, save) {
   writeSave(save);
   const steps = [
     { t: "移动", d: "按住左下摇杆拖动。进攻时跑位，防守时跟住对位球员。" },
-    { t: "投篮", d: "按住 X 蓄力，力度条进入绿区时松开。空位出手更稳。" },
-    { t: "传球 / 必杀", d: "A 传球给队友；Y 在必杀槽满后释放必杀。B 抢断，RB 加速。" },
+    { t: "投篮", d: "按住投篮键蓄力，按键填满发白的瞬间松开。空位出手更稳。" },
+    { t: "传球 / 必杀", d: "点传球给队友；必杀槽满后点必杀；抢断键断球；把摇杆推到外圈自动冲刺。" },
   ];
   const box = document.createElement("div");
   box.className = "rookie-guide";
