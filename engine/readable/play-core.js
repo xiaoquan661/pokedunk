@@ -1875,7 +1875,9 @@ class MatchEngine {
       o = (l) => (this.vsCpu && this.teams[0].human && !n[l] ? 0.2 - this.diff.cpuBoost * 0.012 : 0.2),
       r = (l) => 1 + (this.rng() + this.rng() + this.rng() - 1.5) * o(l) * 1.4;
     this.tipoff = {
-      t: -1.3,
+      // 开场有「双方登场」两条播报（各 1.5s）+「第 1 节 / 跳球」横幅，全部读完再抛球起跳；
+      // 之后节次只需等 2.2s 的节次横幅。
+      t: -(this.quarter === 1 ? 3.3 : 2.5),
       jumpers: [e, t],
       ENGINE_VERSION: [null, null],
       plan: [r(0), r(1)],

@@ -4,7 +4,7 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=80";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=82";
 import { moveMon, writeSave, loadSave } from "../storage.js?v=71";
 import { openDetail } from "./detail.js?v=82";
 import { ICON } from "./icons.js?v=63";

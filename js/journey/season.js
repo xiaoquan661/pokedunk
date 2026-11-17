@@ -11,7 +11,7 @@
  * { v, no, phase, round, byeRound, schedule[], rounds[], results[], table[],
  *   playoffs, fourKings, badges[], champion, history[] }
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=80";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=82";
 import { pickGymRoster } from "./gyms.js?v=60";
 import { teamPower as buildTeamPower } from "../systems/build.js?v=66";
 

@@ -11,7 +11,7 @@
  *   - 传说直接进队伍；队伍满 10 只进仓库；重复折算 200 币。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=80";
+import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=82";
 import { addMon } from "../storage.js?v=71";
 import { LEGENDARY_DEX } from "../systems/build.js?v=66";
 
