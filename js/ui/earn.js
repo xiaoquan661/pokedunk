@@ -11,7 +11,7 @@ import { getPokemon } from "../../engine/data/pokemon.js";
 import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
 import { watchRewardedAd } from "../platform/ads.js?v=59";
 import { gameAudio } from "../platform/audio.js?v=64";
-import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=70";
+import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=73";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 40;      // 每次看广告奖励（S13：40 × 5 = 200/天）

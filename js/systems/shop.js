@@ -146,7 +146,7 @@ function rollShop(save) {
   const day = todayStr();
   const sameDay = save.shop?.date === day;
   const bought = sameDay ? { ...emptyBought(), ...(save.shop.bought || {}) } : emptyBought();
-  save.shop = { date: day, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, bought };
+  save.shop = { date: day, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, freeDay: save.shop?.freeDay || null, bought };
 }
 
 /** 懒刷新：跨天重摇货架（写回 save.shop） */
@@ -178,6 +178,24 @@ export function shopAdRefreshLeft(save) {
   shopEnsure(save);
   const day = todayStr();
   return save.shop.adDay && save.shop.adDay.date === day ? Math.max(0, 1 - (save.shop.adDay.count || 0)) : 1;
+}
+
+/** 每日免费刷新货架 1 次（先用免费，再走广告刷新） */
+export function shopFreeRefresh(save) {
+  shopEnsure(save);
+  const day = todayStr();
+  const cur = save.shop.freeDay || {};
+  const used = cur.date === day ? (cur.count || 0) : 0;
+  if (used >= 1) return { ok: false, error: "今日免费刷新已用完" };
+  rollShop(save);
+  save.shop.freeDay = { date: day, count: used + 1 };
+  return { ok: true };
+}
+
+export function shopFreeRefreshLeft(save) {
+  shopEnsure(save);
+  const day = todayStr();
+  return save.shop.freeDay && save.shop.freeDay.date === day ? Math.max(0, 1 - (save.shop.freeDay.count || 0)) : 1;
 }
 
 /** 货架视图：[{slot, type, dex, price, owned}] */

@@ -12,7 +12,7 @@ import {
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
 } from "../systems/build.js?v=66";
 import { loadSave, writeSave, moveMon } from "../storage.js?v=72";
-import { BERRY_XP } from "../systems/shop.js?v=71";
+import { BERRY_XP } from "../systems/shop.js?v=73";
 import { bumpDaily } from "./earn.js";
 import { playEvolve } from "./anim.js?v=67";
 import { ICON } from "./icons.js?v=63";

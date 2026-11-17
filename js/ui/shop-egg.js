@@ -4,7 +4,7 @@
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
 import { loadSave, writeSave } from "../storage.js?v=72";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=71";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=73";
 import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=72";
 import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=66";
 import { watchRewardedAd } from "../platform/ads.js?v=59";
@@ -71,7 +71,7 @@ export function renderShop(root) {
       <span class="count">${coinInline}${save.coins}</span>
     </div>
     <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 普通树果 ${PRICES.berry} 币 · 高级蛋与高级树果看广告领取（每日限量）</p>
-    <div class="shop-tools"><button class="shop-ad" id="shop-refresh">看广告刷新货架（今日剩 ${shopAdRefreshLeft(save)} 次）</button></div>
+    <div class="shop-tools"><button class="shop-ad${shopFreeRefreshLeft(save) > 0 ? " free" : ""}" id="shop-refresh"${shopFreeRefreshLeft(save) <= 0 && shopAdRefreshLeft(save) <= 0 ? " disabled" : ""}>${shopFreeRefreshLeft(save) > 0 ? "免费刷新货架（今日 1 次）" : shopAdRefreshLeft(save) > 0 ? "看广告刷新货架（今日剩 1 次）" : "今日刷新已用完"}</button></div>
     <div class="shop-grid">
       ${items.map((it) => {
         if (it.type === "mon")
@@ -151,7 +151,17 @@ export function renderShop(root) {
 
   root.querySelector("#shop-refresh")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
-    if (shopAdRefreshLeft(save) <= 0) return toast("今日广告刷新已用完");
+    // 每天先送 1 次免费刷新
+    if (shopFreeRefreshLeft(save) > 0) {
+      btn.disabled = true;
+      const r = shopFreeRefresh(save);
+      if (!r.ok) { btn.disabled = false; return toast(r.error); }
+      writeSave(save);
+      toast("货架已刷新（今日免费 1 次已用）");
+      renderShop(root);
+      return;
+    }
+    if (shopAdRefreshLeft(save) <= 0) return toast("今日刷新已用完");
     btn.disabled = true;
     btn.textContent = "播放中…";
     const ad = await watchRewardedAd("shop_refresh");

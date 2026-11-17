@@ -9,7 +9,7 @@ import { gameAudio } from "../platform/audio.js?v=64";
 import { resetSave } from "../storage.js?v=72";
 import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=81";
 import { BONDS } from "../systems/build.js?v=66";
-import { EGG_TIERS } from "../systems/shop.js?v=71";
+import { EGG_TIERS } from "../systems/shop.js?v=73";
 import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=83";
 
 const SET_KEY = "pokedunk.settings";
