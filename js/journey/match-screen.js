@@ -165,8 +165,8 @@ const TOUCH_ICONS = {
   ball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M3.4 12h17.2M12 3.2v17.6M6 6c3 3 3 9 0 12M18 6c-3 3-3 9 0 12"/></svg>',
   // 封盖手掌（防守）
   block: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 20v-5.5M7.5 14.5V8a1.7 1.7 0 0 1 3.4 0v4.5"/><path d="M10.9 12.5V6.6a1.7 1.7 0 0 1 3.4 0v5.9"/><path d="M14.3 12.5V8.6a1.7 1.7 0 0 1 3.4 0V15c0 3.2-2.2 5-5.2 5H10"/></svg>',
-  // 双向传球箭头
-  pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h10"/><path d="m10 5 3.5 3.5L10 12"/><path d="M20.5 15.5h-10"/><path d="m14 12 3.5 3.5L14 19"/></svg>',
+  // 双箭头向前（传球 / 换防）
+  pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5h9.5"/><path d="m10 5 3.5 3.5L10 12"/><path d="M10.5 15.5h9.5"/><path d="m17 12 3.5 3.5L17 19"/></svg>',
   // 手 + 球（抢断）
   steal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="16.2" cy="8.2" r="3.4"/><path d="M7.6 20v-5.2M7.6 14.8V9.6a1.6 1.6 0 0 1 3.2 0v3.6"/><path d="M10.8 13.2V8.4a1.6 1.6 0 0 1 3.2 0v4.6"/></svg>',
   // 闪电（必杀）

@@ -6,7 +6,7 @@
 import { buildPlayer } from "../../engine/readable/play-core.js?v=83";
 import { startMatchLoop } from "../../engine/readable/play-core.js?v=83";
 import { gameAudio } from "../platform/audio.js?v=64";
-import { createTouchUI } from "../journey/match-screen.js?v=149";
+import { createTouchUI } from "../journey/match-screen.js?v=150";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
