@@ -94,6 +94,12 @@ function evoHtml(dex, save) {
 let toastTimer = null;
 let buildTab = "train"; // 详情页构筑页签：train / item
 let trainFlash = ""; // 训练/道具/调动后的一次性反馈文案
+/** 训练扣币后同步主页/弹层背后的金币数字，避免看起来“没扣钱” */
+function syncCoinUI(coins) {
+  document.querySelectorAll(".coin-chip b").forEach((el) => {
+    if (/^\d+$/.test(el.textContent.trim())) el.textContent = String(coins);
+  });
+}
 function toast(msg, ms = 2600) {
   let t = document.getElementById("pk-toast");
   if (!t) { t = document.createElement("div"); t.id = "pk-toast"; document.body.appendChild(t); }
@@ -176,7 +182,8 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const flashNow = trainFlash;
   trainFlash = "";
   const trainBody = mon
-    ? `<div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
+    ? `<div class="train-wallet"><span>篮球币 <b>${save.coins}</b></span><small>${tr.bank > 0 ? `返还点 ${tr.bank}（优先使用，不扣币）` : `本次训练 ${trainPrice(mon)} 币`}</small></div>
+      <div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
       <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + 5} 币` : ""}。</p>
       <p class="note">${tr.points >= trainCap ? `已达当前等级上限：Lv.${mon.level} 最多训练 ${trainCap} 点，升级后可继续。` : `每只精灵最多训练 ${TRAIN_MAX} 点，当前上限 = 4 + 等级÷2（Lv.${mon.level} → ${trainCap} 点）。`}</p>
       <p class="note">重置返还 80% 训练点，返还点优先使用且不扣币；已花费的篮球币不退。</p>
@@ -261,6 +268,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         if (!r.ok) return toast(r.error);
         const after = growthStats(mon)[k];
         writeSave(save);
+        syncCoinUI(save.coins);
         trainFlash = `训练完成：${STAT_ZH[k]} ${before} → ${after}${r.free ? " · 使用返还点" : ` · -${r.price} 币`}`;
         toast(trainFlash, 3000);
         refresh();

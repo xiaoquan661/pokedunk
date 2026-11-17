@@ -6,7 +6,7 @@
  */
 import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=83";
 import { moveMon, writeSave, loadSave } from "../storage.js?v=72";
-import { openDetail } from "./detail.js?v=82";
+import { openDetail } from "./detail.js?v=83";
 import { ICON } from "./icons.js?v=63";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
