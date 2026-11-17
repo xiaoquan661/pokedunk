@@ -10,7 +10,7 @@ import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-cor
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=71";
 import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=71";
-import { ACHV } from "../systems/achv.js?v=63";
+import { ACHV } from "../systems/achv.js?v=64";
 import { bumpDaily } from "../ui/earn.js?v=74";
 import { currentMatchInfo, recordResult } from "./season.js?v=69";
 import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh } from "../systems/build.js?v=66";

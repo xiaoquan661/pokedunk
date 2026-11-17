@@ -95,12 +95,14 @@ const defs = [
   { id: "sign1",   name: "签约达人", desc: "首次通过战胜签约收服精灵",      check: (s) => !!s.flags?.sign1 },
 ];
 
+/** 所有进化后的形态（作为其他形态的进化目标出现） */
+const EVOLVED_DEXES = new Set(Object.values(EVOLUTIONS).flatMap((e) => e.to || []));
+
 function evolvedCount(s) {
-  // 进化判定：当前 dex 与 createSave 初始不同——用"该 dex 存在进化前形态"近似（EVOLUTIONS 值域包含其 dex）
+  // 只统计「进化后形态」；未进化的精灵即使自己还能再进化，也不算
   let n = 0;
-  for (const m of Object.values(s.mons)) {
-    const evo = EVOLUTIONS[m.dex];
-    if (evo) n++; // 该 dex 是某个进化的目标 → 是进化形态
+  for (const m of Object.values(s?.mons || {})) {
+    if (EVOLVED_DEXES.has(m.dex)) n++;
   }
   return n;
 }
