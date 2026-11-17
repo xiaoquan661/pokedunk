@@ -5,12 +5,12 @@
  */
 import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加载其余模块
 import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=71";
-import { renderDex } from "./ui/dex.js?v=77";
+import { renderDex } from "./ui/dex.js?v=78";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=85";
 import { openSettings } from "./ui/settings.js?v=110";
 import { renderBag } from "./ui/bag.js?v=72";
-import { renderTeam } from "./ui/team.js?v=89";
-import { openDetail } from "./ui/detail.js?v=76";
+import { renderTeam } from "./ui/team.js?v=90";
+import { openDetail } from "./ui/detail.js?v=82";
 import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=145";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";

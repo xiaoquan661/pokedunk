@@ -30,6 +30,67 @@ const monName = (dex) => {
   return r ? String(r[1]).replace(/#\d+$/, "") : "#" + dex;
 };
 
+/** 进化族谱：找到最早形态，再按层级展开（支持分支进化） */
+function evoFamily(dex) {
+  let root = dex;
+  const guard = new Set();
+  for (;;) {
+    const p = Object.keys(EVOLUTIONS)
+      .map(Number)
+      .find((k) => EVOLUTIONS[k].to.includes(root));
+    if (p == null || guard.has(p) || p === root) break;
+    guard.add(p);
+    root = p;
+  }
+  const tiers = [[root]];
+  const levels = [];
+  const depth = new Map([[root, 0]]);
+  for (let d = 0; d < 4; d++) {
+    const next = [];
+    const lv = new Set();
+    for (const id of tiers[d]) {
+      const ev = EVOLUTIONS[id];
+      if (!ev) continue;
+      for (const to of ev.to) {
+        lv.add(ev.level);
+        if (!depth.has(to)) {
+          depth.set(to, d + 1);
+          next.push(to);
+        }
+      }
+    }
+    if (!next.length) break;
+    levels.push([...lv].sort((a, b) => a - b));
+    tiers.push(next);
+  }
+  return { tiers, levels };
+}
+
+/** 图鉴/详情里的进化链区块 */
+function evoHtml(dex, save) {
+  const { tiers, levels } = evoFamily(dex);
+  if (tiers.length < 2) return "";
+  const seen = save?.dex || {};
+  const owned = new Set(Object.values(save?.mons || {}).map((m) => m.dex));
+  const node = (id) => {
+    const cur = id === dex;
+    // 只看图鉴是否已结缘：未结缘统一剪影 + 问号；已结缘才显示立绘与名字
+    // 已拥有但图鉴未记录的旧档也视为已结缘，避免自己的精灵被剪影化
+    const has = !!seen[id] || owned.has(id);
+    return `<button type="button" class="evo-node${cur ? " cur" : ""}${has ? "" : " sil"}" data-evo="${id}"${cur || !has ? " disabled" : ""}>
+      <img src="./sprites/${id}.png" alt="" loading="lazy">
+      <b>${has ? monName(id) : "？？？"}</b>
+      <small>${cur ? "当前形态" : has ? "点击查看" : "尚未发现"}</small>
+    </button>`;
+  };
+  let out = "";
+  tiers.forEach((tier, i) => {
+    if (i > 0) out += `<span class="evo-arrow"><small>Lv.${levels[i - 1].join("/")}</small><i>›</i></span>`;
+    out += tier.map(node).join("");
+  });
+  return `<div class="dsec">进化 <small>到达等级后自动进化</small></div><div class="evo-chain">${out}</div>`;
+}
+
 let toastTimer = null;
 let buildTab = "train"; // 详情页构筑页签：train / item
 let trainFlash = ""; // 训练/道具/调动后的一次性反馈文案
@@ -53,6 +114,29 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const save = loadSave();
   const mon = monId != null ? save.mons[monId] : null;
   const where = monId != null ? (save.team.includes(monId) ? "roster" : "box") : null;
+
+  // 未结缘且未在球场上遇见 → 只展示黑色剪影与问号，不泄露任何资料
+  const known = !!save.dex?.[dexNo] || Object.values(save.mons || {}).some((m) => m.dex === dexNo);
+  if (!known) {
+    const ov = document.createElement("div");
+    ov.className = "detail-wrap";
+    ov.innerHTML = `
+      <div class="detail-box detail-locked">
+        <div class="dhead"><h2>精灵详情</h2><button class="dback">关闭</button></div>
+        <div class="lock-body">
+          <span class="lock-no">No.${dexNo}</span>
+          <img class="lock-sil" src="./sprites/${dexNo}.png" alt="" draggable="false">
+          <b class="lock-name">？？？</b>
+          <p class="lock-hint">尚未在球场上遇见</p>
+          <small>遇见后解锁图鉴资料</small>
+        </div>
+      </div>`;
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov || e.target.closest(".dback")) { ov.remove(); onClose?.(); }
+    });
+    (document.getElementById("stage") || document.body).appendChild(ov);
+    return;
+  }
 
   // 八维 = 种族值 + 等级 + 训练 + 道具（构筑系统统一口径，cap 99）
   const vals = mon ? growthStats(mon) : Object.fromEntries(STAT_KEYS.map((k) => [k, base.r[k] || 0]));
@@ -133,6 +217,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         </div>
       </div>
       <div class="ratings compact">${statsHtml}</div>
+      ${evoHtml(dexNo, save)}
       ${specialHtml}
       ${xpHtml}
       ${buildHtml}
@@ -141,13 +226,24 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         <button class="dbtn b" data-feed="normal"${feedN ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>普通树果 +${BERRY_XP.normal} XP（×${berries.berryNormal || 0}）</button>
         <button class="dbtn b" data-feed="premium"${feedP ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>高级树果 +${BERRY_XP.premium} XP（×${berries.berryPremium || 0}）</button>
       </div>
-      <div class="dact-row">${moveHtml}</div>
-      ${evo ? `<p class="note">Lv${evo.level} 可进化 → ${evo.to.map(monName).join(" / ")}</p>` : ""}` : ""}
+      <div class="dact-row">${moveHtml}</div>` : ""}
     </div>`;
 
   // 事件
   ov.addEventListener("click", (e) => {
     if (e.target === ov || e.target.closest(".dback")) { ov.remove(); onClose?.(); return; }
+    // 进化链跳转（只看已发现的形态）
+    const evoBtn = e.target.closest("[data-evo]");
+    if (evoBtn && !evoBtn.disabled) {
+      const id = Number(evoBtn.dataset.evo);
+      if (id !== dexNo) {
+        const s2 = loadSave() || save;
+        const mid = Object.keys(s2.mons || {}).find((k) => s2.mons[k].dex === id);
+        ov.remove();
+        openDetail(id, mid != null ? Number(mid) : null, onClose);
+      }
+      return;
+    }
     const tab = e.target.closest("[data-btab]");
     if (tab && mon) {
       buildTab = tab.dataset.btab;

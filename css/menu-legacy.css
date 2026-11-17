@@ -1083,3 +1083,27 @@ body:has(.detail-wrap) .menu,body:has(.pj-scrim) .menu,body:has(.hatch-ov) .menu
 }
 .screen-menu .coin-chip > svg,.screen-menu .coin-ico > svg{color:var(--gold)}
 .screen-menu .coin-plus svg{color:#2a1b52}
+/* ===== 详情页：进化链 ===== */
+.detail-box .evo-chain{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:8px 8px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.18);margin:2px 0 8px}
+.detail-box .evo-node{width:70px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 5px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03);color:var(--text);font-family:inherit}
+.detail-box .evo-node img{width:40px;height:40px;image-rendering:pixelated}
+.detail-box .evo-node b{font-size:10.5px;line-height:1.2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-box .evo-node small{font-size:9px;color:var(--text-dim)}
+.detail-box .evo-node.cur{border-color:var(--gold);background:rgba(245,197,66,.12);box-shadow:0 0 0 1px rgba(245,197,66,.35) inset}
+.detail-box .evo-node.cur b{color:var(--gold)}
+.detail-box .evo-node.sil img{filter:brightness(0);opacity:.5}
+.detail-box .evo-node.sil b{color:var(--text-dim)}
+.detail-box .evo-arrow{display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--text-dim);min-width:24px}
+.detail-box .evo-arrow small{font-size:9px;white-space:nowrap}
+.detail-box .evo-arrow i{font-style:normal;font-size:16px;line-height:1;color:var(--gold)}
+html[data-ui-theme="retro"] .detail-box .evo-chain{background:#f4ead2;border-color:#b9ad92}
+html[data-ui-theme="retro"] .detail-box .evo-node{background:#fff8e8;border-color:#b9ad92;color:#1c241e}
+html[data-ui-theme="retro"] .detail-box .evo-node.cur{border-color:#8a5200;background:#f1e2c2}
+html[data-ui-theme="retro"] .detail-box .evo-node small{color:#575245}
+/* 未遇见的图鉴详情：只有剪影与问号 */
+.detail-box .lock-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:330px;padding:20px 16px 30px;text-align:center}
+.detail-box .lock-no{font-size:11px;letter-spacing:1.5px;color:var(--text-dim)}
+.detail-box .lock-sil{width:132px;height:132px;object-fit:contain;image-rendering:pixelated;filter:brightness(0);opacity:.72;margin:8px 0 4px}
+.detail-box .lock-name{font-size:22px;letter-spacing:5px;color:var(--text)}
+.detail-box .lock-hint{margin:6px 0 0;font-size:12px;color:var(--text-dim)}
+.detail-box .lock-body small{font-size:10.5px;color:var(--text-dim);opacity:.72}
