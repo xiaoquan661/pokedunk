@@ -78,6 +78,8 @@ export function loadSave() {
     try { ensureSeason(s); } catch {}
     // 老档迁移：补「新手之路」状态（老档没有 newbie 字段，顶部入口和缺人引导都不会出现）
     try { ensureNewbieBackfill(s); } catch {}
+    // 旧版把「新手之路」期间的单条提示当成整段界面导引完成，通关后不再出现首次主页导引
+    try { ensureHomeGuideV2(s); } catch {}
     return s;
   } catch {
     return null;
@@ -108,6 +110,19 @@ function ensureNewbieBackfill(s) {
     // 保证还差人时能买得起两只（老档可能只剩几十币）
     s.coins = 300;
   }
+  writeSave(s);
+}
+
+/**
+ * 一次性修复界面导引：
+ * 旧流程在新手之路中会显示一条「新手之路」说明，点「知道了」就把 guide.done 置为 true，
+ * 导致走完新手之路后第一次进入主页时，完整的界面导引不再出现。
+ * 对已通关但导引被提前消费的档，重置回第 0 步，让玩家补看一次。
+ */
+function ensureHomeGuideV2(s) {
+  if (s.guideV2) return;
+  s.guideV2 = 1;
+  if (s.newbie?.done && s.guide?.done) s.guide = { v: 1, step: 0, done: false };
   writeSave(s);
 }
 

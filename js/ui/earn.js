@@ -6,7 +6,7 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { writeSave, addMon, hasDex } from "../storage.js?v=71";
+import { writeSave, addMon, hasDex } from "../storage.js?v=72";
 import { getPokemon } from "../../engine/data/pokemon.js";
 import { ensureLineupSlots, rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
 import { watchRewardedAd } from "../platform/ads.js?v=59";

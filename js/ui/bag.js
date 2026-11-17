@@ -5,7 +5,7 @@
  */
 import { getPokemon, xpToNext, rollGrowth } from "../../engine/readable/play-core.js?v=83";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave } from "../storage.js?v=71";
+import { recordEvolution, writeSave } from "../storage.js?v=72";
 import { ICON } from "./icons.js?v=63";
 
 const BERRY_XP = 50;

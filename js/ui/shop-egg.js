@@ -3,7 +3,7 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=71";
+import { loadSave, writeSave } from "../storage.js?v=72";
 import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft } from "../systems/shop.js?v=71";
 import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=72";
 import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=66";

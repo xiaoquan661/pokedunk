@@ -8,7 +8,7 @@
  */
 import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=83";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=71";
+import { recordEvolution, writeSave, addMon, hasDex } from "../storage.js?v=72";
 import { DUPE_REFUND, DUPE_REFUND_LEGEND } from "../systems/shop.js?v=71";
 import { ACHV } from "../systems/achv.js?v=64";
 import { bumpDaily } from "../ui/earn.js?v=74";

@@ -13,7 +13,7 @@ import {
 } from "../../engine/readable/play-core.js?v=83";
 import { buildMyRoster } from "./match-screen.js?v=149";
 import { teamPower, STAT_KEYS } from "../systems/build.js?v=66";
-import { writeSave } from "../storage.js?v=71";
+import { writeSave } from "../storage.js?v=72";
 
 const FIRST_WIN_COINS = 100;
 

@@ -4,7 +4,7 @@
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
 import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=71";
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=72";
 import { renderDex } from "./ui/dex.js?v=78";
 import { renderShop, renderEgg } from "./ui/shop-egg.js?v=85";
 import { openSettings } from "./ui/settings.js?v=110";
@@ -89,6 +89,9 @@ function syncNewbieDone(save) {
   const played = (save.stats?.w || 0) + (save.stats?.l || 0);
   if (!nb.tutorialDone || lineupSize(save) < 5 || played < 1) return false;
   nb.done = true;
+  // 新手之路结束：确保完整的主页界面导引从第一步开始
+  save.guide = { v: 1, step: 0, done: false };
+  save.guideV2 = 1;
   writeSave(save);
   return true;
 }
@@ -144,6 +147,9 @@ function openNewbieQuest(save) {
     4: ["开始第一场比赛", () => {
       const cur = loadSave() || s;
       cur.newbie.done = true;
+      // 新手之路结束：让首次主页界面导引从第一步开始
+      cur.guide = { v: 1, step: 0, done: false };
+      cur.guideV2 = 1;
       writeSave(cur);
       wrap.remove();
       openSeasonBoard(cur);
@@ -671,9 +677,9 @@ function showHome(save, justStarted = false) {
     })
   );
 
-  // 新玩家局外指引：新手之路教程完成后再出现一条专门的入口说明；旧流程照常
+  // 新玩家局外指引：新手之路结束后再完整走一遍主页/赛季/赛前/结算导引
   const gs = loadSave() || save;
-  if (!gs.newbie || gs.newbie.done || gs.newbie.tutorialDone) setTimeout(() => startOnboarding(sc, gs), 420);
+  if (!gs.newbie || gs.newbie.done) setTimeout(() => startOnboarding(sc, gs), 420);
 }
 
 /* ================= 赛季赛程弹窗（9 队单循环 + 季后赛 + 四天王） ================= */
