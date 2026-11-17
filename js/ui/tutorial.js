@@ -6,9 +6,16 @@
 import { buildPlayer } from "../../engine/readable/play-core.js?v=80";
 import { startMatchLoop } from "../../engine/readable/play-core.js?v=80";
 import { gameAudio } from "../platform/audio.js?v=64";
+import { createTouchUI } from "../journey/match-screen.js?v=146";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
+// 移动训练：依次点亮的落脚点（球场坐标，与引擎一致）
+const MOVE_SPOTS = [
+  [70, 15],
+  [81, 29],
+  [70, 40],
+];
 
 const DRILLS = [
   {
@@ -175,9 +182,23 @@ export function startTutorial(root, save, actions = {}) {
   let started = false;
   let finished = false;
   let rewarded = false;
+  let moveSpotIdx = 0;
+  let touchUI = null;
 
   const game = () => page.querySelector(".game");
   const strip = () => page.querySelector(".tut-strip");
+
+  /** 移动训练的发光落脚点：交给引擎的 markers 渲染，随镜头一起缩放 */
+  function clearMoveSpots() {
+    if (!engine) return;
+    engine.markers = (engine.markers || []).filter((m) => m.kind !== "spot");
+  }
+  function setMoveSpot(i) {
+    if (!engine) return;
+    clearMoveSpots();
+    const spot = MOVE_SPOTS[i];
+    if (spot) engine.markers.push({ kind: "spot", x: spot[0], y: spot[1] });
+  }
 
   function updateStrip(hint, progress) {
     const el = strip();
@@ -201,6 +222,10 @@ export function startTutorial(root, save, actions = {}) {
       engine.paused = false;
       engine.setDrill(d.id);
     }
+    // 移动训练点亮第一个落脚点，其他训练清掉残留标记
+    moveSpotIdx = 0;
+    if (d.id === "movement") setMoveSpot(0);
+    else clearMoveSpots();
     page.querySelector(".tut-result")?.setAttribute("hidden", "");
     page.querySelector(".tut-done")?.setAttribute("hidden", "");
     updateStrip(d.intro, 0);
@@ -225,6 +250,7 @@ export function startTutorial(root, save, actions = {}) {
 
   function showResult(skipped = false) {
     phase = "done";
+    clearMoveSpots();
     if (engine) engine.paused = true;
     const d = DRILLS[idx];
     const stars = skipped ? 0 : starsFor(d, stats);
@@ -276,6 +302,7 @@ export function startTutorial(root, save, actions = {}) {
   function exitTutorial() {
     if (finished) return;
     finished = true;
+    clearMoveSpots();
     handle?.stop();
     gameAudio.setTrack("menu");
     actions.onExit?.();
@@ -289,6 +316,7 @@ export function startTutorial(root, save, actions = {}) {
 
   function onFrame(e, events, input, dt) {
     if (finished) return;
+    touchUI?.frame(e);
     if (!started) {
       started = true;
       engine = e;
@@ -324,6 +352,12 @@ export function startTutorial(root, save, actions = {}) {
       if (lastPos) dist += Math.hypot(u.x - lastPos.x, u.y - lastPos.y);
       lastPos = { x: u.x, y: u.y };
       stats.reps = Math.min(d.target, Math.floor(dist / 10));
+      // 走到发光点后点亮下一个
+      const spot = MOVE_SPOTS[moveSpotIdx];
+      if (spot && Math.hypot(u.x - spot[0], u.y - spot[1]) < 2.4) {
+        moveSpotIdx++;
+        setMoveSpot(moveSpotIdx);
+      }
     }
     if (d.id === "passing") {
       const mode = engine.ball?.mode;
@@ -347,6 +381,8 @@ export function startTutorial(root, save, actions = {}) {
   );
   gameAudio.setTrack(null);
   gameAudio.unlock();
+
+  touchUI = createTouchUI(page);
 
   const g = game();
   if (g) g.classList.add("tut-on");

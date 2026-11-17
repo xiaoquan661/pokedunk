@@ -174,7 +174,7 @@ const TOUCH_ICONS = {
 };
 
 /** 竖屏操控层：四键弧形、图标+中文、摇杆推满冲刺、独立蓄力条 */
-function createTouchUI(root) {
+export function createTouchUI(root) {
   const game = root.querySelector(".game");
   const touch = game?.querySelector(".touch");
   if (!touch) return { frame() {} };
