@@ -891,7 +891,7 @@ function buildPlayer(a, e) {
   var o;
   const t = getPokemon(a),
     s = { ...t.r };
-  for (const r of Object.keys(e)) s[r] = Math.min(99, s[r] + ((o = e[r]) != null ? o : 0));
+  for (const r of Object.keys(e)) s[r] = Math.max(1, Math.min(99, s[r] + ((o = e[r]) != null ? o : 0)));
   const n = calcOVR(t.pos, s);
   return { ...t, r: s, ovr: n, archetype: calcArchetype(t.pos, s, n), size: sizeFactor(a, s) };
 }

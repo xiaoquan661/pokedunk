@@ -7,7 +7,7 @@
  */
 import { loadSave, writeSave } from "../storage.js?v=72";
 import { gameAudio } from "../platform/audio.js?v=64";
-import { getPokemon } from "../../engine/readable/play-core.js?v=84";
+import { getPokemon } from "../../engine/readable/play-core.js?v=85";
 import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
 import { openDetail } from "./detail.js?v=83";
 import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=62";

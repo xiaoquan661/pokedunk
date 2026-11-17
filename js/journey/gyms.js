@@ -2,7 +2,7 @@
  * journey/gyms.js —— 八馆 + 四天王配置（pokedunk-v2）
  * 从 match-screen.js 抽出，供赛季系统与比赛屏共用。
  */
-import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=84";
+import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=85";
 
 const GYM_DEXES = {
   Rock: [95, 111, 74, 138, 247],
@@ -19,20 +19,36 @@ const GYM_DEXES = {
   Dragon: [147, 148, 149, 230, 635],
 };
 
-/** 八馆+四天王原版馆主队（唯一、最强） */
+/** 八馆+四天王：原作馆主代表阵容（各取 5 只，含招牌精灵） */
 export const GYM_ROSTERS = {
-  1: [246, 74, 111, 213, 222],
-  2: [60, 140, 98, 184, 195],
-  3: [239, 82, 405, 171, 100],
-  4: [189, 182, 114, 45, 103],
-  5: [169, 93, 24, 45, 110],
-  6: [124, 64, 475, 97, 437],
-  7: [38, 229, 257, 136, 244],
-  8: [383, 445, 208, 260, 530],
-  elite: [151, 243, 150, 384, 249],
+  // 小刚：岩石
+  1: [74, 75, 95, 111, 140],   // 小拳石 / 隆隆石 / 大岩蛇 / 独角犀牛 / 化石盔
+  // 小霞：水
+  2: [120, 121, 118, 119, 60], // 海星星 / 宝石海星 / 角金鱼 / 金鱼王 / 蚊香蝌蚪
+  // 马志士：电
+  3: [100, 101, 81, 82, 26],   // 霹雳电球 / 顽皮雷弹 / 小磁怪 / 三合一磁怪 / 雷丘
+  // 莉佳：草
+  4: [43, 44, 45, 114, 71],    // 走路草 / 臭臭花 / 霸王花 / 蔓藤怪 / 大食花
+  // 阿桔：毒
+  5: [109, 110, 88, 89, 49],   // 瓦斯弹 / 双弹瓦斯 / 臭泥 / 臭臭泥 / 摩鲁蛾
+  // 娜姿：超能
+  6: [63, 64, 65, 122, 97],    // 凯西 / 勇基拉 / 胡地 / 魔墙人偶 / 引梦貘人
+  // 夏伯：火
+  7: [58, 59, 77, 78, 126],    // 卡蒂狗 / 风速狗 / 小火马 / 烈焰马 / 鸭嘴火兽
+  // 坂木：地面
+  8: [111, 112, 31, 34, 115],  // 独角犀牛 / 钻角犀兽 / 尼多后 / 尼多王 / 袋兽
+  // 四天王联队
+  elite: [131, 68, 94, 149, 130], // 拉普拉斯 / 怪力 / 耿鬼 / 快龙 / 暴鲤龙
 };
 
-export const GYM_BONUS = { 1: 0, 2: 2, 3: 4, 4: 6, 5: 8, 6: 10, 7: 12, 8: 14, elite: 4 };
+/**
+ * 赛季 1 的原始目标平均战力：
+ * 60 / 63 / 66 / 69 / 72 / 75 / 78 / 81，四天王 88。
+ * 下面的加成是把各馆原版阵容校准到该目标后反推的值。
+ * 从第 2 赛季起，每赛季再 +2 全属性（由 season.js 的 extra 注入）。
+ */
+export const GYM_TARGETS = { 1: 60, 2: 63, 3: 66, 4: 69, 5: 72, 6: 75, 7: 78, 8: 81, elite: 88 };
+export const GYM_BONUS = { 1: -3, 2: -4, 3: -7, 4: 2, 5: 2, 6: -1, 7: 3, 8: 2, elite: 2 };
 
 const STAT_KEYS = ["spd", "sht", "ins", "pas", "def", "blk", "reb", "hnd"];
 
@@ -44,7 +60,7 @@ export function pickGymRoster(stage, types, extra = 0) {
   for (const p of POKEMON_LIST) if (pool.length < 5 && !pool.includes(p.dex)) pool.push(p.dex);
   const bonus = {};
   const b = (GYM_BONUS[stage] ?? 0) + extra;
-  if (b > 0) for (const k of STAT_KEYS) bonus[k] = b;
+  if (b !== 0) for (const k of STAT_KEYS) bonus[k] = b;
   return pool.slice(0, 5).map((d) => buildPlayer(d, bonus));
 }
 

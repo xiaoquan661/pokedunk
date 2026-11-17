@@ -11,15 +11,15 @@ import { openSettings } from "./ui/settings.js?v=111";
 import { renderBag } from "./ui/bag.js?v=72";
 import { renderTeam } from "./ui/team.js?v=90";
 import { openDetail } from "./ui/detail.js?v=83";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=153";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=155";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=69";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=70";
 import { settleMatchResult, signContract } from "./journey/settle.js?v=96";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=81";
-import { openDaily } from "./ui/daily.js?v=85";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=82";
+import { openDaily } from "./ui/daily.js?v=86";
 import { openAchievements } from "./ui/achv-ui.js?v=71";
-import { startTutorial } from "./ui/tutorial.js?v=79";
+import { startTutorial } from "./ui/tutorial.js?v=80";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=59";
 import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=76";
@@ -45,7 +45,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=84";
+} from "../engine/readable/play-core.js?v=85";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -1334,7 +1334,7 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=84");
+window.__PC = await import("../engine/readable/play-core.js?v=85");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
