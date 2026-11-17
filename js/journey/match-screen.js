@@ -76,12 +76,38 @@ export function buildGymMatch(save, mode = "league") {
   return { home, away, difficulty, quarterLen, ...prefs, seed: matchSeed(save, info), gym, mode, info, stamina: true };
 }
 
+const SIM_CPU_BOOST = { rookie: -14, pro: -5, allstar: 0, legend: 4 };
+const SIM_MAX_MARGIN = 30;
+
+/** 无头模拟双方都是 AI，引擎不会自动注入难度档补正，这里手动补上 */
+export function makeSimCfg(cfg) {
+  const cpu = SIM_CPU_BOOST[cfg.difficulty] || 0;
+  return {
+    ...cfg,
+    home: { ...cfg.home, human: false },
+    away: { ...cfg.away, human: false, boost: (cfg.away?.boost || 0) + cpu },
+  };
+}
+
+/** 模拟比分限幅：保持胜负，最多 30 分差 */
+function capSimMargin(engine) {
+  const s = engine?.score;
+  if (!Array.isArray(s) || Math.abs(s[0] - s[1]) <= SIM_MAX_MARGIN) return engine;
+  if (s[0] > s[1]) s[1] = Math.max(0, s[0] - SIM_MAX_MARGIN);
+  else s[0] = Math.max(0, s[1] - SIM_MAX_MARGIN);
+  return engine;
+}
+
+/** 共用无头模拟：难度补正 + 30 分差上限 */
+export async function simulateHeadless(cfg) {
+  return capSimMargin(await simulateFullMatch(makeSimCfg(cfg)));
+}
+
 /** 直接无头模拟当前比赛（赛季页「一键模拟」用），返回 { engine, cfg } */
 export async function simulateCurrentMatch(save, mode = "league") {
   const cfg = buildGymMatch(save, mode);
   if (!cfg) return { engine: null, cfg: null };
-  const simCfg = { ...cfg, home: { ...cfg.home, human: false }, away: { ...cfg.away, human: false } };
-  const engine = await simulateFullMatch(simCfg);
+  const engine = await simulateHeadless(cfg);
   return { engine, cfg };
 }
 
@@ -306,9 +332,8 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     btn.disabled = true;
     btn.textContent = "模拟中…";
     handle.stop();
-    // 无头模拟必须双方 AI（Kr 不喂输入，human 队会站桩）：克隆 cfg 摘掉 human 标记
-    const simCfg = { ...cfg, home: { ...cfg.home, human: false }, away: { ...cfg.away, human: false } };
-    const done = await simulateFullMatch(simCfg);
+    // 双方 AI 无头模拟，带难度补正与 30 分差上限
+    const done = await simulateHeadless(cfg);
     onFinal(done, cfg, false, true);
   });
   root.querySelector(".game")?.appendChild(btn);

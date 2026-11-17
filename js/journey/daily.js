@@ -9,9 +9,9 @@
  * 状态：save.daily（按 date 懒重置，history 保留最近 7 天）
  */
 import {
-  getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER, simulateFullMatch,
+  getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
 } from "../../engine/readable/play-core.js?v=85";
-import { buildMyRoster } from "./match-screen.js?v=155";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=156";
 import { teamPower, STAT_KEYS } from "../systems/build.js?v=66";
 import { writeSave } from "../storage.js?v=72";
 
@@ -201,11 +201,10 @@ export function buildDailyMatch(save) {
   };
 }
 
-/** 一键模拟（双方 AI） */
+/** 一键模拟（双方 AI，带难度补正与 30 分差上限） */
 export async function simulateDailyMatch(save) {
   const cfg = buildDailyMatch(save);
-  const simCfg = { ...cfg, home: { ...cfg.home, human: false }, away: { ...cfg.away, human: false } };
-  const engine = await simulateFullMatch(simCfg);
+  const engine = await simulateHeadless(cfg);
   return { engine, cfg };
 }
 
