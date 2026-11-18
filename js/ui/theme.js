@@ -40,7 +40,7 @@ const HREF = {
   valorant: "./css/valorant.css?v=41",
   stardew: "./css/stardew.css?v=35",
   terraria: "./css/terraria.css?v=34",
-  black: "./css/black.css?v=42",
+  black: "./css/black.css?v=46",
 };
 
 export function loadTheme() {

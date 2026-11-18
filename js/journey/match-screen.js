@@ -9,12 +9,12 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=85";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=85";
-import { loadSet } from "../ui/settings.js?v=111";
-import { STAT_KEYS } from "./gyms.js?v=62";
-import { currentMatchInfo, matchSeed } from "./season.js?v=69";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=66";
+import { calcOVR } from "../../engine/readable/play-core.js?v=87";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=87";
+import { loadSet, saveSet } from "../ui/settings.js?v=117";
+import { STAT_KEYS } from "./gyms.js?v=63";
+import { currentMatchInfo, matchSeed } from "./season.js?v=74";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=67";
 import { createMatchHype } from "../ui/match-hype.js?v=64";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
@@ -119,8 +119,7 @@ export async function simulateCurrentMatch(save, mode = "league") {
 function createPortraitCamera(root) {
   const game = root.querySelector(".game");
   const canvas = root.querySelector(".game canvas.court") || root.querySelector(".game canvas");
-  const ZOOM = 1.7;
-  const ZOOM_SPEC = 1.55;
+  let viewScale = Math.max(0.8, Math.min(1.2, Number(loadSet().viewScale) || 1));
   const WIDE = 1.3; // 左右视野再扩大 30%
   const LIFT = 30; // 视野变宽后减少上移，避免只看到球场底边
   let tx = 0, ty = 0, primed = false;
@@ -134,6 +133,8 @@ function createPortraitCamera(root) {
 
   function frame(engine, dt) {
     if (!canvas) return;
+    const ZOOM = 1.7 * viewScale;
+    const ZOOM_SPEC = 1.55 * viewScale;
     const fpsDt = Math.min(0.05, dt || 1 / 60);
     if (game?.classList.contains("rot")) {
       if (canvas.style.transform) canvas.style.transform = "";
@@ -182,7 +183,11 @@ function createPortraitCamera(root) {
     canvas.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${zoom})`;
   }
 
-  return { frame };
+  function setViewScale(v) {
+    viewScale = Math.max(0.8, Math.min(1.2, Number(v) || 1));
+  }
+
+  return { frame, setViewScale };
 }
 
 /**
@@ -208,6 +213,12 @@ export function createTouchUI(root) {
   const touch = game?.querySelector(".touch");
   if (!touch) return { frame() {} };
   const pad = game.__touchPad || null;
+  function setStick(cfg = {}) {
+    const c = { ...loadSet(), ...cfg };
+    const scale = Math.max(0.9, Math.min(1.4, Number(c.stickScale) || 1));
+    touch.style.setProperty("--stick-scale", String(scale));
+  }
+  setStick();
 
   touch.querySelector('.tb[data-b="turbo"]')?.remove();
 
@@ -238,6 +249,9 @@ export function createTouchUI(root) {
   const charge = document.createElement("i");
   charge.className = "pd-charge";
   shootBtn?.appendChild(charge);
+  const zone = document.createElement("i");
+  zone.className = "pd-zone";
+  shootBtn?.appendChild(zone);
 
   let sprint = false;
   function frame(engine) {
@@ -257,16 +271,74 @@ export function createTouchUI(root) {
     const charging = !!(u && u.state === "shoot" && u.meter > 0);
     if (!charging) {
       if (charge) charge.style.height = "0%";
+      zone?.classList.remove("on");
       shootBtn?.classList.remove("pd-perfect");
       return;
     }
     const gw = engine.greenWindow?.(u) || 0.03;
     const v = Math.max(0, Math.min(1, u.meter));
     if (charge) charge.style.height = (v * 100).toFixed(1) + "%";
+    // 黄条区域 = 完美出手窗口；长度由该精灵的投篮数值决定
+    if (zone) {
+      const lo = Math.max(0, 0.8 - gw);
+      const hi = Math.min(1, 0.8 + gw);
+      zone.style.bottom = (lo * 100).toFixed(1) + "%";
+      zone.style.height = Math.max(2, (hi - lo) * 100).toFixed(1) + "%";
+      zone.classList.add("on");
+    }
     const perfect = u.meter >= 0.8 - gw && u.meter <= 0.8 + gw;
     shootBtn?.classList.toggle("pd-perfect", perfect);
   }
-  return { frame };
+  return { frame, setStick };
+}
+
+/** 比赛内暂停菜单：画面大小 + 摇杆调整（实时生效） */
+function installPauseTuning(root, camera, touchUI) {
+  const panel = root.querySelector(".pause-menu .panel");
+  if (!panel || panel.querySelector(".pause-tune")) return;
+  const c = loadSet();
+  const view = Math.round(Math.max(0.8, Math.min(1.2, Number(c.viewScale) || 1)) * 100);
+  const stick = Math.round(Math.max(0.9, Math.min(1.4, Number(c.stickScale) || 1)) * 100);
+  const tune = document.createElement("div");
+  tune.className = "pause-tune";
+  tune.innerHTML = `
+    <div class="pt-title">比赛设置 <button type="button" data-pt-reset>恢复默认</button></div>
+    <div class="pt-row"><span>画面大小</span><output data-pt-out="viewScale">${view}%</output></div>
+    <input type="range" data-pt="viewScale" min="80" max="120" step="5" value="${view}">
+    <div class="pt-row"><span>摇杆大小</span><output data-pt-out="stickScale">${stick}%</output></div>
+    <input type="range" data-pt="stickScale" min="90" max="140" step="5" value="${stick}">`;
+  const actions = panel.querySelector(".pause-actions");
+  panel.insertBefore(tune, actions || panel.querySelector(".subs-panel") || null);
+
+  const apply = (key, raw) => {
+    const value = raw / 100;
+    saveSet({ [key]: value });
+    if (key === "viewScale") camera?.setViewScale?.(value);
+    else touchUI?.setStick?.({ [key]: value });
+    const out = tune.querySelector(`[data-pt-out="${key}"]`);
+    if (out) out.textContent = `${raw}%`;
+  };
+  tune.addEventListener("input", (e) => {
+    const input = e.target.closest("input[data-pt]");
+    if (!input) return;
+    apply(input.dataset.pt, Number(input.value) || 0);
+  });
+  tune.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-pt-reset]")) return;
+    saveSet({ viewScale: 1, stickScale: 1 });
+    camera?.setViewScale?.(1);
+    touchUI?.setStick?.({ stickScale: 1 });
+    installPauseTuningReset(tune);
+  });
+}
+function installPauseTuningReset(tune) {
+  const vals = { viewScale: 100, stickScale: 100 };
+  for (const [k, v] of Object.entries(vals)) {
+    const range = tune.querySelector(`input[data-pt="${k}"]`);
+    if (range) range.value = String(v);
+    const out = tune.querySelector(`[data-pt-out="${k}"]`);
+    if (out) out.textContent = `${v}%`;
+  }
 }
 
 export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
@@ -298,6 +370,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
 
   // 暂停菜单：新增「重新开始」（同一对阵重开一局，不计负）
   if (!spectator) {
+    installPauseTuning(root, camera, touchUI);
     const actions = root.querySelector(".pause-menu .pause-actions");
     if (actions) {
       const restart = document.createElement("button");

@@ -5,18 +5,18 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=85";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=87";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
-  trainPrice, trainStat, resetTrain,
+  trainPrice, trainStat, resetTrain, TRAIN_COST_STEP,
   ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=66";
-import { loadSave, writeSave, moveMon } from "../storage.js?v=73";
-import { BERRY_XP } from "../systems/shop.js?v=73";
+} from "../systems/build.js?v=67";
+import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=75";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=1";
+import { BERRY_XP } from "../systems/shop.js?v=74";
 import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=67";
+import { playEvolve } from "./anim.js?v=70";
 import { ICON } from "./icons.js?v=63";
-import { xpToNext } from "../../engine/growth.js";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
 const STAT_ZH = { spd: "速度", sht: "投篮", ins: "终结", pas: "传球", def: "防守", blk: "盖帽", reb: "篮板", hnd: "控球" };
@@ -184,7 +184,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const trainBody = mon
     ? `<div class="train-wallet"><span>篮球币 <b>${save.coins}</b></span><small>${tr.bank > 0 ? `返还点 ${tr.bank}（优先使用，不扣币）` : `本次训练 ${trainPrice(mon)} 币`}</small></div>
       <div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
-      <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + 5} 币` : ""}。</p>
+      <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + TRAIN_COST_STEP} 币` : ""}。</p>
       <p class="note">${tr.points >= trainCap ? `已达当前等级上限：Lv.${mon.level} 最多训练 ${trainCap} 点，升级后可继续。` : `每只精灵最多训练 ${TRAIN_MAX} 点，当前上限 = 4 + 等级÷2（Lv.${mon.level} → ${trainCap} 点）。`}</p>
       <p class="note">重置返还 80% 训练点，返还点优先使用且不扣币；已花费的篮球币不退。</p>
       <button class="dbtn b" data-trainreset>重置训练（返还 80% 点数，不退币）</button>`
@@ -318,10 +318,13 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         if (evo2 && mon.level >= evo2.level && evo2.to.length) {
           const old = mon.dex;
           const oldName = monName(old);
-          mon.dex = evo2.to[0];
-          save.dex[mon.dex] ??= Date.now();
-          events.push(`进化！${oldName} → ${monName(mon.dex)}`);
-          anims.push({ type: "evolve", oldDex: old, newDex: mon.dex, oldName, newName: monName(mon.dex), level: mon.level, growth: [] });
+          const merged = mergeOwnedSpecies(save, monId, evo2.to[0]);
+          const er = recordEvolution(save, monId, evo2.to[0]);
+          if (er.ok) {
+            const newName = monName(mon.dex);
+            events.push(`进化！${oldName} → ${newName}${merged.merged ? "（与已有同种融合）" : ""}`);
+            anims.push({ type: "evolve", oldDex: old, newDex: mon.dex, oldName, newName, level: mon.level, growth: [], merged: merged.merged, compensation: merged });
+          }
         } else {
           anims.push({ type: "levelup", dex: mon.dex, level: mon.level, growth: [] });
         }
@@ -329,13 +332,14 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       writeSave(save);
       ov.remove();
       // 逐个播放升级/进化中心弹窗，结束后重开详情页（dex 可能已进化）
+      const finishAll = () => { anims.length = 0; openDetail(mon.dex, monId, onClose); };
       const playQueue = () => {
         const a = anims.shift();
-        if (!a) return openDetail(mon.dex, monId, onClose);
+        if (!a) return finishAll();
         if (a.type === "evolve") {
-          playEvolve({ oldDex: a.oldDex, newDex: a.newDex, title: `进化！${a.oldName} → ${a.newName}`, sub: `Lv.${a.level} · 位置已随形态更新`, changes: a.growth.map((g) => ({ k: "随机成长", v: g })) }, playQueue);
+          playEvolve({ oldDex: a.oldDex, newDex: a.newDex, title: `进化！${a.oldName} → ${a.newName}`, sub: `Lv.${a.level} · ${a.merged ? "与已有同种融合，训练点已返还" : "等级保持不变，位置已随形态更新"}`, changes: a.growth.map((g) => ({ k: "随机成长", v: g })), onSkipAll: finishAll }, playQueue);
         } else {
-          playEvolve({ oldDex: a.dex, title: `升级！Lv.${a.level}`, sub: "经验已入账", changes: [] }, playQueue);
+          playEvolve({ oldDex: a.dex, title: `升级！Lv.${a.level}`, sub: "经验已入账", changes: [], onSkipAll: finishAll }, playQueue);
         }
       };
       if (anims.length) playQueue();

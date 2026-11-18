@@ -5,9 +5,10 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=73";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=73";
-import { LEGENDARY_DEX } from "./build.js?v=66";
+import { addMon, writeSave } from "../storage.js?v=75";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=74";
+import { LEGENDARY_DEX } from "./build.js?v=67";
+import { syncAcquireLevel } from "./acquire.js?v=1";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
 export const EGG_AD_REDUCE_MS = 30 * 60 * 1000;
@@ -120,9 +121,10 @@ export function eggHatch(save, slot) {
   save.eggs.slots[slot] = null; // 先清槽
   const r = addMon(save, dex, { from: "egg" });
   if (r.ok) {
+    const level = syncAcquireLevel(save, r.id, dex);
     writeSave(save);
     return {
-      ok: true, recruited: true, dex, first: r.isNewDex, placed: r.movedTo,
+      ok: true, recruited: true, dex, level, first: r.isNewDex, placed: r.movedTo,
       legend: LEGENDARY_DEX.has(dex), mon: getPokemon(dex),
     };
   }

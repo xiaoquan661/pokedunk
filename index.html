@@ -6,7 +6,8 @@
 <title>口袋灌篮</title>
 <style>
   /* ===== 跨设备等比缩放舞台：以 390×844 设计稿为基准，只整体缩放，不重排 ===== */
-  html, body { height: 100%; background: #05060f; overflow: hidden; }
+  html, body { position: fixed; inset: 0; height: 100%; background: #05060f; overflow: hidden; overscroll-behavior: none; }
+  body { touch-action: manipulation; -webkit-overflow-scrolling: auto; }
   :root { --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); }
   #stage {
     position: fixed;
@@ -40,11 +41,11 @@
 </style>
 <link rel="stylesheet" href="./css/main.css?v=50" />
 <link rel="stylesheet" href="./css/original.css?v=33" />
-<link rel="stylesheet" href="./css/game-override.css?v=61" />
-<link rel="stylesheet" href="./css/menu-legacy.css?v=127" />
-<link id="ui-theme-style" rel="stylesheet" href="./css/black.css?v=45" />
+<link rel="stylesheet" href="./css/game-override.css?v=72" />
+<link rel="stylesheet" href="./css/menu-legacy.css?v=132" />
+<link id="ui-theme-style" rel="stylesheet" href="./css/black.css?v=46" />
 <link rel="stylesheet" href="./css/battle-ui.css?v=33" />
-<script>try{var __all=new URLSearchParams(location.search).get("themes")==="1";var __saved=localStorage.getItem("pokedunk.uiTheme")||"black";var __ok=__all?["retro","black","classic","valorant","stardew","terraria"]:["retro","black"];var __t=__ok.indexOf(__saved)>=0?__saved:"black";var __map={retro:"./css/retro.css?v=59",classic:"./css/classic.css?v=32",valorant:"./css/valorant.css?v=41",stardew:"./css/stardew.css?v=35",terraria:"./css/terraria.css?v=34",black:"./css/black.css?v=45"};document.getElementById("ui-theme-style").href=__map[__t]||__map.black;document.documentElement.dataset.uiTheme=__t;}catch(e){}</script>
+<script>try{var __all=new URLSearchParams(location.search).get("themes")==="1";var __saved=localStorage.getItem("pokedunk.uiTheme")||"black";var __ok=__all?["retro","black","classic","valorant","stardew","terraria"]:["retro","black"];var __t=__ok.indexOf(__saved)>=0?__saved:"black";var __map={retro:"./css/retro.css?v=59",classic:"./css/classic.css?v=32",valorant:"./css/valorant.css?v=41",stardew:"./css/stardew.css?v=35",terraria:"./css/terraria.css?v=34",black:"./css/black.css?v=46"};document.getElementById("ui-theme-style").href=__map[__t]||__map.black;document.documentElement.dataset.uiTheme=__t;}catch(e){}</script>
 </head>
 <body>
 <div id="stage"><div id="app"></div></div>
@@ -96,15 +97,29 @@
     }
     hint.hidden = true;
     var ins = insets();
-    var availH = Math.max(320, h - ins.top - ins.bottom);
-    var s = Math.max(0.75, Math.min(1.25, w / DESIGN_W));
-    var logicalH = availH / s;
+    // iOS Safari 下拉回弹/底部工具栏会二次遮挡底部；额外预留空白区
+    var q = new URLSearchParams(location.search);
+    var qgap = parseFloat(q.get("gapb"));
+    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent || "")
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var gapBottom = isFinite(qgap) ? qgap : (ios ? 18 : 0);
+    var availH = Math.max(320, h - ins.top - ins.bottom - gapBottom);
+    // 先按宽度铺满；若安全区导致可用高度不足 844 设计稿，则整体等比缩小，
+    // 保证 390×844 的完整内容始终可见（iOS 刘海/Home 条不再裁掉底部）。
+    var base = Math.min(1.25, w / DESIGN_W);
+    var logicalH = availH / base;
+    var s = base;
+    if (logicalH < 844) {
+      s = Math.min(1.25, availH / 844);
+      logicalH = 844;
+    }
+    s = Math.max(0.35, s);
     stage.style.setProperty("--stage-top", ins.top + "px");
     stage.style.setProperty("--stage-s", String(s));
     stage.style.setProperty("--stage-h", logicalH + "px");
     document.documentElement.style.setProperty("--stage-h-logical", logicalH + "px");
     document.documentElement.style.setProperty("--stage-s-logical", String(s));
-    window.__stageInfo = { w: w, h: h, scale: s, logicalH: logicalH, safeTop: ins.top, safeBottom: ins.bottom };
+    window.__stageInfo = { w: w, h: h, scale: s, logicalH: logicalH, safeTop: ins.top, safeBottom: ins.bottom, gapBottom: gapBottom };
   }
   window.__stageApply = apply;
   apply();
@@ -120,7 +135,7 @@
 <script>window.addEventListener("orientationchange",function(){try{window.LampsGame&&window.LampsGame.applyStatusBarSafeTop&&window.LampsGame.applyStatusBarSafeTop()}catch(e){}});</script>
 <script src="./js/zh.js?v=58"></script>
 <script src="./js/dex-data.js?v=56"></script>
-<script type="module" src="./js/app.js?v=340"></script>
+<script type="module" src="./js/app.js?v=361"></script>
 </body>
 </html>
 

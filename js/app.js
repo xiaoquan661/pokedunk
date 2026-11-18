@@ -3,33 +3,34 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=56"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=73";
-import { renderDex } from "./ui/dex.js?v=79";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=87";
-import { openSettings } from "./ui/settings.js?v=111";
-import { renderBag } from "./ui/bag.js?v=72";
-import { renderTeam } from "./ui/team.js?v=91";
-import { openDetail } from "./ui/detail.js?v=84";
-import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=156";
+import "./systems/evo-rules.js?v=57"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=75";
+import { renderDex } from "./ui/dex.js?v=86";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=90";
+import { openSettings } from "./ui/settings.js?v=117";
+import { renderBag } from "./ui/bag.js?v=75";
+import { renderTeam } from "./ui/team.js?v=98";
+import { openDetail } from "./ui/detail.js?v=92";
+import { buildGymMatch, mountMatch } from "./journey/match-screen.js?v=163";
 import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=64";
 import { watchRewardedAd } from "./platform/ads.js?v=59";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=72";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=99";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=84";
-import { openDaily } from "./ui/daily.js?v=88";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=74";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=105";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=92";
+import { openDaily } from "./ui/daily.js?v=97";
 import { openAchievements } from "./ui/achv-ui.js?v=71";
-import { startTutorial } from "./ui/tutorial.js?v=81";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=72";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=60";
-import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=76";
+import { startTutorial } from "./ui/tutorial.js?v=88";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=73";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=62";
+import { openEarn, openDailyTasks, bumpDaily } from "./ui/earn.js?v=77";
 import { ACHV } from "./systems/achv.js?v=65";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=66";
-import { playEvolve } from "./ui/anim.js?v=67";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=67";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=70";
 import { ICON } from "./ui/icons.js?v=63";
 import { LINE_ICON } from "./ui/menu-line-icons.js?v=56";
-import { pendingLegend } from "./journey/legend.js?v=59";
-import { openLegendPicker } from "./ui/legend.js?v=61";
+import { pendingLegend } from "./journey/legend.js?v=60";
+import { minAcquireLevel } from "./systems/acquire.js?v=1";
+import { openLegendPicker } from "./ui/legend.js?v=62";
 import {
   getPokemon,
   calcOVR,
@@ -45,7 +46,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=85";
+} from "../engine/readable/play-core.js?v=87";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -70,7 +71,8 @@ function newbieStep(save) {
   if (!nb || nb.done) return 0;
   if (!nb.tutorialDone) return 1;
   if ((nb.shopBuys || 0) < 2) return 2;
-  if (lineupSize(save) < 5) return 3;
+  // 商店买完后先引导去队伍页检查/调整首发，不要直接开比赛
+  if (!nb.teamDone || lineupSize(save) < 5) return 3;
   return 4;
 }
 
@@ -78,7 +80,7 @@ function newbieStepText(save) {
   const step = newbieStep(save);
   if (step === 1) return "第 1 步 · 完成操作教程";
   if (step === 2) return `第 2 步 · 商店买精灵 ${save.newbie.shopBuys || 0}/2`;
-  if (step === 3) return `第 3 步 · 首发凑齐 ${lineupSize(save)}/5`;
+  if (step === 3) return `第 3 步 · 调整首发队伍 ${lineupSize(save)}/5`;
   return "第 4 步 · 开始第一场比赛";
 }
 
@@ -143,7 +145,7 @@ function openNewbieQuest(save) {
   const actions = {
     1: ["去操作教程", () => { wrap.remove(); startNewbieTutorial(s); }],
     2: ["去每日商店", () => { wrap.remove(); showSub(renderShop, s); }],
-    3: ["去调整首发", () => { wrap.remove(); showTeam(s); }],
+    3: ["去调整队伍", () => { wrap.remove(); showTeam(s); }],
     4: ["开始第一场比赛", () => {
       const cur = loadSave() || s;
       cur.newbie.done = true;
@@ -182,7 +184,7 @@ function openNewbieQuest(save) {
       ${row(!!nb.tutorialDone, "完成操作教程", "学习移动、投篮、传球、抢断、推满摇杆冲刺与必杀")}
       ${row(!!nb.giftDone, "领取教程伙伴", "皮卡丘、伊布加入队伍")}
       ${row(buys >= 2, "在每日商店购买 2 只精灵", `已购买 ${buys}/2`)}
-      ${row(lineup >= 5, "首发阵容达到 5 人", `当前 ${lineup}/5`)}
+      ${row(!!nb.teamDone && lineup >= 5, "调整首发队伍", nb.teamDone ? `当前 ${lineup}/5` : "去队伍页检查首发位置")}
     </div>
     <button class="pk-btn-gold" id="nbq-go" style="width:100%;padding:12px;margin-top:12px">${actions[step][0]}</button>
     <p class="page-sub" style="text-align:center;margin-top:8px">${newbieStepText(s)}</p>
@@ -950,7 +952,7 @@ function showPreMatch(save, mode = "league") {
       <div class="brief-winrow"><span>预计胜率</span><div class="brief-winbar"><i style="width:${winP}%"></i></div><b style="color:${winP >= 50 ? "var(--good)" : "var(--red)"}">${winP}%</b></div>
       <div class="pms-sec"><b>对手首发</b><div class="pms-opp">${cfg.away.roster.slice(0, 5).map((p) => {
         const nm = getPokemon(p.dex).name;
-        return `<button type="button" class="brief-mon" data-pms-dex="${p.dex}" style="--tc:${TYPE_COLORS[p.types?.[0]] || "#5a6a92"}" aria-label="查看 ${nm} 详情"><span class="bo">${p.ovr}</span><img src="./sprites/${p.dex}.png" alt=""><b class="bm-name">${nm}</b><i>${p.pos}</i></button>`;
+        return `<button type="button" class="pms-mon pms-opp-card" data-pms-dex="${p.dex}" style="--tc:${TYPE_COLORS[p.types?.[0]] || "#5a6a92"}" aria-label="查看 ${nm} 详情"><span class="pms-ovr">${p.ovr}</span><img src="./sprites/${p.dex}.png" alt=""><b>${nm}</b><small>${p.pos}</small></button>`;
       }).join("")}</div></div>
       <div class="pms-type-hint">
         <div class="pth-head"><b>系别克制</b><small>仅列出发动 ×2 的属性优势</small></div>
@@ -1080,6 +1082,7 @@ function startAutoMatch(save, cfg, mode = "league") {
 /** 赛后升级/进化中心弹窗队列：逐个播放 anims 事件 */
 function playResultAnims(r) {
   const anims = (r.anims || []).slice();
+  const skipAll = () => { anims.length = 0; };
   const next = () => {
     const a = anims.shift();
     if (!a) return;
@@ -1093,8 +1096,9 @@ function playResultAnims(r) {
         oldDex: a.oldDex,
         newDex: a.newDex,
         title: `进化！${a.oldName} → ${a.newName}`,
-        sub: `Lv.${a.level ?? ""} · 位置已随形态更新`,
+        sub: `Lv.${a.level ?? ""} · ${a.merged ? "与已有同种融合，训练点已返还" : "等级保持不变，位置已随形态更新"}`,
         changes,
+        onSkipAll: skipAll,
       }, next);
     } else {
       playEvolve({
@@ -1102,6 +1106,7 @@ function playResultAnims(r) {
         title: `升级！Lv.${a.level}`,
         sub: (a.growth.join("、") || "无随机加点") + " —— 继续保持训练！",
         changes,
+        onSkipAll: skipAll,
       }, next);
     }
   };
@@ -1212,8 +1217,16 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
       return;
     }
     const card = btn.closest(".res-contract");
-    card?.classList.add("signed");
-    btn.textContent = `已签约 · 加入${res.movedTo === "team" ? "队伍" : "仓库"}`;
+    btn.textContent = "签约中…";
+    playAcquire({
+      dex: r.contract.dex,
+      kicker: "合同签约",
+      title: `获得 ${r.contract.name}`,
+      sub: `Lv.${res.level} · ${r.contract.rarity} · 已加入${res.movedTo === "team" ? "队伍" : "仓库"}`,
+    }, () => {
+      card?.classList.add("signed");
+      btn.textContent = `已签约 · 加入${res.movedTo === "team" ? "队伍" : "仓库"}`;
+    });
   });
   page.querySelector("#res-fk")?.addEventListener("click", () => showMatch(loadSave() || save, "elite"));
   page.querySelector("#res-home").addEventListener("click", () => showHome(loadSave() || save));
@@ -1272,6 +1285,11 @@ function showDailyResult(save, engine, quit, page = app.firstElementChild) {
         <p class="dr-break">得分 ${d.pts} + 扣篮 ${d.dnk}×3 + 三分 ${d.tpm}×2 + 抢断 ${d.stl}×2 + 盖帽 ${d.blk}×2 + 胜利 ${d.winBonus}</p>
         <div class="res-lines rs-lines">
           ${r.firstWin ? `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>今日首胜 +100 篮球币</span></p>` : ""}
+          ${(r.milestones || []).map((m) => {
+            if (m.legend?.ok) return `<p class="res-line res-gold"><span>✦</span><span>${m.score} 分奖励：传说精灵「${m.legend.name}」加入${m.legend.placed === "box" ? "仓库" : "队伍"}！</span></p>`;
+            if (m.legend) return `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>${m.score} 分奖励：+${m.legend.coin || 200} 篮球币（${m.legend.reason === "weekly" ? "本周传说已领取" : "传说已集齐"}）</span></p>`;
+            return `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>${m.score} 分奖励：+${m.coin} 篮球币</span></p>`;
+          }).join("")}
           <p class="res-line"><span class="res-dot"></span><span>今日最佳 ${r.best} 分 · 已挑战 ${r.plays} 场（${r.wins} 胜）</span></p>
           <p class="res-line" style="color:var(--text-dim);font-size:11.5px"><span class="res-dot" style="background:var(--text-dim)"></span><span>当日任务可在「每日挑战」面板领取</span></p>
         </div>
@@ -1323,7 +1341,14 @@ function showDex(save) {
   openPageModal((page) => renderDex(page), save);
 }
 function showTeam(save) {
-  openPageModal((page) => renderTeam(page, save), save);
+  const s = loadSave() || save;
+  const nb = s.newbie;
+  // 新手之路：买完 2 只后，进入队伍页即视为完成了“调整队伍”引导
+  if (nb && !nb.done && (nb.shopBuys || 0) >= 2 && !nb.teamDone) {
+    nb.teamDone = true;
+    writeSave(s);
+  }
+  openPageModal((page) => renderTeam(page, s), s);
 }
 function showBag(save) {
   openPageModal((page) => renderBag(page, save), save);
@@ -1334,10 +1359,19 @@ function showSub(renderFn, save) {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=85");
+window.__PC = await import("../engine/readable/play-core.js?v=87");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
+if (existing) {
+  // 修复历史存档：商店/孵蛋/合同可能把进化后的形态以 Lv.1 入队
+  let repaired = false;
+  for (const mon of Object.values(existing.mons || {})) {
+    const level = minAcquireLevel(mon.dex);
+    if ((mon.level || 1) < level) { mon.level = level; repaired = true; }
+  }
+  if (repaired) writeSave(existing);
+}
 if (existing && existing.journey.stage !== "starter") showHome(existing);
 else showStart();
 

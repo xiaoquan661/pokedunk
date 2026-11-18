@@ -3167,7 +3167,7 @@ window.__pjEnterLine = function (l) {
   window.__pjSetLine(l);
   location.reload();
 };
-const xpToNext = (a) => 60 + 25 * (a - 1),
+const xpToNext = (a) => 40 + 15 * (a - 1),
   LEAGUE_GYMS = [
     {
       name: "Pewter Boulders",
@@ -6699,20 +6699,20 @@ class gs {
       return;
     const r = o.p,
       i = this.proj(r.x, r.y, r.z + Ze(r)),
-      l = Math.round(i.x + 10 * (r.facing === 1 ? -1 : 1) - 3),
-      c = 30,
+      l = Math.round(i.x + 15 * (r.facing === 1 ? -1 : 1) - 4),
+      c = 45,
       h = Math.round(i.y - 4);
-    ((e.globalAlpha = clampNum(o.t * 3, 0, 1)), (e.fillStyle = "#05060f"), e.fillRect(l - 1, h - 1, 7, c + 2));
+    ((e.globalAlpha = clampNum(o.t * 3, 0, 1)), (e.fillStyle = "#05060f"), e.fillRect(l - 1, h - 1, 10, c + 2));
     const d = clampNum(rt - o.w, 0, 1),
       f = clampNum(rt + o.w, 0, 1);
     ((e.fillStyle = "#2f3560"),
-      e.fillRect(l, h, 5, c),
-      (e.fillStyle = "#21d07a"),
-      e.fillRect(l, Math.round(h + c - f * c), 5, Math.max(1, Math.round((f - d) * c))));
+      e.fillRect(l, h, 8, c),
+      (e.fillStyle = "#ffcb05"),
+      e.fillRect(l, Math.round(h + c - f * c), 8, Math.max(2, Math.round((f - d) * c))));
     const u = clampNum(o.v, 0, 1.1),
       m = o.v >= d && o.v <= f;
-    ((e.fillStyle = m ? "#ffffff" : "#ffcb05"),
-      e.fillRect(l - 1, Math.round(h + c - Math.min(1, u) * c), 7, 2),
+    ((e.fillStyle = m ? "#ffffff" : "#ff8a4a"),
+      e.fillRect(l - 1, Math.round(h + c - Math.min(1, u) * c), 10, 3),
       (e.globalAlpha = 1));
   }
   drawJumpMeter(e, t, s) {

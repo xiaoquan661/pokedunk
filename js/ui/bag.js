@@ -3,9 +3,10 @@
  * 格子展示持有物品（树果/精灵蛋），点击格子 → 进入物品详情页（大图+描述+数量）。
  * 使用入口不在背包：树果投喂走精灵详情页（detail.js），孵蛋走孵蛋页。
  */
-import { getPokemon, xpToNext, rollGrowth } from "../../engine/readable/play-core.js?v=85";
+import { getPokemon, xpToNext, rollGrowth } from "../../engine/readable/play-core.js?v=87";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave } from "../storage.js?v=73";
+import { recordEvolution, writeSave } from "../storage.js?v=75";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=1";
 import { ICON } from "./icons.js?v=63";
 
 const BERRY_XP = 50;
@@ -33,8 +34,9 @@ function grantXp(save, monId, mon, amount) {
     events.push(`${getPokemon(mon.dex).name} 升到 Lv.${mon.level}（${growth.join("、") || "无加点"}）`);
     const evo = EVOLUTIONS[mon.dex];
     if (evo && mon.level >= evo.level && evo.to.length) {
+      const merged = mergeOwnedSpecies(save, monId, evo.to[0]);
       const r = recordEvolution(save, monId, evo.to[0]);
-      if (r.ok) events.push(`进化！${getPokemon(r.oldDex).name} → ${getPokemon(r.newDex).name}`);
+      if (r.ok) events.push(`进化！${getPokemon(r.oldDex).name} → ${getPokemon(r.newDex).name}${merged.merged ? "（与已有同种融合）" : ""}`);
     }
   }
   return events;

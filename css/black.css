@@ -1245,41 +1245,7 @@
   border-color: var(--r-line);
   color: #b8b8b8;
 }
-/* 训练模式内的触屏按键同步复古体育，正式比赛仍保持原版 */
-.game.tut-on .touch .tb {
-  border: 3px solid var(--r-ink);
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-  box-shadow: 3px 3px 0 var(--r-ink);
-}
-.game.tut-on .touch .tb b {
-  color: var(--r-ink);
-  border: 2px solid var(--r-ink);
-  background: var(--r-paper);
-  border-radius: 3px;
-}
-.game.tut-on .touch .tb span { color: var(--r-muted); }
-.game.tut-on .touch .tb.on {
-  background: var(--r-green);
-  color: var(--r-paper-3);
-}
-.game.tut-on .touch .tb.on b {
-  background: var(--r-paper-3);
-  color: var(--r-ink);
-}
-.game.tut-on .touch .tb.ready {
-  border-color: var(--r-green);
-  box-shadow: 0 0 0 3px rgba(184, 230, 60, 0.25), 3px 3px 0 var(--r-ink);
-}
-.game.tut-on .touch .stick-base {
-  border: 3px solid var(--r-paper-3);
-  background: rgba(255, 255, 255, 0.14);
-}
-.game.tut-on .touch .stick-knob {
-  border: 3px solid var(--r-ink);
-  background: var(--r-green);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
-}
+/* 教程与正式比赛共用同一套触屏按键外观，不再单独覆盖 */
 .screen-match .tut-prog { background: var(--r-green); }
 .screen-match .tut-score b,
 .screen-match .tut-stars { color: var(--r-green); }

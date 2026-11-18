@@ -11,9 +11,9 @@
  * { v, no, phase, round, byeRound, schedule[], rounds[], results[], table[],
  *   playoffs, fourKings, badges[], champion, history[] }
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=85";
-import { pickGymRoster } from "./gyms.js?v=62";
-import { teamPower as buildTeamPower } from "../systems/build.js?v=66";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=86";
+import { pickGymRoster } from "./gyms.js?v=63";
+import { teamPower as buildTeamPower } from "../systems/build.js?v=67";
 
 export const GYM_CN = ["深灰道馆", "华蓝道馆", "枯叶道馆", "彩虹道馆", "浅红道馆", "金黄道馆", "红莲道馆", "常磐道馆"];
 export const ROUNDS = 9;
@@ -503,6 +503,8 @@ export function recordResult(save, info, { won, myScore, oppScore, sim }) {
 
 export function startNextSeason(save) {
   const old = ensureSeason(save);
+  // 进入新赛季前先把旧赛季徽章封存，避免徽章随赛季重置而丢失
+  syncLegacy(save, old);
   const nextNo = (old.no || 1) + 1;
   const history = old.history || [];
   save.journey.season = emptySeason(nextNo, history);
@@ -522,6 +524,8 @@ export function syncLegacy(save, s) {
   // 每个赛季的徽章独立留档，跨赛季不重置已获得的记录
   j.badgeSeasons ||= {};
   j.badgeSeasons[s.no] = { no: s.no, badges: [...s.badges], champion: !!s.champion };
+  j.badgeVault ||= [];
+  for (const b of s.badges) if (!j.badgeVault.includes(b)) j.badgeVault.push(b);
 }
 
 export function progressLabel(save) {

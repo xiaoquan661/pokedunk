@@ -6,11 +6,11 @@
  * - 存档：重置本机偏好（不影响生涯存档）
  */
 import { gameAudio } from "../platform/audio.js?v=64";
-import { resetSave } from "../storage.js?v=73";
+import { resetSave } from "../storage.js?v=75";
 import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=81";
-import { BONDS } from "../systems/build.js?v=66";
-import { EGG_TIERS } from "../systems/shop.js?v=73";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=85";
+import { BONDS } from "../systems/build.js?v=67";
+import { EGG_TIERS } from "../systems/shop.js?v=74";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=86";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -31,7 +31,7 @@ export function loadSet() {
     return c;
   } catch { return {}; }
 }
-function saveSet(patch) {
+export function saveSet(patch) {
   const c = loadSet();
   for (const k in patch) c[k] = patch[k];
   try { localStorage.setItem(SET_KEY, JSON.stringify(c)); } catch {}
@@ -68,6 +68,18 @@ function tabMatch(c) {
     '<p class="pj-mut">难度由赛程决定：越往后的道馆对手越强</p>' +
     '<p class="pj-mut">比赛偏好即时保存，下次开球生效</p>';
 }
+function tabFeel(c) {
+  const view = Math.round(Math.max(0.8, Math.min(1.2, Number(c.viewScale) || 1)) * 100);
+  const stick = Math.round(Math.max(0.9, Math.min(1.4, Number(c.stickScale) || 1)) * 100);
+  const row = (label, desc, key, min, max, step, val) =>
+    `<div class="pj-block"><div class="pj-flbl">${label}</div><div class="pj-fdesc">${desc}</div>
+      <div class="pj-range"><output data-feel-out="${key}">${val}%</output><input type="range" data-feel="${key}" min="${min}" max="${max}" step="${step}" value="${val}"></div></div>`;
+  return row("画面大小", "比赛镜头远近；80% 看到更多球场，120% 镜头更近。", "viewScale", 80, 120, 5, view) +
+    row("摇杆大小", "摇杆按下时会跳到手指位置，这里只调整摇杆显示尺寸。", "stickScale", 90, 140, 5, stick) +
+    '<button class="pj-btn" id="feel-reset" style="margin-top:2px">恢复默认</button>' +
+    '<p class="pj-mut">这里与战斗内暂停菜单共用同一套设置，下一场生效。</p>';
+}
+
 function tabLook() {
   const desc = THEME_SWITCH_ENABLED
     ? "体验版：开放全部主题用于对比。"
@@ -174,7 +186,55 @@ const CSS =
   ".set-body .type-row>i{width:36px;height:20px;flex-shrink:0;display:grid;place-items:center;border-radius:5px;background:color-mix(in srgb,var(--tc,#4f9dff) 24%,#0a1228);border:1px solid color-mix(in srgb,var(--tc,#4f9dff) 55%,#26325a);color:#fff;font-style:normal;font-size:10px;font-weight:700}" +
   ".set-body .type-txt{min-width:0;display:flex;flex-direction:column;gap:1px}" +
   ".set-body .type-txt span{font-size:10.5px;color:#fff;line-height:1.35}" +
-  ".set-body .type-txt small{font-size:10px;color:var(--text-dim);line-height:1.4}";
+  ".set-body .type-txt small{font-size:10px;color:var(--text-dim);line-height:1.4}" +
+  ".set-head-tools{display:flex;gap:5px;margin-left:auto}" +
+  ".set-head-tools button{padding:5px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.28);color:rgba(255,255,255,.82);font:700 11px var(--sport)}" +
+  ".set-head-tools button.on{background:rgba(245,197,66,.18);border-color:var(--gold);color:var(--gold)}" +
+  ".set-tune{margin:0 0 12px;padding:11px 12px;border:1px solid rgba(245,197,66,.32);border-radius:10px;background:rgba(245,197,66,.07)}" +
+  ".set-tune[hidden]{display:none!important}" +
+  ".set-tune .tune-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}" +
+  ".set-tune .tune-head b{font:700 12.5px var(--sport);color:var(--gold)}" +
+  ".set-tune .tune-head button{width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.24);color:rgba(255,255,255,.7);font:700 13px var(--sport)}" +
+  ".set-tune .tune-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:11.5px}" +
+  ".set-tune .tune-row output{font:700 11.5px var(--sport);color:var(--gold);font-variant-numeric:tabular-nums}" +
+  ".set-tune input[type=range]{width:100%;margin:7px 0 2px;accent-color:var(--gold)}" +
+  ".set-tune .tune-note{font-size:10.5px;color:var(--text-dim);line-height:1.45;margin:2px 0 0}" +
+  ".set-tune .tune-reset{margin-top:10px;padding:6px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.24);color:rgba(255,255,255,.75);font:700 11px var(--sport)}" +
+  ".set-body .pj-range{display:flex;align-items:center;gap:10px}" +
+  ".set-body .pj-range output{flex:0 0 52px;text-align:right;color:var(--gold);font:700 12px var(--sport);font-variant-numeric:tabular-nums}" +
+  ".set-body .pj-range input[type=range]{flex:1;min-width:0;accent-color:var(--gold)}";
+
+let tuneKind = null;
+function tuneRow(label, key, min, max, step, value, fmt, desc) {
+  return `<div class="tune-row"><span>${label}</span><output data-tune-out="${key}">${fmt(value)}</output></div>` +
+    `<input type="range" data-tune="${key}" min="${min}" max="${max}" step="${step}" value="${value}">` +
+    (desc ? `<p class="tune-note">${desc}</p>` : "");
+}
+function tuneHtml(kind) {
+  const c = loadSet();
+  if (kind === "view") {
+    const v = Math.round(Math.max(0.8, Math.min(1.2, Number(c.viewScale) || 1)) * 100);
+    return `<div class="tune-head"><b>画面大小</b><button type="button" data-tune-close>×</button></div>` +
+      tuneRow("比赛视野", "viewScale", 80, 120, 5, v, (x) => `${x}%`, "调大后镜头更近，调小后能看到更多球场；下一场比赛生效。");
+  }
+  const s = Math.round(Math.max(0.9, Math.min(1.4, Number(c.stickScale) || 1)) * 100);
+  const x = Math.round(Math.max(-30, Math.min(30, Number(c.stickX) || 0)));
+  const y = Math.round(Math.max(-30, Math.min(30, Number(c.stickY) || 0)));
+  const px = (n) => `${n > 0 ? "+" : ""}${n}px`;
+  return `<div class="tune-head"><b>摇杆调整</b><button type="button" data-tune-close>×</button></div>` +
+    tuneRow("摇杆大小", "stickScale", 90, 140, 5, s, (n) => `${n}%`, "") +
+    tuneRow("左右位置", "stickX", -30, 30, 5, x, px, "") +
+    tuneRow("上下位置", "stickY", -30, 30, 5, y, px, "调整后下一场比赛生效；默认位置在左下角。") +
+    `<button type="button" class="tune-reset" data-tune-reset>恢复默认</button>`;
+}
+function renderTune(wrap) {
+  const box = wrap.querySelector("#pj-set-tune");
+  if (!box) return;
+  wrap.querySelectorAll("[data-tune-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tuneTab === tuneKind));
+  if (!tuneKind) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = tuneHtml(tuneKind);
+}
 
 let curTab = "match";
 
@@ -182,6 +242,7 @@ function renderBody(panel) {
   const body = panel.querySelector("#pj-set-body");
   const c = loadSet();
   body.innerHTML = curTab === "match" ? tabMatch(c)
+    : curTab === "feel" ? tabFeel(c)
     : curTab === "sound" ? tabSound()
     : curTab === "look" ? tabLook()
     : curTab === "guide" ? tabGuide()
@@ -191,6 +252,7 @@ function renderBody(panel) {
 /** 打开设置面板（挂在 body，关闭即销毁） */
 export function openSettings() {
   curTab = "match"; // 每次打开回到「比赛」页签，避免上次停留的页签造成困惑
+  tuneKind = null;
   if (document.getElementById("pj-set-style")) document.getElementById("pj-set-style").remove();
   const st = document.createElement("style");
   st.id = "pj-set-style";
@@ -205,6 +267,7 @@ export function openSettings() {
       <div class="page-head"><button class="back" data-back>‹</button><h2>设置</h2><span class="count">本机偏好</span></div>
       <div class="pj-tabs">
         <button data-tab="match" class="on">比赛</button>
+        <button data-tab="feel">操作</button>
         <button data-tab="sound">声音</button>
         <button data-tab="look">外观</button>
         <button data-tab="guide">说明</button>
@@ -214,6 +277,11 @@ export function openSettings() {
     </div></div>`;
   wrap.addEventListener("click", (e) => {
     if (e.target === wrap || e.target.closest("[data-back]")) { wrap.remove(); return; }
+    if (e.target.closest("#feel-reset")) {
+      saveSet({ viewScale: 1, stickScale: 1 });
+      renderBody(wrap);
+      return;
+    }
     const tb = e.target.closest(".pj-tabs button");
     if (tb) {
       curTab = tb.dataset.tab;
@@ -262,6 +330,15 @@ export function openSettings() {
       resetSave();
       location.reload();
     }
+  });
+  wrap.addEventListener("input", (e) => {
+    const r = e.target.closest("input[data-feel]");
+    if (!r) return;
+    const key = r.dataset.feel;
+    const raw = Number(r.value) || 0;
+    saveSet({ [key]: raw / 100 });
+    const out = wrap.querySelector(`[data-feel-out="${key}"]`);
+    if (out) out.textContent = `${raw}%`;
   });
   (document.getElementById("stage")||document.body).appendChild(wrap);
   renderBody(wrap);

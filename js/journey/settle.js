@@ -6,35 +6,35 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=85";
+import { xpToNext, rollGrowth, getPokemon } from "../../engine/readable/play-core.js?v=87";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave, addMon, hasDex, markSeen } from "../storage.js?v=73";
-import { monPrice } from "../systems/shop.js?v=73";
+import { recordEvolution, writeSave, addMon, hasDex, markSeen } from "../storage.js?v=75";
+import { monPrice } from "../systems/shop.js?v=74";
 import { ACHV } from "../systems/achv.js?v=65";
-import { bumpDaily } from "../ui/earn.js?v=76";
-import { currentMatchInfo, recordResult } from "./season.js?v=69";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=66";
-import { offerLegendReward } from "./legend.js?v=59";
+import { bumpDaily } from "../ui/earn.js?v=77";
+import { currentMatchInfo, recordResult } from "./season.js?v=74";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=67";
+import { offerLegendReward } from "./legend.js?v=60";
+import { syncAcquireLevel } from "../systems/acquire.js?v=1";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=1";
 
 const CONTRACT_DISCOUNT = 0.6; // 合同价 = 商店价 × 60%
-const CONTRACTS_PER_SEASON = 2;
-const CONTRACT_WIN_STEPS = [2, 5]; // 赛季第 2、5 场胜利各一张
+// 每场胜利 25% 概率出现合同。常规赛 8 场全胜的期望 = 8 × 25% = 2 张；
+// 加上季后赛胜场后期望略高于 2，但单赛季可能 0~4 张。
+const CONTRACT_CHANCE = 0.25;
 // S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高
 const KIND_COIN = { league: 0.7, playoff: 1.5, final: 2.0, elite: 3.0 };
 const KIND_XP = { league: 5.0, playoff: 7.0, final: 8.0, elite: 8.0 };
 
 /**
- * 战胜后的精灵合同：每个赛季固定 2 张，分别在第 2、5 场胜利后出现。
+ * 战胜后的精灵合同：每场胜利按 25% 概率出现，期望每赛季约 2 张。
  * 从普通+稀有的未结缘精灵中抽 1 只，按商店价 6 折出售；不出传说，不重复返币。
  */
 function rollContract(save) {
   const season = save.journey?.season;
   if (!season) return null;
   const issued = season.contracts || 0;
-  const wins = season.contractWins || 0;
-  if (issued >= CONTRACTS_PER_SEASON) return null;
-  const due = wins >= CONTRACT_WIN_STEPS[Math.min(issued, CONTRACT_WIN_STEPS.length - 1)];
-  if (!due) return null;
+  if (Math.random() >= CONTRACT_CHANCE) return null;
   const rows = window.__PJ_DEX_ROWS || [];
   const pool = rows.filter((r) => {
     const dex = r[0];
@@ -64,11 +64,12 @@ export function signContract(save, offer) {
     save.coins = before;
     return { ok: false, error: r.error || "签约失败" };
   }
+  const level = syncAcquireLevel(save, r.id, offer.dex);
   save.flags = save.flags || {};
   save.flags.sign1 = true;
   bumpDaily("sign");
   writeSave(save);
-  return { ok: true, movedTo: r.movedTo, coins: save.coins };
+  return { ok: true, movedTo: r.movedTo, coins: save.coins, level };
 }
 
 /** 单个个体吃 XP（含升级循环+进化判定），返回播报；动画事件写入 anims */
@@ -86,11 +87,12 @@ function grantXp(save, monId, mon, amount, anims) {
     if (evo && mon.level >= evo.level && evo.to.length) {
       const oldDex = mon.dex;
       const oldName = getPokemon(oldDex).name;
+      const merged = mergeOwnedSpecies(save, monId, evo.to[0]);
       const r = recordEvolution(save, monId, evo.to[0]);
       if (r.ok) {
         const newName = getPokemon(r.newDex).name;
-        events.push(`进化！${oldName} → ${newName}`);
-        anims.push({ type: "evolve", monId, oldDex, newDex: r.newDex, oldName, newName, growth });
+        events.push(`进化！${oldName} → ${newName}${merged.merged ? "（与已有同种融合）" : ""}`);
+        anims.push({ type: "evolve", monId, oldDex, newDex: r.newDex, oldName, newName, level: mon.level, growth, merged: merged.merged, compensation: merged });
       }
     } else {
       anims.push({ type: "levelup", monId, dex: mon.dex, level: mon.level, growth });

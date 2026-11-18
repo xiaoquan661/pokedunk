@@ -5,17 +5,27 @@
  *   - 对手战力跟随玩家队伍战力（+2，夹在 45~97），无限次尝试、只记当日最高分
  *   - 结算分 = 我方得分 + 扣篮×3 + 三分×2 + 抢断×2 + 盖帽×2 + 胜利 10；模拟 ×0.8
  *   - 每日首胜 +100 币；3 个当日任务（完成场次/首胜/单场扣篮）另领币
+ *   - 分数奖励：80 分 +80 币 / 110 分 +150 币 / 140 分随机传说（每周限 1 只）
  *   - 不推进赛季、不计生涯战绩、不给 XP/签约，避免与训练师之旅互相刷取
  * 状态：save.daily（按 date 懒重置，history 保留最近 7 天）
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=85";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=156";
-import { teamPower, STAT_KEYS } from "../systems/build.js?v=66";
-import { writeSave, markSeen } from "../storage.js?v=73";
+} from "../../engine/readable/play-core.js?v=87";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=163";
+import { teamPower, STAT_KEYS } from "../systems/build.js?v=67";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=75";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=60";
 
 const FIRST_WIN_COINS = 100;
+const DAILY_LEGEND_DUPE_COINS = 200;
+
+/** 每日挑战分数奖励：达到即自动发放，0 点随每日状态重置 */
+export const DAILY_SCORE_MILESTONES = [
+  { id: "s80", score: 80, coin: 80 },
+  { id: "s110", score: 110, coin: 150 },
+  { id: "s140", score: 140, legend: true },
+];
 
 /** 每日 modifier 轮换表（buff 同时作用于双方） */
 export const DAILY_MODS = [
@@ -41,6 +51,14 @@ export function dateKey(d = new Date()) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 export const WEEK_CN = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+/** 周一为一周起点，用于传说奖励的每周限领 */
+export function weekKey(d = new Date()) {
+  const t = new Date(d);
+  t.setHours(0, 0, 0, 0);
+  t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+  const p = (n) => String(n).padStart(2, "0");
+  return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`;
+}
 function hash32(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -78,9 +96,23 @@ export function ensureDaily(save) {
     bestDunks: 0,
     firstWin: false,
     missions: {},
+    scoreClaims: {},
     history: history.slice(-7),
   };
   return save.daily;
+}
+
+/** 分数奖励行（面板展示用） */
+export function dailyScoreRows(save) {
+  const d = ensureDaily(save);
+  const week = weekKey();
+  const legendLocked = save.dailyLegend?.week === week;
+  return DAILY_SCORE_MILESTONES.map((m) => ({
+    ...m,
+    reached: (d.best || 0) >= m.score,
+    claimed: !!d.scoreClaims?.[m.id],
+    weeklyLocked: !!m.legend && legendLocked,
+  }));
 }
 
 /** 任务列表（含领取状态） */
@@ -222,8 +254,26 @@ export function challengeScore(engine, won) {
   return { total: pts + style, pts, tpm, stl, blk, dnk, winBonus: won ? 10 : 0 };
 }
 
+/** 140 分传说奖励：优先未结缘传说，每周最多 1 只；重复/集齐折算 200 币 */
+function grantDailyLegend(save) {
+  const week = weekKey();
+  if (save.dailyLegend?.week === week) {
+    return { ok: false, reason: "weekly", coin: DAILY_LEGEND_DUPE_COINS };
+  }
+  const pool = LEGEND_ROTATION.filter((dex) => !hasDex(save, dex));
+  if (!pool.length) {
+    return { ok: false, reason: "owned", coin: DAILY_LEGEND_DUPE_COINS };
+  }
+  const dex = pool[Math.floor(Math.random() * pool.length)];
+  const r = addMon(save, dex, { from: "daily" });
+  if (!r.ok) return { ok: false, reason: "error", coin: DAILY_LEGEND_DUPE_COINS };
+  save.dailyLegend = { week, dex, at: Date.now() };
+  return { ok: true, dex, name: dexName(dex), placed: r.movedTo, first: r.isNewDex };
+}
+
 /**
  * 每日挑战结算：记录场次/胜场/最高分/最佳扣篮，发首胜币。
+ * 新增分数里程碑：80/110 分发币，140 分随机传说（每周限 1 只）。
  * 不写 stats.w/l、不推进赛季、不发 XP。
  */
 export function settleDaily(save, engine, quit = false, simulated = false) {
@@ -246,15 +296,32 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
     d.firstWin = true;
     firstWin = true;
     coins += FIRST_WIN_COINS;
-    save.coins += coins;
   }
+
+  // 分数里程碑：达到即自动发放；同一档每天只领一次
+  const claims = d.scoreClaims ||= {};
+  const milestones = [];
+  for (const m of DAILY_SCORE_MILESTONES) {
+    if (score < m.score || claims[m.id]) continue;
+    claims[m.id] = true;
+    const item = { id: m.id, score: m.score, coin: m.coin || 0, legend: null };
+    if (m.coin) coins += m.coin;
+    if (m.legend) {
+      const legend = grantDailyLegend(save);
+      item.legend = legend;
+      if (!legend.ok) coins += legend.coin || 0;
+    }
+    milestones.push(item);
+  }
+  save.coins += coins;
+
   const seen = [];
   for (const team of engine.teams || []) for (const p of team.roster || []) if (p?.dex) seen.push(p.dex);
   markSeen(save, seen);
   writeSave(save);
   return {
     quit: false, won, myScore, oppScore, score, detail, simulated,
-    newBest, best: d.best, coins, firstWin,
+    newBest, best: d.best, coins, firstWin, milestones,
     plays: d.plays, wins: d.wins,
   };
 }

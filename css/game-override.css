@@ -37,8 +37,98 @@
   .game .rot-btn{top:calc(var(--safe-t, 0px) + 166px)}
 }
 
+/* —— 比赛内暂停菜单：画面/摇杆调整 —— */
+.pause-tune{margin:0 0 12px;padding:9px 11px;border:1px solid rgba(245,197,66,.28);border-radius:12px;background:rgba(255,255,255,.035)}
+.pause-tune .pt-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;color:var(--gold,#f5c542);font:700 12px var(--sport)}
+.pause-tune .pt-title button{padding:3px 8px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.24);color:rgba(255,255,255,.68);font:700 9.5px var(--sport)}
+.pause-tune .pt-row{display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:11px;color:#d9d9d9}
+.pause-tune .pt-row output{color:var(--gold,#f5c542);font:700 11px var(--sport);font-variant-numeric:tabular-nums}
+.pause-tune input[type=range]{width:100%;margin:3px 0 2px;accent-color:var(--gold,#f5c542)}
+
+/* —— 竖屏比分栏：参考转播记分牌，横排色块 + 底部信息条 —— */
+@media (orientation:portrait) and (max-width:700px){
+  .game.has-touch .bug{
+    top:calc(var(--safe-t,0px) + 170px);
+    left:50%;right:auto;transform:translateX(-50%);
+    width:calc(100% - 24px);max-width:366px;
+    display:grid;grid-template-columns:minmax(0,1fr) 44px 84px 44px minmax(0,1fr);grid-template-rows:40px 15px;
+    background:#0a0d15;border:2px solid rgba(245,197,66,.45);border-radius:2px;
+    box-shadow:0 4px 0 rgba(0,0,0,.45);overflow:hidden;white-space:nowrap;
+    font:700 12px var(--sport);
+  }
+  /* 参考转播记分条：左侧深色「节次」+ 中央浅色大时钟 + 右侧深色「24 秒」。
+     44px 两侧等宽夹住 84px 时钟 → 时钟严格居中；两只球队镜像分列两端。 */
+  .game.has-touch .bug-team{
+    display:flex;align-items:center;gap:6px;
+    min-width:0;padding:0 8px;border-left:0;
+  }
+  .game.has-touch .bug-team:nth-child(1){grid-column:1;grid-row:1;justify-content:flex-end;background:color-mix(in srgb,var(--tc,#7a5cf0) 13%,#0d111b);color:#fff}
+  .game.has-touch .bug-team:nth-child(2){grid-column:5;grid-row:1;flex-direction:row-reverse;justify-content:flex-end;background:color-mix(in srgb,var(--tc,#7a5cf0) 13%,#0d111b);color:#fff}
+  .game.has-touch .bug-team .abbr{
+    flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;
+    background:var(--tc);color:#fff;font:800 8px/1 var(--sport);letter-spacing:0;
+    overflow:hidden;text-overflow:ellipsis;box-shadow:inset 0 0 0 2px rgba(255,255,255,.28);
+  }
+  .game.has-touch .bug-team .pts{flex:none;min-width:auto;text-align:center;font:800 24px/1 var(--sport);font-variant-numeric:tabular-nums;color:#fff;text-shadow:none}
+  /* bug-clock 本身不占格子，把「节次」和「时间」铺成并排两格 */
+  .game.has-touch .bug-clock{display:contents}
+  .game.has-touch .bug-clock [data-k="q"]{
+    grid-column:2;grid-row:1;display:grid;place-items:center;margin:0;
+    background:#191b22;color:#fff;font:800 11px/1 var(--sport);letter-spacing:.02em;white-space:nowrap;
+  }
+  .game.has-touch .bug-clock [data-k="clock"]{
+    grid-column:3;grid-row:1;display:grid;place-items:center;margin:0;
+    background:#f2f1ec;color:#0b0b0d;padding:0;text-align:center;
+    font:800 23px/1 var(--sport);font-variant-numeric:tabular-nums;letter-spacing:.01em;
+  }
+  .game.has-touch .bug-shot{
+    grid-column:4;grid-row:1;display:grid;place-items:center;padding:0;
+    background:#23252c;color:#fff;font:800 14px var(--sport);
+    font-variant-numeric:tabular-nums;
+  }
+  .game.has-touch .bug-shot.low{background:#8e2338;color:#fff}
+  .game.has-touch .bug::after{
+    content:"POKÉ DUNK  ·  PRIME COURT";grid-column:1/-1;grid-row:2;display:flex;align-items:center;justify-content:center;
+    background:#0d1220;color:#7f88a8;font:700 7px var(--sport);letter-spacing:.12em;
+  }
+  /* 主题色兜底：保证色块和白字不被黑色/复古主题覆盖 */
+  html[data-ui-theme] .game.has-touch .bug{background:#0a0d15;border-color:rgba(245,197,66,.45);box-shadow:0 4px 0 rgba(0,0,0,.45)}
+  html[data-ui-theme] .game.has-touch .bug-team .abbr{color:#fff}
+  html[data-ui-theme] .game.has-touch .bug-team .pts{color:#fff}
+  html[data-ui-theme] .game.has-touch .bug-clock [data-k="q"]{background:#191b22;color:#fff}
+  html[data-ui-theme] .game.has-touch .bug-clock [data-k="clock"]{background:#f2f1ec;color:#0b0b0d}
+  html[data-ui-theme] .game.has-touch .bug-shot{background:#23252c;color:#fff}
+  html[data-ui-theme] .game.has-touch .bug-shot.low{background:#8e2338}
+  html[data-ui-theme="retro"] .game.has-touch .bug{background:#f4ead2;border-color:#1c241e}
+  html[data-ui-theme="retro"] .game.has-touch .bug-team:nth-child(1){background:#fff8e8}
+  html[data-ui-theme="retro"] .game.has-touch .bug-team:nth-child(1) .pts{color:#1c241e}
+  html[data-ui-theme="retro"] .game.has-touch .bug-team:nth-child(2){background:#1c241e}
+  html[data-ui-theme="retro"] .game.has-touch .bug-team:nth-child(2) .pts{color:#f4ead2}
+  html[data-ui-theme="retro"] .game.has-touch .bug-clock [data-k="q"]{background:#1c241e;color:#f4ead2}
+  html[data-ui-theme="retro"] .game.has-touch .bug-clock [data-k="clock"]{background:#f4ead2;color:#1c241e}
+  html[data-ui-theme="retro"] .game.has-touch .bug-shot{background:#1c241e;color:#f4ead2}
+  html[data-ui-theme="retro"] .game.has-touch .bug-shot.low{background:#8a2a2a;color:#f4ead2}
+  html[data-ui-theme="retro"] .game.has-touch .bug::after{background:#1c241e;color:#f4ead2}
+
+  /* 精灵状态卡下移到比分栏同排；顶部只留功能按钮 */
+  .game.has-touch .pcard{
+    top:calc(var(--safe-t,0px) + 50px);left:10px;
+    width:292px;height:112px;padding:8px 10px 8px 7px;gap:8px;
+    transform:none;transform-origin:top left;border-radius:6px;overflow:hidden;
+  }
+  .game.has-touch .pcard img{width:64px;height:64px;flex:none}
+  .game.has-touch .pcard .pinfo{gap:4px;min-width:0;overflow:hidden}
+  .game.has-touch .pcard .pname{font-size:.95rem;line-height:1.1;gap:5px;min-width:0}
+  .game.has-touch .pcard .povr{font-size:.62rem;white-space:nowrap}
+  .game.has-touch .pcard .bar{height:10px;margin:0}
+  .game.has-touch .pcard .bar b{font-size:.5rem;line-height:10px;padding-left:6px}
+  .game .sim-btn,.game .rot-btn{top:calc(var(--safe-t,0px) + 8px);height:36px;padding:0;font-size:11px;border-radius:8px}
+  .game .sim-btn{right:114px;width:78px}
+  .game .rot-btn{right:52px;width:56px}
+}
+
 /* —— 战斗播报：移到计分板下方的黑边区域，不再挡住球场中央 —— */
-.game.has-touch .battle{top:calc(max(8px,var(--safe-t,0px)) + 202px) !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 24px);padding:5px 10px;transform:translate(-50%,-6px);opacity:0}
+.game.has-touch .battle{top:calc(max(8px,var(--safe-t,0px)) + 246px) !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 24px);padding:5px 10px;transform:translate(-50%,-6px);opacity:0}
 .game.has-touch .battle.show{transform:translate(-50%,0);opacity:1}
 .game.rot .battle{top:46px !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 180px);padding:4px 9px;transform:translate(-50%,-6px);opacity:0}
 .game.rot .battle.show{transform:translate(-50%,0);opacity:1}
@@ -126,8 +216,15 @@ button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
 @keyframes pdPulse{from{box-shadow:0 0 0 0 rgba(255,185,0,.45),inset 0 -4px rgba(0,0,0,.25)}to{box-shadow:0 0 16px 4px rgba(255,185,0,.65),inset 0 -4px rgba(0,0,0,.25)}}
 
 /* 摇杆整体放大 50%，拖动行程同步加大，方便单手推满 */
-.game.has-touch .touch .stick-base{width:156px;height:156px;margin:-78px 0 0 -78px}
-.game.has-touch .touch .stick-knob{width:72px;height:72px;margin:-36px 0 0 -36px}
+.game.has-touch .touch .stick-base{
+  left:90px;top:60%;
+  width:calc(156px * var(--stick-scale,1));height:calc(156px * var(--stick-scale,1));
+  margin:calc(-78px * var(--stick-scale,1)) 0 0 calc(-78px * var(--stick-scale,1));
+}
+.game.has-touch .touch .stick-knob{
+  width:calc(72px * var(--stick-scale,1));height:calc(72px * var(--stick-scale,1));
+  margin:calc(-36px * var(--stick-scale,1)) 0 0 calc(-36px * var(--stick-scale,1));
+}
 
 /* 摇杆推满：自动冲刺（无独立加速键） */
 .game.has-touch .touch .stick-base::after{content:"推满冲刺";position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);font:700 10px var(--sport);color:#8f96b8;white-space:nowrap;letter-spacing:.1em;opacity:.7}
@@ -138,6 +235,8 @@ button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
 /* 蓄力反馈：不再单独出横条，直接灌进投篮键（底部向上填充 + 完美区高亮） */
 .game.has-touch .touch .tb[data-b="shoot"]{overflow:hidden}
 .game.has-touch .touch .tb .pd-charge{position:absolute;left:0;right:0;bottom:0;height:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,224,138,.6),rgba(255,203,5,.32));border-top:2px solid rgba(255,255,255,.9);box-shadow:0 0 8px rgba(255,203,5,.5)}
+.game.has-touch .touch .tb .pd-zone{position:absolute;left:8%;right:8%;bottom:80%;height:6%;z-index:0;pointer-events:none;opacity:0;background:rgba(255,203,5,.8);border-top:2px solid #fff;border-bottom:2px solid #fff;box-shadow:0 0 10px rgba(255,203,5,.9);transition:opacity .1s}
+.game.has-touch .touch .tb .pd-zone.on{opacity:1}
 .game.has-touch .touch .tb[data-b="shoot"] > b,
 .game.has-touch .touch .tb[data-b="shoot"] > span{position:relative;z-index:1}
 .game.has-touch .touch .tb[data-b="shoot"].pd-perfect{border-color:#fff;box-shadow:0 0 18px rgba(255,255,255,.85),inset 0 -4px rgba(0,0,0,.2)}

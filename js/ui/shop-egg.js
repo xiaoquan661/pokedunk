@@ -3,12 +3,13 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=73";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=73";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=72";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=66";
+import { loadSave, writeSave } from "../storage.js?v=75";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=74";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=74";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=67";
 import { watchRewardedAd } from "../platform/ads.js?v=59";
-import { playHatch } from "./anim.js?v=67";
+import { playHatch, playAcquire } from "./anim.js?v=69";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=1";
 import { ICON, coinInline } from "./icons.js?v=63";
 
 const monName = (dex) => {
@@ -107,20 +108,36 @@ export function renderShop(root) {
     b.addEventListener("click", () => {
       const r = shopBuy(save, Number(b.dataset.buy));
       if (!r.ok) return toast("购买失败：" + r.error);
-      if (r.kind === "mon") toast(`${monName(r.dex)}${r.placed === "box" ? " 进入仓库（队伍已满）" : " 已入队！"}`, 3000);
-      else if (r.kind === "egg") toast(`神秘蛋已放入背包（待孵 ${r.stock} 颗，今日还可买 ${r.left} 颗）——去孵蛋页选择孵化`, 3000);
-      else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个，今日还可买 ${r.left} 个）`);
-      // 新手之路：购买精灵计入进度，并自动排进首发，避免流程卡在“队伍人数不够”
-      if (r.kind === "mon" && save.newbie && !save.newbie.done) {
-        save.newbie.shopBuys = (save.newbie.shopBuys || 0) + 1;
-        ensureLineupSlots(save);
+      if (r.kind === "mon") {
+        // 新手之路：购买精灵计入进度，并自动排进首发，避免流程卡在“队伍人数不够”
+        if (save.newbie && !save.newbie.done) {
+          save.newbie.shopBuys = (save.newbie.shopBuys || 0) + 1;
+          ensureLineupSlots(save);
+        }
+        // 商店可能直接出售进化后的形态：等级抬到该形态的最低进化等级
+        const mid = Object.keys(save.mons).find((id) => save.mons[id].dex === r.dex);
+        const level = mid != null ? syncAcquireLevel(save, mid, r.dex) : minAcquireLevel(r.dex);
+        writeSave(save);
+        const name = monName(r.dex);
+        const finishBuy = () => {
+          renderShop(root);
+          if (save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 2) {
+            toast("首发 5 人已凑齐，准备第一场比赛！", 2600);
+            setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
+          }
+        };
+        playAcquire({
+          dex: r.dex,
+          kicker: "新伙伴",
+          title: `获得 ${name}`,
+          sub: `Lv.${level} · ${rarityOf(r.dex)} · ${r.placed === "box" ? "已放入仓库（队伍已满）" : "已加入队伍"}`,
+        }, finishBuy);
+        return;
       }
+      if (r.kind === "egg") toast(`神秘蛋已放入背包（待孵 ${r.stock} 颗，今日还可买 ${r.left} 颗）——去孵蛋页选择孵化`, 3000);
+      else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个，今日还可买 ${r.left} 个）`);
       writeSave(save);
       renderShop(root); // 重渲染刷新币数/置灰
-      if (r.kind === "mon" && save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 2) {
-        toast("首发 5 人已凑齐，准备第一场比赛！", 2600);
-        setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
-      }
     })
   );
 
@@ -322,7 +339,7 @@ export function renderEgg(root) {
       const sub = r.recruited
         ? legend
           ? `传说精灵加入了${r.placed === "box" ? "仓库" : "队伍"} · 图鉴${r.first ? "首次点亮" : "记录 +1"}`
-          : `${rarity} · 图鉴` + (r.first ? " · 首次点亮" : " · 记录 +1")
+          : `Lv.${r.level} · ${rarity} · 图鉴` + (r.first ? " · 首次点亮" : " · 记录 +1")
         : `${rarity} · 已拥有该精灵 · 转化为篮球币 +${r.coin}`;
       playHatch({ dex: r.dex, title, sub, dup: !r.recruited, legend }, () => renderEgg(root));
     })

@@ -5,12 +5,12 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=73";
+import { loadSave, writeSave } from "../storage.js?v=75";
 import { gameAudio } from "../platform/audio.js?v=64";
-import { getPokemon } from "../../engine/readable/play-core.js?v=85";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=66";
-import { openDetail } from "./detail.js?v=84";
-import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=62";
+import { getPokemon } from "../../engine/readable/play-core.js?v=86";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=67";
+import { openDetail } from "./detail.js?v=92";
+import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=63";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...

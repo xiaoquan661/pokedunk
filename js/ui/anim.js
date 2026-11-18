@@ -55,6 +55,8 @@ const CSS =
   'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-xp .row b{color:#1f5c3a}' +
   'html[data-ui-theme="retro"] .hatch-ov:not(.legend) .hc-btn{background:#1f5c3a;border-color:#1c241e;color:#f4ead2;box-shadow:3px 3px 0 rgba(28,36,30,.3)}' +
   ".hatch-skip{position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:11px}" +
+  ".hatch-skip-all{display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:3;padding:8px 13px;border:1px solid rgba(255,255,255,.38);border-radius:999px;background:rgba(0,0,0,.62);color:#f2f2f2;font:700 11px var(--sport,sans-serif)}" +
+  ".hatch-skip-all.on{display:block}" +
   ".hatch-ov.end .hatch-skip{display:none}" +
   ".hatch-ov .pulse{opacity:1 !important;animation:ePulse .5s ease-in-out 3}" +
   "@keyframes ePulse{0%,100%{filter:none;transform:scale(1)}50%{filter:brightness(2.2) drop-shadow(0 0 14px #fff);transform:scale(1.06)}}" +
@@ -86,7 +88,17 @@ const CSS =
   ".hatch-ov.legend .hc-badge{display:block}" +
   ".hatch-flash.gold{background:#ffe9a8}" +
   ".hatch-ov.legend .legend-rays,.hatch-ov.legend .legend-aura,.hatch-ov.legend .legend-stars{display:block}" +
-  ".hatch-ov:not(.legend) .legend-rays,.hatch-ov:not(.legend) .legend-aura,.hatch-ov:not(.legend) .legend-stars{display:none}";
+  ".hatch-ov:not(.legend) .legend-rays,.hatch-ov:not(.legend) .legend-aura,.hatch-ov:not(.legend) .legend-stars{display:none}" +
+  ".hatch-ov.acquire{background:radial-gradient(ellipse at 50% 44%,#1c2438 0%,#0b0d16 58%,#03050c 100%)}" +
+  ".hatch-ov.acquire .hatch-ring{border-color:#ffcb05;box-shadow:0 0 22px rgba(255,203,5,.55)}" +
+  ".hatch-ov.acquire .hatch-mon{filter:drop-shadow(0 0 18px rgba(255,203,5,.7))}" +
+  ".hatch-ov.acquire .hatch-card{border-color:#ffcb05}" +
+  ".hatch-ov.acquire .hc-t{color:#ffd75e}" +
+  ".hatch-ov.acquire .hc-kicker{color:#ffcb05}" +
+  /* 升级/进化：立绘放大 100%，舞台与金环同步放大 */
+  ".hatch-ov.evo .hatch-stage{width:min(300px,82vw);height:min(300px,82vw)}" +
+  ".hatch-ov.evo .hatch-mon{left:0;right:0;top:0;bottom:0;margin:auto;width:min(288px,78vw);height:min(288px,78vw);object-fit:contain}" +
+  ".hatch-ov.evo .hatch-ring{left:0;right:0;top:0;bottom:0;margin:auto;width:min(320px,86vw);height:min(320px,86vw)}";
 
 let styleInjected = false;
 function ensureCss() {
@@ -124,6 +136,7 @@ function buildOverlay(id) {
     '<img class="hatch-mon" src="" alt="">' +
     "</div>" +
     '<div class="hatch-card"><div class="hc-badge">传说降临</div><span class="hc-kicker">LEVEL UP</span><div class="hc-t"></div><div class="hc-s"></div><div class="hc-xp" hidden></div><button class="hc-btn" type="button">确 认</button></div></div>' +
+    '<button class="hatch-skip-all" type="button">跳过全部</button>' +
     '<p class="hatch-skip">点击任意处跳过</p>';
   (document.getElementById("stage")||document.body).appendChild(ov);
   return ov;
@@ -196,6 +209,49 @@ export function playHatch(o, onDone) {
 }
 
 /**
+ * 获得精灵弹窗：商店购买 / 赛后合同签约共用。
+ * o = { dex, title, sub, kicker }；点击任意处直接揭晓，确认后回调。
+ */
+export function playAcquire(o, onDone) {
+  const ov = buildOverlay("pj-acquire-ov");
+  const q = (sel) => ov.querySelector(sel);
+  const mon = q(".hatch-mon"), ring = q(".hatch-ring"), card = q(".hatch-card");
+  const egg = q(".hatch-egg"), crack = q(".hatch-crack"),
+    st = q(".hshell.top"), sb = q(".hshell.bot");
+  let finished = false;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    clearTimers();
+    q(".hc-kicker").textContent = o.kicker || "NEW PARTNER";
+    q(".hc-t").textContent = o.title;
+    q(".hc-s").textContent = o.sub;
+    card.classList.add("on");
+    ov.classList.add("end");
+    q("button").onclick = (e) => { e.stopPropagation(); ov.remove(); onDone?.(); };
+  }
+
+  egg.style.display = "none"; crack.style.display = "none";
+  st.style.display = "none"; sb.style.display = "none";
+  mon.src = `./sprites/${o.dex}.png`;
+  ov.classList.add("on", "acquire");
+  mon.style.opacity = "1";
+  mon.classList.add("evolve");
+  timers.push(setTimeout(() => { ring.classList.add("on"); }, 120));
+  timers.push(setTimeout(finish, 620));
+
+  ov.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    clearTimers();
+    if (card.classList.contains("on")) { finished = true; return; }
+    finished = false;
+    ring.classList.add("on");
+    finish();
+  });
+}
+
+/**
  * 进化/升级中心弹窗。o = { oldDex, newDex, title, sub, changes:[{k,v}] }。
  * 序列：旧形态三次白光脉冲（ePulse）→ 白闪 → 新形态 evoPop 弹出 + 金环 → 属性提升卡。
  * 无 newDex（纯升级）时直接弹属性提升卡。
@@ -228,7 +284,20 @@ export function playEvolve(o, onDone) {
   egg.style.display = "none"; crack.style.display = "none";
   st.style.display = "none"; sb.style.display = "none";
   mon.src = `./sprites/${o.newDex || o.oldDex}.png`;
-  ov.classList.add("on");
+  ov.classList.add("on", "evo");
+
+  // 连续升级/进化时，一键跳过当前动画和剩余队列
+  const skipAll = q(".hatch-skip-all");
+  if (o.onSkipAll) {
+    skipAll.classList.add("on");
+    skipAll.onclick = (e) => {
+      e.stopPropagation();
+      finished = true;
+      clearTimers();
+      ov.remove();
+      o.onSkipAll();
+    };
+  }
 
   if (o.newDex && o.newDex !== o.oldDex) {
     // 进化序列：旧形态脉冲 3 次（1.5s）→ 白闪换图 → 新形态弹出

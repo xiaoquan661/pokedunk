@@ -5,8 +5,8 @@ import { getPokemon } from "./data/pokemon.js";
 import { STAT_LABELS } from "./data/pokemon.js";
 import { weightsOf } from "./data/positions.js";
 
-/** 升到下一级所需 XP（翻译自 Fs，逐行等价） */
-export const xpToNext = (level) => 60 + 25 * (level - 1);
+/** 升到下一级所需 XP（下调升级门槛：40 + 15×等级差） */
+export const xpToNext = (level) => 40 + 15 * (level - 1);
 
 /**
  * 升级随机加点（翻译自 mn，逐行等价）：
