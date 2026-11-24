@@ -8,7 +8,7 @@
  *   - 已有同种的训练点转入返还池
  *   - 道具投入优先转移，超出上限按每点 100 币折算
  */
-import { ITEM_TYPES, ITEM_MAX, ITEM_PER_TYPE, ensureLineupSlots } from "./build.js?v=67";
+import { ITEM_TYPES, ITEM_MAX, ITEM_PER_TYPE, ensureLineupSlots } from "./build.js?v=549";
 
 const sameId = (a, b) => Number(a) === Number(b);
 
@@ -31,10 +31,12 @@ export function mergeOwnedSpecies(save, monId, newDex) {
     src.bonus[k] = Math.max(src.bonus[k] || 0, v || 0);
   }
 
-  // 训练点：把被融合个体的已投入点与返还池转入保留个体
-  src.train ||= { points: 0, stats: {}, bank: 0 };
+  // 训练点：把被融合个体的已投入点、返还池、未用自由点转入保留个体
+  src.train ||= { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 };
   const trainRefund = (target.train?.points || 0) + (target.train?.bank || 0);
   src.train.bank = (src.train.bank || 0) + trainRefund;
+  src.train.free = (src.train.free || 0) + (target.train?.free || 0);
+  src.train.freeEarned = Math.max(src.train.freeEarned || 0, target.train?.freeEarned || 0);
 
   // 道具：能转移就转移；达到单只/单项上限的部分折币
   src.item ||= { points: 0, stats: {}, used: {} };

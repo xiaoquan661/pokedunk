@@ -3,15 +3,17 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=75";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=74";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggBuySlot, eggAdSlot, EGG_SLOT_PRICE } from "../systems/egg.js?v=74";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=67";
-import { watchRewardedAd } from "../platform/ads.js?v=59";
-import { playHatch, playAcquire } from "./anim.js?v=69";
-import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=1";
-import { ICON, coinInline } from "./icons.js?v=63";
+import { loadSave, writeSave } from "../storage.js?v=549";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=549";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=549";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=549";
+import { watchRewardedAd } from "../platform/ads.js?v=549";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=549";
+import { playHatch, playAcquire } from "./anim.js?v=549";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=549";
+import { ICON, coinInline } from "./icons.js?v=549";
 
+const AD_EGG_INSTANT_MAX = 1;
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];
   const r = rows.find((x) => x[0] === dex);
@@ -71,7 +73,7 @@ export function renderShop(root) {
       <h2>每日商店</h2>
       <span class="count">${coinInline}${save.coins}</span>
     </div>
-    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 普通树果 ${PRICES.berry} 币 · 高级蛋与高级树果看广告领取（每日限量）</p>
+    <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 普通树果 ${PRICES.berry} 币不限购 / 高级树果 ${PRICES.berryPremium} 币（每日 3 个） · 高级蛋看广告领取</p>
     <div class="shop-tools"><button class="shop-ad${shopFreeRefreshLeft(save) > 0 ? " free" : ""}" id="shop-refresh"${shopFreeRefreshLeft(save) <= 0 && shopAdRefreshLeft(save) <= 0 ? " disabled" : ""}>${shopFreeRefreshLeft(save) > 0 ? "免费刷新货架（今日 1 次）" : shopAdRefreshLeft(save) > 0 ? "看广告刷新货架（今日剩 1 次）" : "今日刷新已用完"}</button></div>
     <div class="shop-grid">
       ${items.map((it) => {
@@ -93,14 +95,11 @@ export function renderShop(root) {
             <div class="nm">${t.name}</div><div class="info">${coinInline}${it.price} · 孵化 ${fmtMs(t.hatchMs)} · 限购${it.bought}/${it.limit}</div>
             <button data-buy="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已购完" : `购买（剩 ${it.left}）`}</button></div>`;
         }
-        if (it.ad) {
-          return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.berry}</span>
-            <div class="nm">高级树果</div><div class="info">看广告 · +${BERRY_XP.premium} XP · 限领 ${it.bought}/${it.limit}</div>
-            <button data-ad="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已领完" : "看广告领取"}</button></div>`;
-        }
-        return `<div class="shop-card${it.soldOut ? " off" : ""}"><span class="emoji">${ICON.berry}</span>
-          <div class="nm">普通树果</div><div class="info">${coinInline}${it.price} · +${BERRY_XP.normal} XP · 限购${it.bought}/${it.limit}</div>
-          <button data-buy="${it.slot}"${it.soldOut ? " disabled" : ""}>${it.soldOut ? "今日已购完" : `购买（剩 ${it.left}）`}</button></div>`;
+        const premium = it.tier === "premium";
+        const limitTxt = premium ? `限购 ${it.bought}/${it.limit}` : "不限购";
+        return `<div class="shop-card${premium && it.soldOut ? " off" : ""}"><span class="emoji">${premium ? ICON.berryPremium : ICON.berry}</span>
+          <div class="nm">${premium ? "高级树果" : "普通树果"}</div><div class="info">${coinInline}${it.price} · +${premium ? BERRY_XP.premium : BERRY_XP.normal} XP · ${limitTxt}</div>
+          <button data-buy="${it.slot}"${premium && it.soldOut ? " disabled" : ""}>${premium && it.soldOut ? "今日已购完" : premium ? `购买（剩 ${it.left}）` : "购买"}</button></div>`;
       }).join("")}
     </div>`;
 
@@ -135,7 +134,7 @@ export function renderShop(root) {
         return;
       }
       if (r.kind === "egg") toast(`神秘蛋已放入背包（待孵 ${r.stock} 颗，今日还可买 ${r.left} 颗）——去孵蛋页选择孵化`, 3000);
-      else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个，今日还可买 ${r.left} 个）`);
+      else toast(`${r.tier === "premium" ? "高级树果" : "普通树果"}已入背包（共 ${r.count} 个${r.left != null ? `，今日还可买 ${r.left} 个` : ""}）`);
       writeSave(save);
       renderShop(root); // 重渲染刷新币数/置灰
     })
@@ -160,7 +159,7 @@ export function renderShop(root) {
         return;
       }
       if (r.kind === "egg") toast(`高级蛋已放入背包（待孵 ${r.stock} 颗，今日还可领 ${r.left} 颗）——去孵蛋页选择孵化`, 3200);
-      else toast(`高级树果已入背包（共 ${r.count} 个，今日还可领 ${r.left} 个）`);
+      else toast(`高级蛋已放入背包（今日还可领 ${r.left} 颗）`);
       writeSave(save);
       renderShop(root);
     })
@@ -196,7 +195,7 @@ export function renderShop(root) {
 }
 
 /* ---------- 孵蛋页 ---------- */
-function eggSlotHtml(e, i) {
+function eggSlotHtml(e, i, hatchCount = 0) {
   if (!e) {
     return `<div class="egg-slot empty">
       <div class="egg-orb empty">${PLUS_SVG}</div>
@@ -215,7 +214,9 @@ function eggSlotHtml(e, i) {
          <button class="pk-btn-gold egg-hatch" data-hatch="${i}">孵 化</button>`
       : `<span class="egg-left">${fmtMs(e.leftMs)}</span>
          <div class="egg-bar"><i style="width:${Math.round((e.progress || 0) * 100)}%"></i></div>
-         <button class="egg-ad" data-adspeed="${i}">看广告 -30 分钟</button>`}
+         ${hatchCount > 0 ? `<button class="egg-ad" data-hatchitem="${i}">用加速券 -50%（×${hatchCount}）</button>` : ""}
+         <button class="egg-ad" data-adspeed="${i}">看广告 -2 小时</button>
+         <button class="egg-ad" data-adinstant="${i}"${adLeft("egg_instant", AD_EGG_INSTANT_MAX) <= 0 ? " disabled" : ""}>看广告立即孵出（今日 ${adLeft("egg_instant", AD_EGG_INSTANT_MAX)}/${AD_EGG_INSTANT_MAX}）</button>`}
     <span class="egg-slot-no">槽位 ${i + 1}</span>
   </div>`;
 }
@@ -251,10 +252,10 @@ export function renderEgg(root) {
       <h2>孵蛋</h2>
       <span class="count">${ICON.egg}${live}/${data.unlocked}</span>
     </div>
-    <p class="page-sub">购买后进入待孵栏，由你决定何时放入孵化器 · 普通蛋 30 分钟 / 高级蛋 3 小时 · 普通蛋 1% / 高级蛋 3% 传说概率</p>
+    <p class="page-sub">购买后进入待孵栏，由你决定何时放入孵化器 · 普通蛋 20 分钟 / 高级蛋 2 小时 · 普通蛋 1% / 高级蛋 6% 传说概率</p>
     ${slotUp ? `<div style="display:flex;justify-content:center;margin:8px 0 10px">${slotUp}</div>` : ""}
     <div class="egg-sec">孵化器 <small>${live}/${data.unlocked} 槽</small></div>
-    <div class="egg-grid">${data.slots.map((e, i) => eggSlotHtml(e, i)).join("")}</div>
+    <div class="egg-grid">${data.slots.map((e, i) => eggSlotHtml(e, i, save.bag?.items?.[HATCH_ITEM] || 0)).join("")}</div>
     ${data.stock.length ? `
       <div class="egg-sec">待孵化 <small>${data.stock.length} 颗 · 放入后开始计时</small></div>
       <div class="egg-stock">${data.stock.map((e) => stockCardHtml(e, hasFree)).join("")}</div>
@@ -308,6 +309,15 @@ export function renderEgg(root) {
         renderEgg(root);
         return;
       }
+      const hi = e.target.closest("[data-hatchitem]");
+      if (hi && !hi.disabled) {
+        const fresh = loadSave() || save;
+        const r = eggItemSpeedUp(fresh, Number(hi.dataset.hatchitem));
+        if (!r.ok) return toast(r.error);
+        toast(r.leftMs <= 0 ? "加速完成，可以孵化了！" : "已用加速券缩短一半时间");
+        renderEgg(root);
+        return;
+      }
       const sp = e.target.closest("[data-adspeed]");
       if (sp && !sp.disabled) {
         sp.disabled = true;
@@ -315,13 +325,31 @@ export function renderEgg(root) {
         const ad = await watchRewardedAd("egg_speed");
         if (!ad.ok) {
           sp.disabled = false;
-          sp.textContent = "看广告 -30 分钟";
+          sp.textContent = "看广告 -2 小时";
           return toast(ad.message || "广告暂不可用");
         }
         const fresh = loadSave() || save;
         const r = eggSpeedUp(fresh, Number(sp.dataset.adspeed));
         if (!r.ok) return toast(r.error);
-        toast(r.leftMs <= 0 ? "加速完成，可以孵化了！" : "已加速 30 分钟");
+        toast(r.leftMs <= 0 ? "加速完成，可以孵化了！" : "已加速 2 小时");
+        renderEgg(root);
+        return;
+      }
+      const inst = e.target.closest("[data-adinstant]");
+      if (inst && !inst.disabled) {
+        inst.disabled = true;
+        inst.textContent = "播放中…";
+        const ad = await watchRewardedAd("egg_instant");
+        if (!ad.ok) {
+          inst.disabled = false;
+          inst.textContent = "看广告立即孵出";
+          return toast(ad.message || "广告暂不可用");
+        }
+        if (!adUse("egg_instant", AD_EGG_INSTANT_MAX)) return toast("今日立即孵化次数已用完");
+        const fresh = loadSave() || save;
+        const r = eggAdInstant(fresh, Number(inst.dataset.adinstant));
+        if (!r.ok) return toast(r.error);
+        toast("广告奖励：这颗蛋可以立即孵化了");
         renderEgg(root);
       }
     });

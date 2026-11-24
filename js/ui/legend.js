@@ -3,9 +3,9 @@
  * 联赛总冠军 / 四天王挑战共享本赛季传说池；领取后立即写入存档。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { loadSave, writeSave } from "../storage.js?v=75";
-import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=60";
-import { ICON } from "./icons.js?v=63";
+import { loadSave, writeSave } from "../storage.js?v=549";
+import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=549";
+import { ICON } from "./icons.js?v=549";
 
 const TYPE_ZH = {
   Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰",
@@ -34,6 +34,9 @@ function choiceCard(save, dex) {
  */
 export function openLegendPicker(save, pending, opts = {}) {
   if (!pending) return;
+  const seasonNo = Number(pending.season);
+  let currentSave = save;
+  let currentPending = pending;
   const wrap = document.createElement("div");
   wrap.className = "pj-scrim page-modal legend-picker";
   wrap.style.cssText = "position:fixed;inset:0;z-index:960;background:rgba(5,8,16,.78);display:grid;place-items:center;padding:10px";
@@ -47,25 +50,37 @@ export function openLegendPicker(save, pending, opts = {}) {
     opts.onClose?.();
   };
 
+  /** 领取后从最新存档重新取 pending，避免继续用旧的 choices/claims */
+  const refreshPending = (fresh) => {
+    currentSave = fresh;
+    const list = fresh?.journey?.legend?.pending;
+    currentPending = Array.isArray(list)
+      ? list.find((p) => Number(p.season) === seasonNo) || null
+      : null;
+  };
+
   const renderPick = () => {
+    if (!currentPending || !currentPending.choices?.length) { close(); return; }
     card.innerHTML = `<div class="sub-page pj-page-body">
       <div class="page-head">
         <button class="back" data-legend-close>‹</button>
         <h2>赛季传说</h2>
-        <span class="count">S${pending.season} · ${pending.choices.length} 选 1</span>
+        <span class="count">S${seasonNo} · ${currentPending.choices.length} 选 1</span>
       </div>
       <p class="page-sub">联赛总冠军 / 四天王挑战共享本赛季传说池 · 选择一只加入球队</p>
-      <div class="legend-choice-grid">${pending.choices.map((dex) => choiceCard(save, dex)).join("")}</div>
-      <p class="legend-pick-note">本赛季还可领取 ${pending.claims || 1} 只；未领取的奖励会保留在赛季页。</p>
+      <div class="legend-choice-grid">${currentPending.choices.map((dex) => choiceCard(currentSave, dex)).join("")}</div>
+      <p class="legend-pick-note">本赛季还可领取 ${currentPending.claims || 1} 只；未领取的奖励会保留在赛季页。</p>
     </div>`;
   };
 
   const renderSuccess = (r) => {
+    const left = currentPending?.claims || 0;
+    const canNext = left > 0 && (currentPending?.choices?.length || 0) > 0;
     card.innerHTML = `<div class="sub-page pj-page-body legend-result">
       <div class="page-head">
         <button class="back" data-legend-close>‹</button>
         <h2>传说降临</h2>
-        <span class="count">S${pending.season}</span>
+        <span class="count">S${seasonNo}</span>
       </div>
       <div class="legend-reveal">
         <span class="legend-reveal-ring"></span>
@@ -75,8 +90,8 @@ export function openLegendPicker(save, pending, opts = {}) {
         <p>${r.dup
           ? `已拥有该传说 · 折算 <b>${ICON.coin}${r.coin}</b> 篮球币`
           : `已加入${r.placed === "box" ? "仓库" : "队伍"} · 图鉴点亮`}</p>
-        ${pending.claims > 0 && pending.choices.length
-          ? `<button class="pk-btn-gold legend-done" data-legend-next>继续领取（剩 ${pending.claims} 只）</button>`
+        ${canNext
+          ? `<button class="pk-btn-gold legend-done" data-legend-next>继续领取（剩 ${left} 只）</button>`
           : `<button class="pk-btn-gold legend-done" data-legend-close>确 定</button>`}
       </div>
     </div>`;
@@ -88,12 +103,13 @@ export function openLegendPicker(save, pending, opts = {}) {
     const btn = e.target.closest("[data-legend-pick]");
     if (!btn || btn.disabled) return;
     const dex = Number(btn.dataset.legendPick);
-    const fresh = loadSave() || save;
-    const r = claimLegendReward(fresh, pending.season, dex);
-    if (!r.ok) return;
+    const fresh = loadSave() || currentSave;
+    const r = claimLegendReward(fresh, seasonNo, dex);
+    if (!r.ok) { refreshPending(fresh); renderPick(); return; }
     writeSave(fresh);
+    refreshPending(fresh);
     renderSuccess(r);
-    opts.onClaim?.(r);
+    opts.onClaim?.(r, fresh);
   });
 
   renderPick();

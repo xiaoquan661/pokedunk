@@ -33,8 +33,10 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { ensureSeason } from "./journey/season.js?v=74";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=67";
+import { rollGrowth } from "../engine/growth.js?v=549";
+import { ensureSeason } from "./journey/season.js?v=549";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=549";
+import { minAcquireLevel } from "./systems/acquire.js?v=549";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -174,7 +176,7 @@ function nextMonId(save) {
   return save._nextMonId;
 }
 
-/** 全档案同种唯一校验（S5/S6 铁律）：该 dex 已存在于 team/box → false */
+/** 全档案同种唯一校验（S5/S6 铁律）：该 dex 已存在于 team/box → true */
 export function hasDex(save, dex) {
   return Object.values(save.mons).some((m) => m.dex === dex);
 }
@@ -195,15 +197,25 @@ export function addMon(save, dex, opts = {}) {
 
   const base = getPokemon(dex);
   const id = nextMonId(save);
+  // 直接获得进化后形态时，等级不能低于该形态的进化门槛
+  const level = Math.max(1, opts.level ?? 1, minAcquireLevel(dex) || 1);
   save.mons[id] = {
     dex,
-    level: opts.level ?? 1,
+    level,
     xp: opts.xp ?? 0,
     bonus: opts.bonus ?? {},
     pos: base.pos, // 推荐位置（进化时更新）
-    train: { points: 0, stats: {}, bank: 0 },
+    train: { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 },
     item: { points: 0, stats: {}, used: {} },
   };
+  // 补发从 Lv1 到到手等级的随机成长与自由训练点，
+  // 否则直接获得的进化形态会“等级高但属性没长”。
+  const mon = save.mons[id];
+  for (let lv = 1; lv < level; lv++) {
+    rollGrowth({ dex, bonus: mon.bonus }, Math.random);
+    mon.train.free += 1;
+    mon.train.freeEarned += 1;
+  }
 
   const movedTo = save.team.length < 10 ? (save.team.push(id), "team") : (save.box.push(id), "box");
 

@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=3";
+} from "./store-bridge.js?v=549";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -966,10 +966,14 @@ const COURT_HALF_WIDTH = 94,
   COURT_SCALE_W = 0.75,
   HOOP_RING_DIAMETER = 32,
   COURT_SCALE_H = 0.45;
+// 半场 1v1：双方攻同一个篮筐，活动范围限制在右半场。单机同一时刻只有一场比赛。
+let HALF_COURT_ACTIVE = false;
 function hoopXOf(a) {
+  if (HALF_COURT_ACTIVE) return 88.75;
   return a === 0 ? 88.75 : 5.25;
 }
 function sideSign(a) {
+  if (HALF_COURT_ACTIVE) return -1;
   return a === 0 ? -1 : 1;
 }
 function isOutsideCourt(a, e, t) {
@@ -1577,7 +1581,9 @@ class MatchEngine {
       e.engineVersion !== void 0 && e.engineVersion !== ENGINE_VERSION)
     )
       throw new Error("game was recorded on engine v".concat(e.engineVersion, ", this is engine v").concat(ENGINE_VERSION));
-    ((this.cfg = e),
+    (HALF_COURT_ACTIVE = !!e.halfCourt,
+      (this.cfg = e),
+      (this.quarters = Math.max(2, Number(e.quarters) || 4)),
       (this.teams = [e.home, e.away]),
       (this.diff = DIFFICULTY_LEVELS[e.difficulty]),
       (this.seed = ((s = e.seed) != null ? s : Math.floor(Math.random() * 2 ** 32)) >>> 0),
@@ -1704,7 +1710,7 @@ class MatchEngine {
   }
   greenWindow(e) {
     const t = e.human ? this.diff.green * (1 + 0.3 * this.catchup()) : 1;
-    return (0.022 + (e.r.sht / 100) * 0.034) * t * (e.fire ? 1.7 : 1);
+    return (0.022 + (e.r.sht / 100) * 0.045) * t * (e.fire ? 1.7 : 1);
   }
   isHumanTeam(e) {
     return this.teams[e].human;
@@ -1725,13 +1731,13 @@ class MatchEngine {
   }
   startQuarter() {
     const e = this.quarter,
-      t = e > 4 ? (this.rng() < 0.5 ? 0 : 1) : 1 - this.tipWinner;
+      t = e > this.quarters ? (this.rng() < 0.5 ? 0 : 1) : 1 - this.tipWinner;
     if (
-      ((this.clock = e > 4 ? Math.max(30, Math.round(this.cfg.quarterLen / 2)) : this.cfg.quarterLen),
+      ((this.clock = e > this.quarters ? Math.max(30, Math.round(this.cfg.quarterLen / 2)) : this.cfg.quarterLen),
       (this.shotClock = 24),
       this.cfg.stamina && e > 1)
     ) {
-      const i = e === 3 ? 0.3 : 0.15;
+      const i = e === Math.ceil(this.quarters / 2) + 1 ? 0.3 : 0.15;
       for (const l of [...this.players, ...this.bench]) l.energy = Math.min(1, l.energy + i);
       (this.applyPendingSubs(), this.autoSubs(0, !0), this.autoSubs(1, !0));
     }
@@ -1744,8 +1750,8 @@ class MatchEngine {
     ];
     for (const i of this.players) {
       const [l, c] = s[i.slot];
-      ((i.x = 47 + (i.team === 0 ? -l : l)),
-        (i.y = c),
+      ((i.x = this.cfg.halfCourt ? (i.team === t ? 62 : 70) : 47 + (i.team === 0 ? -l : l)),
+        (i.y = this.cfg.halfCourt ? COURT_MID_Y : c),
         (i.z = 0),
         (i.vx = 0),
         (i.vy = 0),
@@ -1757,17 +1763,19 @@ class MatchEngine {
         (i.fx.slow = 0),
         (i.fx.phase = 0),
         (i.fx.surge = 0),
-        (i.facing = i.team === 0 ? 1 : -1),
+        (i.facing = this.cfg.halfCourt ? 1 : i.team === 0 ? 1 : -1),
         (i.ai.jumpIn = -1),
         (i.ai.plan = "none"));
     }
     if (this.drillId) return this.stageDrill();
     const n =
-      e > 4 ? (e === 5 ? "加时赛" : "".concat(e - 4, " 次加时")) : "第 ".concat(e, " 节");
+      e > this.quarters
+        ? (e === this.quarters + 1 ? "加时赛" : "".concat(e - this.quarters, " 次加时"))
+        : "第 ".concat(e, " 节");
     this.phase = "tip";
     let o = t;
     if (this.cfg.practice && e === 1) o = this.tipWinner = this.teams[0].human ? 0 : 1;
-    else if (e === 1 || e === 3) {
+    else if (e === 1 || (this.quarters > 2 && e === Math.ceil(this.quarters / 2) + 1)) {
       (this.setupJump(), this.events.push({ kind: "quarter", label: n, sub: "跳球" }));
       return;
     }
@@ -1863,12 +1871,12 @@ class MatchEngine {
     for (const l of [0, 1]) {
       const c = l === 0 ? e : t,
         h = l === 0 ? -1 : 1;
-      ((c.x = 47 + h * 1.3),
+      ((c.x = this.cfg.halfCourt ? 62 + h * 1.3 : 47 + h * 1.3),
         (c.y = 25),
         this.teamPlayers(l)
           .filter((d) => d !== c)
           .forEach((d, f) => {
-            ((d.x = 47 + h * -s[f][0]), (d.y = 25 + s[f][1]));
+            ((d.x = this.cfg.halfCourt ? 62 + h * -s[f][0] : 47 + h * -s[f][0]), (d.y = 25 + s[f][1]));
           }));
     }
     const n = [this.isHumanTeam(0), this.isHumanTeam(1)],
@@ -1975,14 +1983,18 @@ class MatchEngine {
   endQuarter() {
     this.sfx.push("buzzer");
     const [e, t] = this.score;
-    if (this.quarter >= 4 && e !== t) {
+    if (this.quarter >= this.quarters && e !== t) {
       ((this.phase = "final"), this.events.push({ kind: "final" }));
       return;
     }
     const s =
-        this.quarter === 2 ? "中场休息" : this.quarter >= 4 ? "常规时间结束" : "第 ".concat(this.quarter, " 节结束"),
+        this.quarter === Math.ceil(this.quarters / 2)
+          ? "中场休息"
+          : this.quarter >= this.quarters
+            ? "常规时间结束"
+            : "第 ".concat(this.quarter, " 节结束"),
       n =
-        this.quarter >= 4
+        this.quarter >= this.quarters
           ? "比分战平！进入加时"
           : "".concat(AB(this.teams[0]), " ").concat(e, " - ").concat(t, " ").concat(AB(this.teams[1]));
     (this.events.push({ kind: "quarter", label: s, sub: n }),
@@ -2031,13 +2043,14 @@ class MatchEngine {
     if (this.cfg.autoSwitch === !1) return;
     const s = this.users[e],
       n = (h) => h.state !== "stun";
-    if (s && n(s) && dist2d(s.x, s.y, t.x, t.y) < 6) return;
+    const marking = s && this.manOf(s) === t;
+    if (s && n(s) && (marking || dist2d(s.x, s.y, t.x, t.y) < 6)) return;
     const o = this.teamPlayers(e).filter(n);
     if (!o.length) return;
     const r = (h) => dist2d(h.x, h.y, t.x, t.y),
       i = o.find((h) => this.manOf(h) === t),
       l = o.reduce((h, d) => (r(d) < r(h) ? d : h)),
-      c = i && r(i) < r(l) + 8 ? i : l;
+      c = i || l;
     c !== s && this.setUser(e, c);
   }
   userIntent(e, t) {
@@ -2311,7 +2324,7 @@ class MatchEngine {
       if (o.team === e.team || o.state === "stun") continue;
       const r = dist2d(e.x, e.y, o.x, o.y);
       if (r > 7) continue;
-      let i = (1 - r / 7) * (0.25 + o.r.def * 0.0025 + o.size * 0.06) * (o.z > 0.8 ? 1.4 : 1);
+      let i = (1 - r / 7) * (0.25 + o.r.def * 0.004 + o.size * 0.07) * (o.z > 0.8 ? 1.4 : 1);
       (((o.x - e.x) * (t - e.x) + (o.y - e.y) * (COURT_MID_Y - e.y)) / ((r || 1) * s) < 0.3 && (i *= 0.6), (n = Math.max(n, i)));
     }
     return (e.human && (n *= this.diff.contest), clampNum(1 - n, 0.35, 1));
@@ -2343,7 +2356,8 @@ class MatchEngine {
     let c;
     switch (n) {
       case "perfect":
-        c = (r ? 0.86 : 0.94) - (1 - i) * 0.55;
+        // 完美出手也吃投篮：低投篮完美仍可能打铁，高投篮完美更稳
+        c = clampNum((r ? 0.78 : 0.86) + (e.r.sht - 60) * 0.002, 0.55, 0.97) - (1 - i) * 0.55;
         break;
       case "good":
         c = l * i + 0.06;
@@ -2739,7 +2753,7 @@ class MatchEngine {
       (h && (d *= 1.42),
         e.fx.surge > 0 && (d *= 1.2),
         e.fx.slow > 0 && (d *= 0.55),
-        this.ball.owner === e && (d *= 0.94),
+        this.ball.owner === e && (d *= 0.82 + e.r.hnd * 0.0013),
         e.state === "swipe" && (d *= 0.5),
         this.phase === "tip" && (d = 0),
         (s = r * d),
@@ -2756,7 +2770,7 @@ class MatchEngine {
     ((e.x += e.vx * t),
       (e.y += e.vy * t),
       (e.z > 0 || e.vz > 0) && ((e.vz -= HOOP_RING_DIAMETER * t), (e.z += e.vz * t), e.z <= 0 && ((e.z = 0), (e.vz = 0))),
-      (e.x = clampNum(e.x, 0.6, COURT_HALF_WIDTH - 0.6)),
+      (e.x = clampNum(e.x, this.cfg.halfCourt ? 47.4 : 0.6, COURT_HALF_WIDTH - 0.6)),
       (e.y = clampNum(e.y, 0.6, COURT_MID_X - 0.6)),
       e.state === "shoot" || e.state === "layup"
         ? ((e.facing = hoopXOf(e.team) > e.x ? 1 : -1), (e.back = !1))
@@ -2956,7 +2970,7 @@ class MatchEngine {
       const s = Math.min(1, 1.5 * e);
       ((t.vx -= t.vx * s), (t.vy -= t.vy * s));
     }
-    (t.x < 0.5 && ((t.x = 0.5), (t.vx = Math.abs(t.vx) * 0.5)),
+    (t.x < (this.cfg.halfCourt ? 47.4 : 0.5) && ((t.x = this.cfg.halfCourt ? 47.4 : 0.5), (t.vx = Math.abs(t.vx) * 0.5)),
       t.x > COURT_HALF_WIDTH - 0.5 && ((t.x = COURT_HALF_WIDTH - 0.5), (t.vx = -Math.abs(t.vx) * 0.5)),
       t.y < 0.5 && ((t.y = 0.5), (t.vy = Math.abs(t.vy) * 0.5)),
       t.y > COURT_MID_X - 0.5 && ((t.y = COURT_MID_X - 0.5), (t.vy = -Math.abs(t.vy) * 0.5)));
@@ -3167,7 +3181,7 @@ window.__pjEnterLine = function (l) {
   window.__pjSetLine(l);
   location.reload();
 };
-const xpToNext = (a) => 40 + 15 * (a - 1),
+const xpToNext = (a) => 15 + 6 * (a - 1),
   LEAGUE_GYMS = [
     {
       name: "Pewter Boulders",
@@ -3517,17 +3531,7 @@ window.__pjFeedXp = function (__u, __n) {
       __p.level++;
       var __g = rollGrowth(__p);
       __ev.push("LV".concat(__p.level, " ").concat(__g.join(" ")));
-      var __P = EVOLUTIONS[__p.dex];
-      if (__P && __p.level >= __P.level) {
-        __p.evolvedFrom = __p.dex;
-        __p.dex = __P.to[Math.floor(Math.random() * __P.to.length)];
-        __ev.push("EVOLVED: ".concat(__nm2, " -> ").concat(getPokemon(__p.dex).name));
-        if (a.journey && a.dex && !a.dex[__p.dex]) {
-          a.dex[__p.dex] = 1;
-          a.coins = (a.coins || 0) + 50;
-        }
-        __nm2 = getPokemon(__p.dex).name;
-      }
+      // 进化由玩家在详情页手动触发，引擎不再自动进化
     }
     Nr(a);
     return { ok: 1, level: __p.level, events: __ev };
@@ -3754,7 +3758,7 @@ function settleMatch(a, e, t, s, n) {
     }
   const i = [];
   let l = -1 / 0;
-  const c = t.cfg.quarterLen * 4;
+  const c = t.cfg.quarterLen * (t.cfg.quarters || 4);
   for (const f of [...t.rosterOf(0), ...t.rosterOf(1)]) {
     const u = n.get(f.mon);
     if (!u) continue;
@@ -3781,16 +3785,8 @@ function settleMatch(a, e, t, s, n) {
     ) {
       ((m.xp -= xpToNext(m.level)), m.level++);
       const k = getPokemon(m.dex).name,
-        w = { uid: u, team: v, name: k, level: m.level, gains: rollGrowth(m) },
-        P = EVOLUTIONS[m.dex];
-      if (P && m.level >= P.level) {
-        ((w.evolvedFrom = m.dex), (m.dex = P.to[Math.floor(Math.random() * P.to.length)]), (w.evolvedTo = m.dex));
-        try {
-          window.__PJ_JOURNEY__ && window.__PJ_JOURNEY__.onEvolve && window.__PJ_JOURNEY__.onEvolve(a, m);
-        } catch (__oe) {}
-        const S = a.teams[v];
-        a.news.unshift("".concat(S.name, "'s ").concat(k, " evolved into ").concat(getPokemon(m.dex).name, "!"));
-      }
+        w = { uid: u, team: v, name: k, level: m.level, gains: rollGrowth(m) };
+      // 进化由玩家在详情页手动触发，比赛结算不再自动进化
       i.push(w);
     }
   }
@@ -3845,13 +3841,7 @@ function __pjAiGrow(a) {
         while (__p.xp >= xpToNext(__p.level)) {
           __p.xp -= xpToNext(__p.level);
           __p.level++;
-          var __P = EVOLUTIONS[__p.dex];
-          if (__P && __p.level >= __P.level) {
-            var __old = getPokemon(__p.dex).name;
-            __p.evolvedFrom = __p.dex;
-            __p.dex = __P.to[Math.floor(Math.random() * __P.to.length)];
-            a.news.unshift("EVOLVED: ".concat(__old, " -> ").concat(getPokemon(__p.dex).name, " (").concat(__tm.name, ")"));
-          }
+          // 进化由玩家在详情页手动触发，AI 队伍也不再自动进化
         }
       }
     }
@@ -6022,7 +6012,8 @@ class gs {
       this.drawFloor(this.ctx));
   }
   snap(e) {
-    this.camX = clampNum(e.focusX(), 21, COURT_HALF_WIDTH - 21);
+    this.halfCourt = !!e?.cfg?.halfCourt;
+    this.camX = clampNum(e.focusX(), this.halfCourt ? 56 : 21, COURT_HALF_WIDTH - 21);
   }
   handle(e, t) {
     for (const s of e)
@@ -6072,7 +6063,8 @@ class gs {
     this.t += t;
     const s = this.ctx;
     ((this.flash = Math.max(0, this.flash - t)), (this.hype = Math.max(0, this.hype - t)));
-    const n = clampNum(e.focusX(), 21, COURT_HALF_WIDTH - 21);
+    this.halfCourt = !!e.cfg.halfCourt;
+    const n = clampNum(e.focusX(), this.halfCourt ? 56 : 21, COURT_HALF_WIDTH - 21);
     ((this.camX += (n - this.camX) * Math.min(1, t * 3.5)),
       s.save(),
       e.shake > 0 && s.translate(Math.round(re(-1, 1) * e.shake * 3), Math.round(re(-1, 1) * e.shake * 3)),
@@ -6235,6 +6227,7 @@ class gs {
     (e.save(), e.translate(i.x, i.y), e.scale(i.s * o, gt * r), t(), e.restore());
   }
   drawFloor(e) {
+    if (this.halfCourt) return this.drawHalfFloor(e);
     const t = this.court;
     ((e.fillStyle = t.apron),
       this.poly(e, [
@@ -6360,7 +6353,80 @@ class gs {
         ));
     }
   }
+  drawHalfFloor(e) {
+    const t = this.court;
+    ((e.fillStyle = t.apron),
+      this.poly(e, [
+        [36, -2],
+        [COURT_HALF_WIDTH + 30, -2],
+        [COURT_HALF_WIDTH + 30, COURT_MID_X + 6],
+        [36, COURT_MID_X + 6],
+      ]),
+      e.fill(),
+      (e.fillStyle = t.wood),
+      this.poly(e, [
+        [47, 0],
+        [COURT_HALF_WIDTH, 0],
+        [COURT_HALF_WIDTH, COURT_MID_X],
+        [47, COURT_MID_X],
+      ]),
+      e.fill(),
+      (e.fillStyle = "rgba(40,20,0,0.07)"));
+    for (let o = 0; o < COURT_MID_X; o += 2.5)
+      (this.poly(e, [
+        [47, o],
+        [COURT_HALF_WIDTH, o],
+        [COURT_HALF_WIDTH, o + 1.25],
+        [47, o + 1.25],
+      ]),
+        e.fill());
+    ((e.fillStyle = t.paint),
+      (e.globalAlpha = 0.8),
+      this.poly(e, [
+        [75, 17],
+        [COURT_HALF_WIDTH, 17],
+        [COURT_HALF_WIDTH, 33],
+        [75, 33],
+      ]),
+      e.fill(),
+      (e.globalAlpha = 1),
+      (e.strokeStyle = t.lines),
+      (e.lineWidth = 1),
+      this.line(e, [
+        [47, 0],
+        [COURT_HALF_WIDTH, 0],
+        [COURT_HALF_WIDTH, COURT_MID_X],
+        [47, COURT_MID_X],
+        [47, 0],
+      ]),
+      this.line(e, [
+        [47, 0],
+        [47, COURT_MID_X],
+      ]),
+      this.line(e, [
+        [75, 17],
+        [75, 33],
+        [COURT_HALF_WIDTH, 33],
+        [COURT_HALF_WIDTH, 17],
+        [75, 17],
+      ]),
+      this.line(e, this.arcPts(75, 25, 6, 0, Math.PI * 2, 40)));
+    const s = Math.asin(22 / 23.75),
+      n = 88.75 - Math.cos(s) * 23.75;
+    (this.line(e, [
+      [COURT_HALF_WIDTH, 3],
+      [n, 3],
+    ]),
+      this.line(e, [
+        [COURT_HALF_WIDTH, 47],
+        [n, 47],
+      ]),
+      this.line(e, this.arcPts(88.75, 25, 23.75, Math.PI - s, Math.PI + s, 40)),
+      this.line(e, this.arcPts(88.75, 25, 4, Math.PI / 2, Math.PI * 1.5, 16)),
+      this.line(e, this.arcPts(47, 25, 6, -Math.PI / 2, Math.PI / 2, 24)));
+  }
   drawMarkers(e, t) {
+    if (this.halfCourt) return;
     const s = t.markers;
     if (!s.length) return;
     const n = So(this.t, this.calm),
@@ -6890,7 +6956,7 @@ const qt = 1 / 60,
   Go = 240 * 1e3,
   Vs = (a) => {
     const e = Math.max(0, a.clock),
-      t = a.quarter > 4 ? "加时" : "第".concat(a.quarter, "节");
+      t = a.quarter > (a.quarters || 4) ? "加时" : "第".concat(a.quarter, "节");
     return a.phase === "final"
       ? "终场"
       : ""
@@ -7607,10 +7673,10 @@ class Ga {
     const t = this.g;
     (this.set("s0", String(t.score[0])), this.set("s1", String(t.score[1])));
     const s =
-      t.quarter > 4
-        ? t.quarter === 5
+      t.quarter > (t.quarters || 4)
+        ? t.quarter === (t.quarters || 4) + 1
           ? "加时"
-          : "".concat(t.quarter - 4, " 加时")
+          : "".concat(t.quarter - (t.quarters || 4), " 加时")
         : "第".concat(t.quarter, "节");
     (this.set("q", s),
       this.set("clock", Yo(t.clock)),
@@ -7796,7 +7862,7 @@ class or {
   consider(e, t) {
     var n;
     const s = (o, r, i = 0) => {
-      const l = e.quarter >= 4 && e.clock <= 30;
+      const l = e.quarter >= (e.quarters || 4) && e.clock <= 30;
       this.candidates.push({
         kind: o,
         tick: this.tick,

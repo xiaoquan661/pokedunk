@@ -120,6 +120,7 @@
 .screen-menu .coin-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,0,0,.55);border:2px solid #f5c542;border-radius:999px;color:#f5c542;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .screen-menu .badge-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:rgba(0,0,0,.55);border:2px solid #2f5599;border-radius:999px;color:#fff;font-size:14px}
 .screen-menu .top-row{position:relative;z-index:3;display:flex;align-items:center;gap:8px;padding:calc(var(--safe-t, 0px) + 8px) 12px 0}
+.screen-menu .title{margin-top:24px}
 .screen-menu .top-row .spacer{flex:1;min-width:0}
 .screen-menu .guide-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.35);color:var(--text);font:700 10.5px var(--sport);letter-spacing:.06em;text-shadow:none;flex-shrink:0}
 
@@ -376,6 +377,12 @@ body:has(.detail-wrap) .menu,body:has(.pj-scrim) .menu,body:has(.hatch-ov) .menu
 .detail-box .train-wallet b{font-size:15px;color:var(--gold);margin-left:3px;font-variant-numeric:tabular-nums}
 .detail-box .train-wallet small{font-size:10.5px;line-height:1.4;text-align:right}
 .train-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px}
+.train-rec{margin:8px 0 6px;padding:8px 10px;border-radius:10px;background:rgba(88,160,255,.08);border:1px solid rgba(88,160,255,.28)}
+.train-rec .tr-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.train-rec .tr-head b{font-size:11.5px;color:#9ec7ff}
+.train-rec .tr-head small{font-size:10px;color:var(--text-dim);line-height:1.35;text-align:right}
+.train-rec p{margin:4px 0 6px;font-size:10.5px;color:var(--gold);line-height:1.5}
+.train-rec .dbtn{margin:0;width:100%}
 .train-stat{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--text)}
 .train-stat span{font-size:10px;color:var(--text-dim)}
 .train-stat b{font-size:14px;color:var(--gold);font-variant-numeric:tabular-nums}
@@ -482,6 +489,22 @@ body:has(.detail-wrap) .menu,body:has(.pj-scrim) .menu,body:has(.hatch-ov) .menu
 .res-contract .rc-info em{font-style:normal;color:var(--gold);font-weight:700}
 .res-contract button{flex:0 0 auto;width:auto;min-width:0;padding:9px 10px;font-size:11px;white-space:nowrap}
 .res-contract.signed{opacity:.72;border-style:solid}
+/* 合同三选一：纵向三张，整张可点 */
+.res-contract-list{display:flex;flex-direction:column;gap:5px;margin:6px 0 2px;padding:8px;border:1px dashed var(--gold);border-radius:10px;background:rgba(245,197,66,.08);text-align:left}
+.res-contract-list .rc-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 2px 2px}
+.res-contract-list .rc-head b{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gold)}
+.res-contract-list .rc-head b svg{width:14px;height:14px;flex:0 0 14px}
+.res-contract-list .rc-head small{font-size:9.5px;color:var(--text-dim);white-space:nowrap}
+.res-contract-list .rc-opt{width:100%;margin:0;padding:6px 7px;gap:7px;border:1px solid rgba(245,197,66,.28);border-radius:8px;background:rgba(0,0,0,.2);color:inherit;font:inherit;cursor:pointer}
+.res-contract-list .rc-opt:active{background:rgba(245,197,66,.14)}
+.res-contract-list .rc-opt:disabled{opacity:.55;cursor:default}
+.res-contract-list .rc-opt img{width:34px;height:34px;flex:0 0 34px}
+.res-contract-list .rc-opt .rc-acts{display:flex;flex-direction:column;gap:4px;flex:0 0 auto}
+.res-contract-list .rc-opt .rc-sign{flex:0 0 auto;padding:5px 8px;border:0;border-radius:6px;background:var(--gold);color:#1c241e;font:700 10px var(--sport);white-space:nowrap;cursor:pointer}
+.res-contract-list .rc-opt .rc-sign:disabled{opacity:.55;cursor:default}
+.res-contract-list .rc-opt .rc-ad{background:rgba(255,255,255,.12);color:var(--text);border:1px solid rgba(255,255,255,.32)}
+.res-contract-list .rc-opt.signed{border-color:var(--gold);background:rgba(245,197,66,.14)}
+.res-contract-list .rc-opt.signed .rc-sign{background:rgba(245,197,66,.25);color:var(--gold)}
 .res-xp{margin-top:9px;color:var(--text-dim);font-size:12.5px;display:flex;flex-direction:column;gap:2px}
 .sc-empty-ico{display:flex;align-items:center;justify-content:center;color:var(--text-dim)}
 .pk-btn-gold svg{vertical-align:-3px;margin-right:5px}
@@ -713,6 +736,20 @@ body:has(.detail-wrap) .menu,body:has(.pj-scrim) .menu,body:has(.hatch-ov) .menu
 .rs-actions .pm-ghost{background:none;border:1px solid var(--line);color:var(--text-dim);box-shadow:none}
 .rs-actions .rs-ad{background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.45);color:var(--gold);box-shadow:none;font-size:12px}
 .rs-actions .rs-ad[disabled]{opacity:.55}
+/* 赛后双方数据 */
+.rs-boxscore{margin:4px 0 12px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1);text-align:left}
+.rs-boxscore .bs-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rs-boxscore .bs-head b{font-size:11.5px;color:var(--gold);letter-spacing:.08em}
+.rs-boxscore .bs-head small{font-size:9px;color:rgba(255,255,255,.42)}
+.bs-team-row{margin-top:7px}
+.bs-team-row > b{display:flex;align-items:center;justify-content:space-between;padding:4px 7px;border-radius:7px;background:rgba(255,255,255,.06);font-size:10.5px;color:#fff}
+.bs-team-row > b span{color:var(--gold);font-variant-numeric:tabular-nums}
+.bs-table{width:100%;margin-top:3px;border-collapse:collapse;font-size:9.5px;font-variant-numeric:tabular-nums}
+.bs-table th{padding:2px 2px;color:rgba(255,255,255,.4);font-weight:400;text-align:right;border-bottom:1px solid rgba(255,255,255,.08)}
+.bs-table th:first-child{text-align:left}
+.bs-table td{padding:2px 2px;color:rgba(255,255,255,.82);text-align:right;border-bottom:1px solid rgba(255,255,255,.04)}
+.bs-table td:first-child{text-align:left;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dfe7ff}
+.bs-table tr.bn td{opacity:.62}
 
 /* ===== 比赛内暂停 / 换人面板：对齐 v2 深蓝金语言 ===== */
 .game .pause-menu{background:rgba(4,7,14,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:16px}

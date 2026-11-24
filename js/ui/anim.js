@@ -90,8 +90,11 @@ const CSS =
   ".hatch-ov.legend .legend-rays,.hatch-ov.legend .legend-aura,.hatch-ov.legend .legend-stars{display:block}" +
   ".hatch-ov:not(.legend) .legend-rays,.hatch-ov:not(.legend) .legend-aura,.hatch-ov:not(.legend) .legend-stars{display:none}" +
   ".hatch-ov.acquire{background:radial-gradient(ellipse at 50% 44%,#1c2438 0%,#0b0d16 58%,#03050c 100%)}" +
-  ".hatch-ov.acquire .hatch-ring{border-color:#ffcb05;box-shadow:0 0 22px rgba(255,203,5,.55)}" +
-  ".hatch-ov.acquire .hatch-mon{filter:drop-shadow(0 0 18px rgba(255,203,5,.7))}" +
+  ".hatch-ov.acquire .hatch-stage{width:min(360px,92vw);height:min(360px,92vw)}" +
+  ".hatch-ov.acquire .hatch-mon{left:0;right:0;top:0;bottom:0;margin:auto;width:min(360px,92vw);height:min(360px,92vw);object-fit:contain;filter:drop-shadow(0 0 18px rgba(255,203,5,.7))}" +
+  ".hatch-ov.acquire .hatch-mon.evolve{animation:hAcquirePop .55s cubic-bezier(.34,1.56,.64,1) forwards}" +
+  "@keyframes hAcquirePop{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.28)}100%{opacity:1;transform:scale(1.18)}}" +
+  ".hatch-ov.acquire .hatch-ring{left:0;right:0;top:0;bottom:0;margin:auto;width:min(370px,94vw);height:min(370px,94vw);border-color:#ffcb05;box-shadow:0 0 22px rgba(255,203,5,.55)}" +
   ".hatch-ov.acquire .hatch-card{border-color:#ffcb05}" +
   ".hatch-ov.acquire .hc-t{color:#ffd75e}" +
   ".hatch-ov.acquire .hc-kicker{color:#ffcb05}" +
@@ -214,6 +217,8 @@ export function playHatch(o, onDone) {
  */
 export function playAcquire(o, onDone) {
   const ov = buildOverlay("pj-acquire-ov");
+  // 徽章页等高层弹窗内调用时，获得动画需要盖在页面之上（默认 990）
+  if (o.z != null) ov.style.zIndex = String(o.z);
   const q = (sel) => ov.querySelector(sel);
   const mon = q(".hatch-mon"), ring = q(".hatch-ring"), card = q(".hatch-card");
   const egg = q(".hatch-egg"), crack = q(".hatch-crack"),

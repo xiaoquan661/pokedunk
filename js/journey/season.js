@@ -11,9 +11,9 @@
  * { v, no, phase, round, byeRound, schedule[], rounds[], results[], table[],
  *   playoffs, fourKings, badges[], champion, history[] }
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=86";
-import { pickGymRoster } from "./gyms.js?v=63";
-import { teamPower as buildTeamPower } from "../systems/build.js?v=67";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=549";
+import { pickGymRoster } from "./gyms.js?v=549";
+import { teamPower as buildTeamPower } from "../systems/build.js?v=549";
 
 export const GYM_CN = ["深灰道馆", "华蓝道馆", "枯叶道馆", "彩虹道馆", "浅红道馆", "金黄道馆", "红莲道馆", "常磐道馆"];
 export const ROUNDS = 9;
@@ -59,6 +59,7 @@ function emptySeason(no, history = []) {
     badges: [],
     contracts: 0,
     contractWins: 0,
+    contractDry: 0,
     champion: false,
     history,
   };
@@ -103,6 +104,7 @@ export function ensureSeason(save) {
     s = j.season = emptySeason(no, history);
   }
   s.v = SEASON_V;
+  s.contractDry ||= 0;
   s.round ||= 0;
   s.results ||= [];
   s.rounds ||= [];
@@ -414,7 +416,9 @@ function opponentGym(save, s, id) {
 
 export function fourKingsInfo(save) {
   const s = ensureSeason(save);
-  if (s.phase === "done" || !s.fourKings?.unlocked) return null;
+  // 集齐 8 枚徽章即可随时挑战，与赛程阶段无关；通关后不再生成对阵
+  const badgeCount = (s.badges || []).filter((b) => b !== "champion").length;
+  if (badgeCount < 8 || s.fourKings?.cleared) return null;
   const extra = (s.no - 1) * 2;
   const elite = LEAGUE_GYMS.find((g) => g.elite) || LEAGUE_GYMS[LEAGUE_GYMS.length - 1];
   const roster = pickGymRoster("elite", elite.types, extra);
@@ -457,8 +461,8 @@ export function recordResult(save, info, { won, myScore, oppScore, sim }) {
     const after = currentMatchInfo(save, "elite");
     return {
       badgeGained: null, champion: false, seasonEnded: false,
-      fourKings: true, legendTrack,
-      nextLabel: after ? after.label : "赛季结束",
+      fourKings: true, legendTrack, fourKingsCleared: s.fourKings.cleared,
+      nextLabel: after ? after.label : "本赛季四天王已通关",
     };
   }
 
@@ -523,7 +527,11 @@ export function syncLegacy(save, s) {
   j.seasonNo = s.no;
   // 每个赛季的徽章独立留档，跨赛季不重置已获得的记录
   j.badgeSeasons ||= {};
-  j.badgeSeasons[s.no] = { no: s.no, badges: [...s.badges], champion: !!s.champion };
+  j.badgeSeasons[s.no] = {
+    no: s.no,
+    badges: [...s.badges],
+    champion: !!s.champion,
+  };
   j.badgeVault ||= [];
   for (const b of s.badges) if (!j.badgeVault.includes(b)) j.badgeVault.push(b);
 }

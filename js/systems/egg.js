@@ -5,15 +5,17 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=75";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=74";
-import { LEGENDARY_DEX } from "./build.js?v=67";
-import { syncAcquireLevel } from "./acquire.js?v=1";
+import { addMon, writeSave } from "../storage.js?v=549";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS } from "./shop.js?v=549";
+import { LEGENDARY_DEX } from "./build.js?v=549";
+import { syncAcquireLevel } from "./acquire.js?v=549";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
-export const EGG_AD_REDUCE_MS = 30 * 60 * 1000;
+/** 孵蛋加速券：背包道具 id（战斗掉落） */
+export const HATCH_ITEM = "hatch";
+export const EGG_AD_REDUCE_MS = 2 * 60 * 60 * 1000;
 export const EGG_SLOT_MAX = 3;
-export const EGG_SLOT_PRICE = 600;
+export const EGG_SLOT_PRICE = 300;
 
 /** 购买 1 个孵蛋槽位（上限 3，只能购买一次） */
 export function eggBuySlot(save) {
@@ -86,7 +88,18 @@ export function eggStart(save, index) {
   return { ok: true, slot: free };
 }
 
-/** 看广告加速：减 30 分钟；每天最多 2 次 */
+/** 看广告立即孵出：把倒计时直接归零，每日次数由 UI 层 ad-caps 控制 */
+export function eggAdInstant(save, slot) {
+  save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
+  save.eggs.slots ||= [];
+  const e = save.eggs.slots[slot];
+  if (!e) return { ok: false, error: "空蛋槽" };
+  e.startTs = Date.now() - hatchMsOf(e.eggTier) - 1;
+  writeSave(save);
+  return { ok: true, slot };
+}
+
+/** 看广告加速：减 2 小时；每天最多 2 次 */
 export function eggSpeedUp(save, slot) {
   save.eggs.slots ||= [];
   const e = save.eggs.slots[slot];
@@ -102,6 +115,23 @@ export function eggSpeedUp(save, slot) {
   save.eggs.adDay = { date: day, count: used + 1 };
   writeSave(save);
   return { ok: true, leftMs: Math.max(0, e.startTs + total - Date.now()), left: 2 - used - 1 };
+}
+
+/** 使用背包里的「孵蛋加速券」：减少剩余时间 50%（至少 1 分钟），消耗 1 张 */
+export function eggItemSpeedUp(save, slot) {
+  save.eggs.slots ||= [];
+  const e = save.eggs.slots[slot];
+  if (!e) return { ok: false, error: "空蛋槽" };
+  const total = hatchMsOf(e.eggTier);
+  const left = Math.max(0, e.startTs + total - Date.now());
+  if (left <= 0) return { ok: false, error: "这颗蛋已经可以孵化" };
+  const n = save.bag?.items?.[HATCH_ITEM] || 0;
+  if (n <= 0) return { ok: false, error: "没有孵蛋加速券" };
+  const cut = Math.max(60 * 1000, Math.floor(left / 2));
+  e.startTs -= Math.min(cut, left);
+  save.bag.items[HATCH_ITEM] = n - 1;
+  writeSave(save);
+  return { ok: true, leftMs: Math.max(0, e.startTs + total - Date.now()), cut, left: n - 1 };
 }
 
 /**
@@ -121,7 +151,7 @@ export function eggHatch(save, slot) {
   save.eggs.slots[slot] = null; // 先清槽
   const r = addMon(save, dex, { from: "egg" });
   if (r.ok) {
-    const level = syncAcquireLevel(save, r.id, dex);
+    const level = syncAcquireLevel(save, r.id, dex, e.eggTier === "premium" ? "egg_premium" : "egg_normal");
     writeSave(save);
     return {
       ok: true, recruited: true, dex, level, first: r.isNewDex, placed: r.movedTo,

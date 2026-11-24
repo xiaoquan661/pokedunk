@@ -5,18 +5,18 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=87";
+import { getPokemon, calcOVR, calcArchetype, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=549";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
-  trainPrice, trainStat, resetTrain, TRAIN_COST_STEP,
-  ITEM_TYPES, itemCount, useItem, TRAIN_MAX, recommendedPositions,
-} from "../systems/build.js?v=67";
-import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=75";
-import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=1";
-import { BERRY_XP } from "../systems/shop.js?v=74";
-import { bumpDaily } from "./earn.js";
-import { playEvolve } from "./anim.js?v=70";
-import { ICON } from "./icons.js?v=63";
+  growthZh, recommendedPositions,
+} from "../systems/build.js?v=549";
+import { rollGrowth } from "../../engine/growth.js?v=549";
+import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=549";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=549";
+import { BERRY_XP } from "../systems/shop.js?v=549";
+import { bumpDaily } from "./earn.js?v=549";
+import { playEvolve } from "./anim.js?v=549";
+import { ICON } from "./icons.js?v=549";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
 const STAT_ZH = { spd: "速度", sht: "投篮", ins: "终结", pas: "传球", def: "防守", blk: "盖帽", reb: "篮板", hnd: "控球" };
@@ -88,12 +88,10 @@ function evoHtml(dex, save) {
     if (i > 0) out += `<span class="evo-arrow"><small>Lv.${levels[i - 1].join("/")}</small><i>›</i></span>`;
     out += tier.map(node).join("");
   });
-  return `<div class="dsec">进化 <small>到达等级后自动进化</small></div><div class="evo-chain">${out}</div>`;
+  return `<div class="dsec">进化 <small>到达等级后在详情页手动进化</small></div><div class="evo-chain">${out}</div>`;
 }
 
 let toastTimer = null;
-let buildTab = "train"; // 详情页构筑页签：train / item
-let trainFlash = ""; // 训练/道具/调动后的一次性反馈文案
 /** 训练扣币后同步主页/弹层背后的金币数字，避免看起来“没扣钱” */
 function syncCoinUI(coins) {
   document.querySelectorAll(".coin-chip b").forEach((el) => {
@@ -135,6 +133,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
           <b class="lock-name">？？？</b>
           <p class="lock-hint">尚未在球场上遇见</p>
           <small>遇见后解锁图鉴资料</small>
+          <p class="lock-hint" style="margin-top:10px;font-size:11px;line-height:1.7">获取途径：每日商店 · 孵蛋 · 战胜签约 · 每日挑战 / 赛季传说</p>
         </div>
       </div>`;
     ov.addEventListener("click", (e) => {
@@ -152,7 +151,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const vers = mon ? versatility(mon) : ovr;
   const rarity = rarityOf(dexNo);
   const arch = calcArchetype(assigned, vals, calcOVR(assigned, vals));
-  const wa = SPECIAL_MOVES[base.types[0]];
+  const wa = base.types?.[0] ? SPECIAL_MOVES[base.types[0]] : null;
   const sp = wa ? SPECIAL_EFFECTS[wa[0]] : null;
 
   // 能力条压缩为 4×2 网格（保留数值与进度，减少纵向滚动）
@@ -169,38 +168,14 @@ export function openDetail(dexNo, monId = null, onClose = null) {
   const feedN = !mon || maxed || (berries.berryNormal || 0) <= 0;
   const feedP = !mon || maxed || (berries.berryPremium || 0) <= 0;
   const evo = EVOLUTIONS[dexNo];
+  const canEvolve = !!(mon && evo && mon.level >= evo.level && evo.to.length);
+  const evoTarget = canEvolve ? evo.to[0] : null;
 
   const xpHtml = mon
     ? `<div class="detail-xp"><div class="row"><b>Lv.${mon.level}</b><span>经验 ${mon.xp} / ${xpToNext(mon.level)}</span></div>
        <div class="track"><i style="width:${Math.min(100, Math.round((mon.xp / xpToNext(mon.level)) * 100))}%"></i></div></div>`
     : `<div class="detail-xp"><div class="row"><span>尚未结缘 —— 在商店 / 孵蛋 / 比赛签约中与它相遇</span></div></div>`;
 
-  // 训练 / 道具（构筑系统）：两块收进页签，首屏只显示一块
-  const trainCap = mon ? Math.min(TRAIN_MAX, 4 + Math.floor(mon.level / 2)) : 0;
-  const tr = mon?.train || { points: 0, stats: {} };
-  const seenTab = ["train", "item"].includes(buildTab) ? buildTab : "train";
-  const flashNow = trainFlash;
-  trainFlash = "";
-  const trainBody = mon
-    ? `<div class="train-wallet"><span>篮球币 <b>${save.coins}</b></span><small>${tr.bank > 0 ? `返还点 ${tr.bank}（优先使用，不扣币）` : `本次训练 ${trainPrice(mon)} 币`}</small></div>
-      <div class="train-grid">${STAT_KEYS.map((k) => `<button class="train-stat" data-train="${k}"${tr.points >= trainCap ? " disabled" : ""}><span>${STAT_ZH[k]}</span><b>${vals[k]}</b></button>`).join("")}</div>
-      <p class="note">每点 +1 属性；费用随已训练点数上涨，当前 ${trainPrice(mon)} 币/点${tr.points < trainCap ? `，下一点 ${trainPrice(mon) + TRAIN_COST_STEP} 币` : ""}。</p>
-      <p class="note">${tr.points >= trainCap ? `已达当前等级上限：Lv.${mon.level} 最多训练 ${trainCap} 点，升级后可继续。` : `每只精灵最多训练 ${TRAIN_MAX} 点，当前上限 = 4 + 等级÷2（Lv.${mon.level} → ${trainCap} 点）。`}</p>
-      <p class="note">重置返还 80% 训练点，返还点优先使用且不扣币；已花费的篮球币不退。</p>
-      <button class="dbtn b" data-trainreset>重置训练（返还 80% 点数，不退币）</button>`
-    : "";
-  const itemBody = mon
-    ? Object.entries(ITEM_TYPES).map(([id, it]) => `<button class="dbtn" data-item="${id}"${itemCount(save, id) <= 0 ? " disabled" : ""}>${it.name} ×${itemCount(save, id)} · ${STAT_ZH[it.stat]}+1（该只 ${mon.item?.used?.[id] || 0}/4）</button>`).join("")
-    : "";
-  const buildHtml = mon
-    ? `<div class="dsec">构筑 <small>训练 ${tr.points}/${TRAIN_MAX} · 道具 ${mon.item?.points || 0}/20 · ${POS_ZH[assigned]}</small></div>
-      ${flashNow ? `<p class="train-flash">${flashNow}</p>` : ""}
-      <div class="dtab-row">
-        ${[["train", "训练"], ["item", "道具"]].map(([id, label]) => `<button class="dtab${seenTab === id ? " on" : ""}" data-btab="${id}">${label}</button>`).join("")}
-      </div>
-      <div class="dtab-panel" data-bpanel="train"${seenTab !== "train" ? " hidden" : ""}>${trainBody}</div>
-      <div class="dtab-panel" data-bpanel="item"${seenTab !== "item" ? " hidden" : ""}>${itemBody}</div>`
-    : "";
 
   const moveHtml = mon
     ? (where === "roster"
@@ -227,12 +202,13 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       ${evoHtml(dexNo, save)}
       ${specialHtml}
       ${xpHtml}
-      ${buildHtml}
       ${mon ? `<div class="dsec">养成与调动</div>
+      ${canEvolve ? `<div class="dact-row"><button class="dbtn b" data-do-evolve style="border-color:var(--gold,#f5c542);color:var(--gold,#f5c542)">进化！${monName(evoTarget)}</button></div>` : ""}
       <div class="dact-row">
         <button class="dbtn b" data-feed="normal"${feedN ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>普通树果 +${BERRY_XP.normal} XP（×${berries.berryNormal || 0}）</button>
         <button class="dbtn b" data-feed="premium"${feedP ? " disabled" : ""}><span class="btn-ico">${ICON.berry}</span>高级树果 +${BERRY_XP.premium} XP（×${berries.berryPremium || 0}）</button>
       </div>
+      <div class="dact-row"><button class="dbtn b" data-go-train>去升级 · 培养强化</button></div>
       <div class="dact-row">${moveHtml}</div>` : ""}
     </div>`;
 
@@ -251,51 +227,33 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       }
       return;
     }
-    const tab = e.target.closest("[data-btab]");
-    if (tab && mon) {
-      buildTab = tab.dataset.btab;
-      ov.querySelectorAll("[data-btab]").forEach((b) => b.classList.toggle("on", b === tab));
-      ov.querySelectorAll("[data-bpanel]").forEach((p) => { p.hidden = p.dataset.bpanel !== buildTab; });
+    if (e.target.closest("[data-do-evolve]") && mon) {
+      const evoNow = EVOLUTIONS[mon.dex];
+      if (!evoNow || mon.level < evoNow.level || !evoNow.to?.length) return;
+      const oldDex = mon.dex;
+      const oldName = monName(oldDex);
+      const targetDex = evoNow.to[0];
+      const merged = mergeOwnedSpecies(save, monId, targetDex);
+      const r = recordEvolution(save, monId, targetDex);
+      if (!r.ok) return toast("进化失败：" + r.error);
+      writeSave(save);
+      ov.remove();
+      const newDex = r.newDex;
+      const newName = monName(newDex);
+      const done = () => openDetail(newDex, monId, onClose);
+      playEvolve({
+        oldDex, newDex,
+        title: `进化！${oldName} → ${newName}`,
+        sub: `Lv.${mon.level} · ${merged?.merged ? "与已有同种融合，训练点已返还" : "位置已随形态更新"}`,
+        changes: [],
+        onSkipAll: done,
+      }, done);
       return;
     }
-    const act = e.target.closest("[data-train],[data-trainreset],[data-item]");
-    if (act && mon) {
-      const refresh = () => { ov.remove(); openDetail(mon.dex, monId, onClose); };
-      if (act.hasAttribute("data-train")) {
-        const k = act.dataset.train;
-        const before = growthStats(mon)[k];
-        const r = trainStat(save, mon, k);
-        if (!r.ok) return toast(r.error);
-        const after = growthStats(mon)[k];
-        writeSave(save);
-        syncCoinUI(save.coins);
-        trainFlash = `训练完成：${STAT_ZH[k]} ${before} → ${after}${r.free ? " · 使用返还点" : ` · -${r.price} 币`}`;
-        toast(trainFlash, 3000);
-        refresh();
-        return;
-      }
-      if (act.hasAttribute("data-trainreset")) {
-        const r = resetTrain(mon);
-        if (!r.ok) return toast(r.error);
-        writeSave(save);
-        trainFlash = `已重置训练，返还 ${r.refund} 点`;
-        toast(trainFlash);
-        refresh();
-        return;
-      }
-      if (act.hasAttribute("data-item")) {
-        const id = act.dataset.item;
-        const stat = ITEM_TYPES[id].stat;
-        const before = growthStats(mon)[stat];
-        const r = useItem(save, mon, id);
-        if (!r.ok) return toast(r.error);
-        const after = growthStats(mon)[stat];
-        writeSave(save);
-        trainFlash = `道具已使用：${ITEM_TYPES[id].name} · ${STAT_ZH[r.stat]} ${before} → ${after}`;
-        toast(trainFlash, 3000);
-        refresh();
-        return;
-      }
+    if (e.target.closest("[data-go-train]") && mon) {
+      ov.remove();
+      window.dispatchEvent(new CustomEvent("pj-open-train", { detail: { monId } }));
+      return;
     }
     const b = e.target.closest("button[data-feed], button[data-move]");
     if (!b || !mon) return;
@@ -308,27 +266,20 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       save.bag[key]--;
       bumpDaily("feed");
       mon.xp += BERRY_XP[tier];
-      const events = [];
-      const anims = [];
+      const fromLevel = mon.level;
+      const growthAll = [];
       while (mon.xp >= xpToNext(mon.level) && mon.level < 99) {
         mon.xp -= xpToNext(mon.level);
         mon.level++;
-        events.push(`升到 Lv.${mon.level}！`);
-        const evo2 = EVOLUTIONS[mon.dex];
-        if (evo2 && mon.level >= evo2.level && evo2.to.length) {
-          const old = mon.dex;
-          const oldName = monName(old);
-          const merged = mergeOwnedSpecies(save, monId, evo2.to[0]);
-          const er = recordEvolution(save, monId, evo2.to[0]);
-          if (er.ok) {
-            const newName = monName(mon.dex);
-            events.push(`进化！${oldName} → ${newName}${merged.merged ? "（与已有同种融合）" : ""}`);
-            anims.push({ type: "evolve", oldDex: old, newDex: mon.dex, oldName, newName, level: mon.level, growth: [], merged: merged.merged, compensation: merged });
-          }
-        } else {
-          anims.push({ type: "levelup", dex: mon.dex, level: mon.level, growth: [] });
-        }
+        growthAll.push(...rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random).map(growthZh));
+        mon.train ||= { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 };
+        mon.train.free = (mon.train.free || 0) + 1;
+        mon.train.freeEarned = (mon.train.freeEarned || 0) + 1;
       }
+      const levels = mon.level - fromLevel;
+      const anims = levels > 0
+        ? [{ type: "levelup", dex: mon.dex, fromLevel, toLevel: mon.level, levels, growth: growthAll }]
+        : [];
       writeSave(save);
       ov.remove();
       // 逐个播放升级/进化中心弹窗，结束后重开详情页（dex 可能已进化）
@@ -339,7 +290,15 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         if (a.type === "evolve") {
           playEvolve({ oldDex: a.oldDex, newDex: a.newDex, title: `进化！${a.oldName} → ${a.newName}`, sub: `Lv.${a.level} · ${a.merged ? "与已有同种融合，训练点已返还" : "等级保持不变，位置已随形态更新"}`, changes: a.growth.map((g) => ({ k: "随机成长", v: g })), onSkipAll: finishAll }, playQueue);
         } else {
-          playEvolve({ oldDex: a.dex, title: `升级！Lv.${a.level}`, sub: "经验已入账", changes: [], onSkipAll: finishAll }, playQueue);
+          const cnt = {};
+          (a.growth || []).forEach((g) => {
+            const m = String(g).match(/^\+\d+\s+(.+)$/);
+            const k = m ? m[1] : String(g);
+            cnt[k] = (cnt[k] || 0) + 1;
+          });
+          const changes = Object.entries(cnt).map(([k, v]) => ({ k, v: `+${v}` }));
+          const title = a.levels > 1 ? `升级！Lv.${a.fromLevel} → Lv.${a.toLevel}` : `升级！Lv.${a.toLevel}`;
+          playEvolve({ oldDex: a.dex, title, sub: `升了 ${a.levels} 级 · 经验已入账`, changes, onSkipAll: finishAll }, playQueue);
         }
       };
       if (anims.length) playQueue();
@@ -348,8 +307,7 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       const mr = moveMon(save, monId, b.dataset.move);
       if (mr.ok) {
         writeSave(save);
-        trainFlash = `${monName(dexNo)}${b.dataset.move === "box" ? " 已移入仓库" : " 已调入队伍"}`;
-        toast(trainFlash);
+        toast(`${monName(dexNo)}${b.dataset.move === "box" ? " 已移入仓库" : " 已调入队伍"}`);
       } else toast("调动失败：" + mr.error);
       ov.remove();
       openDetail(dexNo, monId, onClose);

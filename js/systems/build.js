@@ -1,11 +1,11 @@
 /**
  * systems/build.js —— 构筑系统（docs/02 附 v2.4 + docs/03）
  * 三层数值：种族值 + 成长值（等级 bonus / 训练 train / 道具 item，单项 99 封顶）
- * 成长预算：等级 196 + 训练 40 + 道具 20 = 256（上限，非保底）
+ * 成长预算：等级随机 98 + 训练 138（自由 98 + 购买 40）+ 道具 20 = 256（上限，非保底）
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=86";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=549";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
@@ -39,6 +39,10 @@ const tidy = (mon) => {
   mon.train ||= { points: 0, stats: {}, bank: 0 };
   mon.train.stats ||= {};
   mon.train.bank ||= 0;
+  mon.train.free ||= 0;
+  mon.train.freeEarned ||= 0;
+  // 旧存档：此前的训练点全部视为已购买，保证价格曲线连续
+  if (mon.train.paid == null) mon.train.paid = mon.train.points || 0;
   mon.item ||= { points: 0, stats: {}, used: {} };
   mon.item.stats ||= {};
   mon.item.used ||= {};
@@ -102,34 +106,55 @@ export function versatility(mon) {
 }
 
 /* ---------------- 训练 ---------------- */
-export const TRAIN_COST_BASE = 20;
-export const TRAIN_COST_STEP = 5;
+export const TRAIN_COST_BASE = 10;
+export const TRAIN_COST_STEP = 3;
 export function trainPrice(mon) {
   tidy(mon);
-  return TRAIN_COST_BASE + TRAIN_COST_STEP * (mon.train.points || 0);
+  return TRAIN_COST_BASE + TRAIN_COST_STEP * (mon.train.paid || 0);
+}
+/** 训练额度：升级赠送的免费点 + 可购买点（4 + 等级÷2，最多 40） */
+export function trainCaps(mon) {
+  tidy(mon);
+  const paidCap = Math.min(TRAIN_MAX, 4 + Math.floor((mon.level || 1) / 2));
+  const freeMax = Math.max(0, mon.train.freeEarned || 0);
+  return {
+    paidCap,
+    freeMax,
+    totalCap: freeMax + paidCap,
+    free: mon.train.free || 0,
+    paid: mon.train.paid || 0,
+    points: mon.train.points || 0,
+  };
 }
 export function canTrain(save, mon) {
   tidy(mon);
-  const cap = Math.min(TRAIN_MAX, 4 + Math.floor(mon.level / 2));
-  if (mon.train.points >= cap) return { ok: false, error: mon.train.points >= TRAIN_MAX ? "训练已满 40 点" : `已达当前等级上限（${cap} 点）` };
+  const cap = trainCaps(mon);
+  if (mon.train.points >= cap.totalCap) {
+    return { ok: false, error: `已达当前训练上限（${cap.totalCap} 点），升级后可继续` };
+  }
+  const freeLeft = mon.train.bank > 0 || mon.train.free > 0;
+  if (!freeLeft && mon.train.paid >= cap.paidCap) {
+    return { ok: false, error: `购买训练已达当前等级上限（${cap.paidCap} 点）` };
+  }
   const price = trainPrice(mon);
-  if (save.coins < price) return { ok: false, error: `篮球币不足（需 ${price}）` };
-  return { ok: true, price, free: mon.train.bank > 0 };
+  if (!freeLeft && save.coins < price) return { ok: false, error: `篮球币不足（需 ${price}）` };
+  return { ok: true, price, free: freeLeft, cap };
 }
 
-/** 训练 1 点：优先用返还池（bank），否则扣币；写入 mon.train */
+/** 训练 1 点：优先返还池，其次升级赠送点，最后扣币 */
 export function trainStat(save, mon, stat) {
   tidy(mon);
   const chk = canTrain(save, mon);
   if (!chk.ok) return chk;
   const g = growthStats(mon);
   if (g[stat] >= 99) return { ok: false, error: `${STAT_ZH[stat]}已满 99` };
-  const free = mon.train.bank > 0;
-  if (free) mon.train.bank--;
-  else { save.coins -= chk.price; }
+  let paid = 0;
+  if (mon.train.bank > 0) mon.train.bank--;
+  else if (mon.train.free > 0) mon.train.free--;
+  else { paid = chk.price; save.coins -= paid; mon.train.paid++; }
   mon.train.stats[stat] = (mon.train.stats[stat] || 0) + 1;
   mon.train.points++;
-  return { ok: true, free, price: free ? 0 : chk.price, stat };
+  return { ok: true, free: paid === 0, price: paid, stat };
 }
 
 /** 重置训练：清空加点，返还 80% 训练点（不进每周额度、不退币） */
@@ -139,6 +164,7 @@ export function resetTrain(mon) {
   const refund = Math.floor(mon.train.points * 0.8);
   mon.train.stats = {};
   mon.train.points = 0;
+  mon.train.paid = 0;
   mon.train.bank += refund;
   return { ok: true, refund };
 }
@@ -180,6 +206,18 @@ function chainRoot(dex) {
   return d;
 }
 
+/** 草地中的个体 id：挂机与比赛互斥，草地精灵不能进入首发 */
+function grassIdSet(save) {
+  const set = new Set();
+  for (const slot of save?.grass?.slots || []) {
+    if (slot && slot.monId != null) set.add(Number(slot.monId));
+  }
+  return set;
+}
+export function isOnGrass(save, monId) {
+  return grassIdSet(save).has(Number(monId));
+}
+
 /** 首发 5 人（按 assign 槽位，主动下放的替补不计入） */
 export function startersOf(save) {
   return starterIds(save).map((id) => save.mons[id]).filter(Boolean);
@@ -203,7 +241,7 @@ export const BONDS = [
     id: "sameType", name: "同系共鸣", category: "属性", desc: "首发同属性 ≥3（该属性成员关键属性 +5%）",
     check(ctx) {
       const cnt = {};
-      ctx.mons.forEach((m) => { const t = m.types[0]; cnt[t] = (cnt[t] || 0) + 1; });
+      ctx.mons.forEach((m) => { const t = m.types?.[0]; if (t) cnt[t] = (cnt[t] || 0) + 1; });
       const best = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
       return { met: best && best[1] >= 3, progress: best ? `${best[1]}/3` : "0/3", type: best?.[0] };
     },
@@ -302,7 +340,9 @@ export function bondMultipliers(save) {
     if (!def || !def.mult || !Object.keys(def.mult).length) continue;
     const m = def.mult;
     for (const e of ctx.entries) {
-      if (m.onlyType && e.mon.types[0] !== b.extra?.type) continue;
+      // e.mon 是存档里的原始个体（只有 dex/level/bonus 等），种族属性要从注册表取
+      const types = getPokemon(e.mon.dex)?.types || [];
+      if (m.onlyType && types[0] !== b.extra?.type) continue;
       if (m.onlyDexes && !(b.extra?.dexes || []).includes(e.mon.dex)) continue;
       if (m.all) { for (const k of STAT_KEYS) add(e.mon, k, m.all); }
       for (const k of STAT_KEYS) if (m[k]) add(e.mon, k, m[k]);
@@ -318,7 +358,10 @@ export function ensureAssignments(save) {
   save.benched ||= {};
   // 自愈：已经占据首发槽位的精灵不应再标记为替补
   for (const id of Object.keys(save.benched)) if (save.assign[id]) delete save.benched[id];
-  const first = save.team.slice(0, 5).filter((id) => save.mons[id] && !save.benched[id]);
+  // 草地挂机与比赛互斥：老档里已在草地的首发自动退出首发，空位由后面的队员补上
+  const grass = grassIdSet(save);
+  for (const id of Object.keys(save.assign)) if (grass.has(Number(id))) delete save.assign[id];
+  const first = save.team.filter((id) => save.mons[id] && !save.benched[id] && !grass.has(Number(id))).slice(0, 5);
   const used = new Set(first.map((id) => save.assign[id]).filter(Boolean));
   first.forEach((id, i) => {
     if (save.assign[id]) return;
@@ -332,7 +375,9 @@ export function ensureAssignments(save) {
 /** 首发 id（按槽位顺序；以 assign 为准，主动下放的替补不算首发） */
 export function starterIds(save) {
   ensureLineupSlots(save);
-  return POSITION_ORDER.map((pos) => save.team.find((id) => save.assign?.[id] === pos)).filter(Boolean);
+  const grass = grassIdSet(save);
+  return POSITION_ORDER.map((pos) => save.team.find((id) => save.assign?.[id] === pos))
+    .filter((id) => id && !grass.has(Number(id)));
 }
 
 /** 替补 id（队伍中未占据首发槽位的精灵） */
@@ -347,7 +392,8 @@ export function ensureLineupSlots(save) {
   save.assign ||= {};
   save.benched ||= {};
   ensureAssignments(save);
-  const first = save.team.slice(0, 5).filter((id) => save.mons[id] && !save.benched[id]);
+  const grass = grassIdSet(save);
+  const first = save.team.filter((id) => save.mons[id] && !save.benched[id] && !grass.has(Number(id))).slice(0, 5);
   const used = new Set();
   for (const id of first) {
     const p = save.assign[id];
@@ -404,6 +450,7 @@ export function substituteBenchToSlot(save, benchId, pos) {
   if (!POSITION_ORDER.includes(pos)) return { ok: false, error: "未知位置" };
   ensureLineupSlots(save);
   save.benched ||= {};
+  if (isOnGrass(save, benchId)) return { ok: false, error: "该精灵在草地挂机，请先收回" };
   if (save.assign?.[benchId]) return { ok: false, error: "该精灵已在首发" };
   const occupant = slotOwner(save, pos);
   if (occupant === benchId) return { ok: true };
@@ -426,7 +473,11 @@ export function substituteStarterToBench(save, starterId, benchId = null) {
   ensureLineupSlots(save);
   save.benched ||= {};
   if (!save.assign?.[starterId]) return { ok: false, error: "该精灵不在首发" };
-  if (benchId != null && save.assign?.[benchId]) return { ok: false, error: "换人参数无效" };
+  // 拖到替补席区域时，目标可能是旧界面的首发卡或错位 id；
+  // 这里自动退回第一个真正未上场的替补，找不到则只下放、留出空槽。
+  if (benchId != null && save.assign?.[benchId]) {
+    benchId = save.team.find((id) => id !== starterId && save.mons[id] && !save.assign?.[id]) ?? null;
+  }
   const pos = save.assign[starterId];
   delete save.assign[starterId];
   save.benched[starterId] = true;
@@ -463,7 +514,7 @@ const POSITIONS = POSITION_ORDER;
 
 /** 自动排阵：队伍 10 人穷举 5 人 × 5 位置，优先总 monPower，其次全能度 */
 export function autoLineup(save) {
-  const ids = save.team.filter((id) => save.mons[id]);
+  const ids = save.team.filter((id) => save.mons[id] && !isOnGrass(save, id));
   const per = bondMultipliers(save);
   const n = ids.length;
   if (n === 0) return [];

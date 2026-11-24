@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=75";
+import { loadSave, writeSave } from "../storage.js?v=549";
 
 const STEPS = [
   {
@@ -25,7 +25,7 @@ const STEPS = [
     screen: "home",
     target: '[data-go="shop"]',
     title: "每日商店",
-    text: "每日商店每天刷新精灵、宝可蛋和树果，记得每天来看。购买后用「孵蛋」入口孵化；普通蛋 30 分钟、高级蛋 3 小时，高级蛋必出稀有且传说率更高。",
+    text: "每日商店每天刷新精灵、宝可蛋和树果，记得每天来看。购买后用「孵蛋」入口孵化；普通蛋 20 分钟、高级蛋 2 小时，高级蛋必出稀有且传说率更高。",
     action: "下一步",
   },
   {

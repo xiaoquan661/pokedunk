@@ -3,11 +3,10 @@
  * 格子展示持有物品（树果/精灵蛋），点击格子 → 进入物品详情页（大图+描述+数量）。
  * 使用入口不在背包：树果投喂走精灵详情页（detail.js），孵蛋走孵蛋页。
  */
-import { getPokemon, xpToNext, rollGrowth } from "../../engine/readable/play-core.js?v=87";
-import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { recordEvolution, writeSave } from "../storage.js?v=75";
-import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=1";
-import { ICON } from "./icons.js?v=63";
+import { getPokemon, xpToNext } from "../../engine/readable/play-core.js?v=549";
+import { rollGrowth } from "../../engine/growth.js?v=549";
+import { writeSave } from "../storage.js?v=549";
+import { ICON } from "./icons.js?v=549";
 
 const BERRY_XP = 50;
 
@@ -31,19 +30,54 @@ function grantXp(save, monId, mon, amount) {
     if (mon.level >= 99) { mon.xp = 0; break; }
     mon.level++;
     const growth = rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random);
-    events.push(`${getPokemon(mon.dex).name} 升到 Lv.${mon.level}（${growth.join("、") || "无加点"}）`);
-    const evo = EVOLUTIONS[mon.dex];
-    if (evo && mon.level >= evo.level && evo.to.length) {
-      const merged = mergeOwnedSpecies(save, monId, evo.to[0]);
-      const r = recordEvolution(save, monId, evo.to[0]);
-      if (r.ok) events.push(`进化！${getPokemon(r.oldDex).name} → ${getPokemon(r.newDex).name}${merged.merged ? "（与已有同种融合）" : ""}`);
-    }
+    mon.train ||= { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 };
+    mon.train.free = (mon.train.free || 0) + 1;
+    mon.train.freeEarned = (mon.train.freeEarned || 0) + 1;
+    events.push(`${getPokemon(mon.dex).name} 升到 Lv.${mon.level}（${growth.join("、") || "无加点"} · 自由训练点 +1）`);
+    // 进化改为玩家在详情页手动触发
   }
   return events;
 }
 
 /* —— 物品定义 —— */
+const trainCount = (save, id) => save.bag?.items?.[id] || 0;
 const ITEMS = {
+  power: {
+    icon: ICON.potionPower,
+    name: "力量药剂",
+    desc: "投喂给一只精灵，终结 +1（单只最多 4 次，道具加成共 20 点）。使用入口：精灵详情页的「道具」栏。战斗胜利掉落。",
+    count: (save) => trainCount(save, "power"),
+  },
+  speed: {
+    icon: ICON.potionSpeed,
+    name: "速度药剂",
+    desc: "投喂给一只精灵，速度 +1（单只最多 4 次）。使用入口：精灵详情页的「道具」栏。战斗胜利掉落。",
+    count: (save) => trainCount(save, "speed"),
+  },
+  skill: {
+    icon: ICON.potionSkill,
+    name: "技巧药剂",
+    desc: "投喂给一只精灵，投篮 +1（单只最多 4 次）。使用入口：精灵详情页的「道具」栏。战斗胜利掉落。",
+    count: (save) => trainCount(save, "skill"),
+  },
+  guard: {
+    icon: ICON.potionGuard,
+    name: "防守药剂",
+    desc: "投喂给一只精灵，防守 +1（单只最多 4 次）。使用入口：精灵详情页的「道具」栏。战斗胜利掉落。",
+    count: (save) => trainCount(save, "guard"),
+  },
+  board: {
+    icon: ICON.potionBoard,
+    name: "篮板药剂",
+    desc: "投喂给一只精灵，篮板 +1（单只最多 4 次）。使用入口：精灵详情页的「道具」栏。战斗胜利掉落。",
+    count: (save) => trainCount(save, "board"),
+  },
+  hatch: {
+    icon: ICON.ticket,
+    name: "孵蛋加速券",
+    desc: "在孵蛋页对一颗孵化中的蛋使用，立刻减少剩余时间的一半（至少 1 分钟）。战斗胜利掉落。",
+    count: (save) => trainCount(save, "hatch"),
+  },
   berry: {
     icon: ICON.berry,
     name: "普通树果",
@@ -51,9 +85,9 @@ const ITEMS = {
     count: (save) => save.bag.berryNormal || 0,
   },
   berryPremium: {
-    icon: ICON.berry,
+    icon: ICON.berryPremium,
     name: "高级树果",
-    desc: "投喂给一只精灵，立刻获得 300 XP。使用入口：精灵详情页的「投喂」按钮。",
+    desc: "投喂给一只精灵，立刻获得 800 XP。使用入口：精灵详情页的「投喂」按钮。",
     count: (save) => save.bag.berryPremium || 0,
   },
   egg: {
@@ -65,17 +99,19 @@ const ITEMS = {
 };
 
 export function renderBag(page, save) {
-  const total = Object.values(ITEMS).reduce((a, it) => a + it.count(save), 0);
+  // 只展示背包里实际持有的物品
+  const owned = Object.entries(ITEMS).filter(([, it]) => it.count(save) > 0);
+  const total = owned.reduce((a, [, it]) => a + it.count(save), 0);
   page.innerHTML = `
     <div class="page-head"><button class="back" data-back>‹</button><h2>背包</h2></div>
     <p class="page-sub">结缘获得的消耗品 · 点击物品查看详情（投喂入口在精灵详情页）</p>
     ${total ? `<div class="bag-grid">
-      ${Object.entries(ITEMS).map(([key, it]) => {
+      ${owned.map(([key, it]) => {
         const n = it.count(save);
-        return `<button class="bag-item pk-panel${n <= 0 ? " dim" : ""}" data-item="${key}">
+        return `<button class="bag-item pk-panel" data-item="${key}">
           <span class="bi-icon">${it.icon}</span>
           <b class="bi-name">${it.name}</b>
-          <small class="bi-note">${n > 0 ? "点击查看" : "暂无"}</small>
+          <small class="bi-note">点击查看</small>
           <span class="bi-count">×${n}</span>
         </button>`;
       }).join("")}

@@ -7,6 +7,15 @@ const svg = (body) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="fa
 const grad = (id, top, bottom) =>
   `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>`;
 
+/** 药剂瓶通用外形；glyph 为瓶身内部印记，用于区分属性 */
+const potionBody = (id, top, bottom, glyph) =>
+  grad(id, top, bottom) +
+  `<path d="M9.6 3.4h4.8v2.1l2.5 4.3a4.6 4.6 0 0 1-4 6.9h-1.8a4.6 4.6 0 0 1-4-6.9l2.5-4.3V3.4Z" fill="url(#${id})" stroke="#4a2a0a" stroke-width="1.4"/>` +
+  `<path d="M8.9 5.5h6.2" stroke="#4a2a0a" stroke-width="1.6" stroke-linecap="round"/>` +
+  `<path d="M7.9 13.2h8.2" stroke="#ffffff" stroke-width="1" opacity=".32" stroke-linecap="round"/>` +
+  glyph +
+  `<circle cx="10" cy="15.4" r="1" fill="#fff" opacity=".55"/>`;
+
 export const ICON = {
   /* 篮球币：金色币框 + 橙色篮球芯 */
   coin: svg(
@@ -85,6 +94,37 @@ export const ICON = {
       `<path d="M12 8.4c.8-2.2 2.7-3.5 4.9-3.2-.3 2.2-1.7 3.7-3.9 4.4" fill="#4caf50" stroke="#215c25" stroke-width="1.2"/>` +
       `<ellipse cx="9.4" cy="11.8" rx="2.1" ry="1.4" fill="#fff" opacity=".55" transform="rotate(-22 9.4 11.8)"/>` +
       `<circle cx="11" cy="15" r="1.6" fill="#22408f" opacity=".35"/>`
+  ),
+  /* 高级树果：金紫色 + 星标，与普通蓝树果区分 */
+  berryPremium: svg(
+    grad("ic-berry-premium", "#ffe27a", "#b86a1f") +
+      `<ellipse cx="12" cy="14.8" rx="7.2" ry="6.4" fill="url(#ic-berry-premium)" stroke="#5e3208" stroke-width="1.6"/>` +
+      `<path d="M12 8.6c.8-2.2 2.7-3.5 4.9-3.2-.3 2.2-1.7 3.7-3.9 4.4" fill="#7bd45c" stroke="#2c6b1f" stroke-width="1.2"/>` +
+      `<path d="M12 10.2l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z" fill="#fff8d6" stroke="#8a5510" stroke-width=".7" stroke-linejoin="round"/>` +
+      `<ellipse cx="9.2" cy="12" rx="2" ry="1.3" fill="#fff" opacity=".5" transform="rotate(-22 9.2 12)"/>`
+  ),
+  /* 训练药剂（5 种属性，瓶身颜色 + 内部印记区分） */
+  potion: svg(potionBody("ic-potion", "#ffd479", "#d97b1a", "")),
+  potionPower: svg(potionBody("ic-potion-power", "#ff9a8a", "#c9301f",
+    `<path d="M8.4 16.4h2v-2.2h3.2v2.2h2" fill="none" stroke="#7a1408" stroke-width="1.3" stroke-linecap="round"/>` +
+    `<circle cx="9.4" cy="13.6" r=".9" fill="#7a1408"/><circle cx="14.6" cy="13.6" r=".9" fill="#7a1408"/>`)),
+  potionSpeed: svg(potionBody("ic-potion-speed", "#9ff0ff", "#1f9fc9",
+    `<path d="M13.6 10.4l-2.4 3.6h2l-1.4 3.2 3.2-4h-2z" fill="#064c66" stroke="#064c66" stroke-width=".6" stroke-linejoin="round"/>`)),
+  potionSkill: svg(potionBody("ic-potion-skill", "#d8b8ff", "#7b3fc9",
+    `<circle cx="12" cy="13.7" r="2.5" fill="#f2c98a" stroke="#4a2578" stroke-width="1"/>` +
+    `<path d="M9.5 13.7h5M12 11.2v5" stroke="#4a2578" stroke-width=".9"/>`)),
+  potionGuard: svg(potionBody("ic-potion-guard", "#9fdcff", "#2f6fc9",
+    `<path d="M12 10.8l3 1.2v2.1c0 1.9-1.4 3.1-3 3.6-1.6-.5-3-1.7-3-3.6V12z" fill="#e8f6ff" stroke="#0f3a6b" stroke-width="1.1"/>`)),
+  potionBoard: svg(potionBody("ic-potion-board", "#b9f0a8", "#2f9f4a",
+    `<rect x="9.2" y="11.6" width="5.6" height="3.4" rx=".6" fill="#eafff0" stroke="#12561f" stroke-width="1"/>` +
+    `<path d="M11.2 15v2.2M12.8 15v2.2" stroke="#12561f" stroke-width="1"/>`)),
+  /* 孵蛋加速券 */
+  ticket: svg(
+    grad("ic-ticket", "#9fe0ff", "#2f7fc9") +
+      `<path d="M3.2 8.2h17.6v3.1a1.6 1.6 0 0 0 0 3.2v3.1H3.2v-3.1a1.6 1.6 0 0 0 0-3.2V8.2Z" fill="url(#ic-ticket)" stroke="#123f68" stroke-width="1.4"/>` +
+      `<path d="M9.4 8.6v8.2" stroke="#123f68" stroke-width="1.2" stroke-dasharray="1.8 1.6" opacity=".65"/>` +
+      `<circle cx="14.6" cy="12.6" r="2.6" fill="#fff" opacity=".85"/>` +
+      `<path d="M14.6 11.2v1.6l1.1.7" stroke="#2f7fc9" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
   ),
 };
 

@@ -1,8 +1,9 @@
 /**
  * ui/match-hype.js —— 比赛内「必杀」现场特写（v2）
  * 监听引擎事件，只在 kind === "special" 时触发（双方都播）。
- * 设计：斜切能量带 + 大立绘 + 必杀大字 + 招式名，不暂停比赛。
+ * 设计：斜切能量带 + 大立绘 + 必杀大字 + 招式名 + 效果说明，不暂停比赛。
  */
+import { SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=549";
 
 const MOVE_CN = {
   "VOLT TACKLE": "伏特攻击",
@@ -50,23 +51,23 @@ const CSS = `
 .mh-aura{position:absolute;left:2%;top:50%;width:330px;height:330px;transform:translateY(-50%) scale(.5);border-radius:50%;
   background:radial-gradient(circle,color-mix(in srgb,var(--mh-fx,var(--mh-accent,#f5c542)) 42%,transparent) 0,transparent 66%);
   opacity:0;mix-blend-mode:screen;filter:blur(2px)}
-.mh.on .mh-aura{animation:mhAura 2s ease-out both}
+.mh.on .mh-aura{animation:mhAura 2.4s ease-out both}
 .mh-portrait{position:relative;z-index:2;width:41%;flex-shrink:0;display:grid;place-items:center}
 .mh-ghost{position:absolute;z-index:1;width:176px;height:176px;object-fit:contain;image-rendering:pixelated;opacity:0;
   filter:blur(2px) saturate(1.4);mix-blend-mode:screen}
-.mh.on .mh-ghost.g1{animation:mhGhost1 1.95s ease-out both}
-.mh.on .mh-ghost.g2{animation:mhGhost2 1.95s ease-out both}
+.mh.on .mh-ghost.g1{animation:mhGhost1 2.34s ease-out both}
+.mh.on .mh-ghost.g2{animation:mhGhost2 2.34s ease-out both}
 .mh-sprite{position:relative;z-index:2;width:176px;height:176px;object-fit:contain;image-rendering:pixelated;
   filter:drop-shadow(0 6px 7px rgba(0,0,0,.65)) drop-shadow(0 0 12px color-mix(in srgb,var(--mh-fx,var(--mh-accent,#f5c542)) 52%,transparent));
   opacity:0;transform:rotate(-5deg) scale(.7) translateY(18px)}
-.mh.on .mh-sprite{animation:mhAction 1.98s cubic-bezier(.2,.8,.3,1) .05s both}
+.mh.on .mh-sprite{animation:mhAction 2.38s cubic-bezier(.2,.8,.3,1) .05s both}
 .mh-ring{position:absolute;z-index:1;width:226px;height:226px;border:2px solid color-mix(in srgb,var(--mh-fx,var(--mh-accent,#f5c542)) 74%,#fff);
   border-radius:50%;transform:rotate(-16deg) scale(.55);opacity:0;box-shadow:0 0 24px color-mix(in srgb,var(--mh-fx,var(--mh-accent,#f5c542)) 45%,transparent)}
 .mh.on .mh-ring.r1{animation:mhRing .6s ease-out .06s both}
 .mh.on .mh-ring.r2{animation:mhRing .6s ease-out 1.02s both}
 .mh-impact{position:absolute;z-index:3;left:50%;top:50%;width:34px;height:34px;border:3px solid #fff;border-radius:50%;
   opacity:0;transform:translate(-50%,-50%) scale(.2);box-shadow:0 0 22px color-mix(in srgb,var(--mh-fx,var(--mh-accent,#f5c542)) 75%,transparent)}
-.mh.on .mh-impact{animation:mhImpact 2s ease-out both}
+.mh.on .mh-impact{animation:mhImpact 2.4s ease-out both}
 .mh-copy{position:relative;z-index:2;min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
   padding-left:8px;border-left:3px solid color-mix(in srgb,var(--mh-accent,#f5c542) 80%,#fff);
   opacity:0;transform:translateX(46px)}
@@ -82,9 +83,11 @@ const CSS = `
 .mh-move{display:block;max-width:100%;margin-top:5px;padding:3px 12px 4px;border-radius:3px;
   background:var(--mh-accent,#f5c542);color:#0a1128;font:800 14px var(--sport);letter-spacing:.08em;
   transform:skewX(-10deg);box-shadow:0 2px 0 rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mh-effect{display:block;max-width:100%;margin-top:5px;font:600 10px/1.45 var(--sport);color:rgba(255,255,255,.82);
+  text-shadow:0 1px 2px rgba(0,0,0,.65);white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .mh-flash{position:absolute;inset:0;background:linear-gradient(105deg,transparent 18%,rgba(255,255,255,.32) 48%,transparent 78%);opacity:0;mix-blend-mode:screen}
 .mh.on .mh-flash{animation:mhFlash .42s ease-out both}
-.game.mh-zoom .stage{transform-origin:var(--mh-focus-x,50%) 54%;animation:mhCam 1.95s cubic-bezier(.2,.75,.25,1) both}
+.game.mh-zoom .stage{transform-origin:var(--mh-focus-x,50%) 54%;animation:mhCam 2.34s cubic-bezier(.2,.75,.25,1) both}
 @keyframes mhCam{0%{transform:scale(1)}14%{transform:scale(1.28)}78%{transform:scale(1.28)}100%{transform:scale(1)}}
 @keyframes mhCut{0%{transform:translate(-50%,-50%) rotate(-7deg) translateX(-115%)}100%{transform:translate(-50%,-50%) rotate(-7deg) translateX(0)}}
 @keyframes mhLines{0%{opacity:0;transform:scale(1.2) rotate(-4deg)}35%{opacity:.9}100%{opacity:0;transform:scale(1) rotate(0)}}
@@ -136,6 +139,7 @@ export function createMatchHype(root) {
         <span class="mh-name"></span>
         <b class="mh-label"><span>必</span><span>杀</span></b>
         <span class="mh-move"></span>
+        <span class="mh-effect"></span>
       </div>
     </div>
     <div class="mh-flash"></div>`;
@@ -145,6 +149,7 @@ export function createMatchHype(root) {
   const ghosts = layer.querySelectorAll(".mh-ghost");
   const name = layer.querySelector(".mh-name");
   const move = layer.querySelector(".mh-move");
+  const effect = layer.querySelector(".mh-effect");
   const FX_COLOR = {
     blaze: "#ff9a3d", quake: "#d9b25c", freeze: "#8ee6e9",
     phase: "#b28cff", lockin: "#82d8ff", surge: "#ffe45c",
@@ -160,7 +165,7 @@ export function createMatchHype(root) {
     const ev = (events || []).find((e) => e.kind === "special" && e.player?.mon);
     if (!ev) return;
     const now = performance.now();
-    if (now - last < 2200) return;
+    if (now - last < 2600) return;
     last = now;
 
     const p = ev.player;
@@ -173,6 +178,8 @@ export function createMatchHype(root) {
     ghosts.forEach((g) => { g.src = img.src; });
     name.textContent = monName(mon.dex) || mon.name || "";
     move.textContent = MOVE_CN[mon.move] || mon.move || "必杀";
+    const sp = SPECIAL_EFFECTS[mon.special];
+    effect.textContent = sp ? `${sp.label}：${sp.desc}` : "";
     // 特写期间冻结比赛，动作只存在于特写里
     pausedEngine = engine || null;
     pausedBefore = !!engine?.paused;
@@ -190,7 +197,7 @@ export function createMatchHype(root) {
         if (!menu || menu.hidden) pausedEngine.paused = false;
       }
       pausedEngine = null;
-    }, 2000);
+    }, 2400);
   }
 
   function destroy() {

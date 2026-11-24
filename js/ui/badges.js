@@ -1,6 +1,7 @@
 /**
  * ui/badges.js —— 道馆徽章：统一徽章图形、获得动画、徽章详情页
  * 8 枚徽章沿用现有徽章形状（奖牌 + 绶带），按道馆主题配色与图腾区分。
+ * 徽章页承载「八大天王入口」与赛季徽章记录。
  */
 
 const GLYPHS = {
@@ -52,6 +53,11 @@ const CSS = `
 .bd-info span{font-size:10px;color:var(--gold,#f5c542)}
 .bd-info small{font-size:9px;color:rgba(255,255,255,.5);line-height:1.35}
 .bd-note{margin:8px 0 0;font-size:10px;color:rgba(255,255,255,.45);text-align:center}
+.bd-rewards{margin:12px 0 0}
+.bd-elite{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:10px 0 0;padding:12px;border-radius:12px;border:1px solid rgba(255,110,110,.55);background:linear-gradient(180deg,rgba(255,90,90,.28),rgba(150,20,40,.35));color:#ffe4e4;font:700 13px var(--sport);box-shadow:0 0 18px rgba(255,70,90,.18)}
+.bd-elite:active{transform:scale(.98)}
+.bd-elite:disabled{border-color:rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);box-shadow:none}
+.bd-elite small{font:700 9px var(--sport);color:rgba(255,210,210,.75);letter-spacing:.12em}
 .page-head .badge-count{border:1px solid rgba(245,197,66,.45);background:rgba(245,197,66,.1);color:var(--gold,#f5c542);padding:4px 9px;border-radius:999px;font:700 11px var(--sport);cursor:pointer;white-space:nowrap}
 .page-head .badge-count:active{transform:scale(.97)}
 .screen-menu .badge-chip{cursor:pointer}
@@ -101,16 +107,19 @@ export function openBadgeDetail(save, opts = {}) {
   wrap.style.cssText = "position:fixed;inset:0;z-index:1100;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
     <div class="page-head"><button class="back" data-bd-back>‹</button><h2>道馆徽章</h2><span class="count" data-bd-count></span></div>
-    <p class="page-sub">击败道馆馆主获得徽章 · 集齐 8 枚挑战四天王</p>
+    <p class="page-sub">击败道馆馆主获得徽章 · 8 枚解锁四天王</p>
     <div class="bd-seasons">
       ${seasons.map((x) => `<button type="button" data-bd-season="${x.no}">S${x.no}</button>`).join("")}
     </div>
     <div class="bd-grid" data-bd-grid></div>
+    <div data-bd-rewards></div>
     <p class="bd-note">每个赛季独立记录；已经获得的赛季徽章不会重置。</p>
   </div></div>`;
 
   const grid = wrap.querySelector("[data-bd-grid]");
   const countEl = wrap.querySelector("[data-bd-count]");
+  const rewardsEl = wrap.querySelector("[data-bd-rewards]");
+
   const paint = () => {
     const data = seasons.find((x) => Number(x.no) === Number(picked)) || seasons[0] || { no: picked, badges: [] };
     const got = new Set(data.badges || []);
@@ -128,12 +137,23 @@ export function openBadgeDetail(save, opts = {}) {
         <div class="bd-info"><b>${g.venueCn}</b><span>${g.badgeCn}</span><small>${sub}</small></div>
       </div>`;
     }).join("");
+    const isCur = Number(data.no) === Number(cur.no);
+    const fk = cur.fourKings || {};
+    // 当前赛季集齐 8 枚即可挑战，不受赛程阶段影响；通关后入口置灰
+    const eliteOpen = isCur && count >= 8 && !fk.cleared;
+    const eliteHtml = !isCur || count < 8
+      ? ""
+      : eliteOpen
+        ? `<button type="button" class="bd-elite" data-bd-elite><span>挑战四天王</span><small>ELITE FOUR</small></button>`
+        : `<button type="button" class="bd-elite" disabled><span>${fk.cleared ? "本赛季四天王已通关" : "四天王暂未解锁"}</span></button>`;
+    rewardsEl.innerHTML = eliteHtml ? `<div class="bd-rewards">${eliteHtml}</div>` : "";
   };
   paint();
   wrap.addEventListener("click", (e) => {
     if (e.target === wrap || e.target.closest("[data-bd-back]")) { wrap.remove(); opts.onClose?.(); return; }
     const sb = e.target.closest("[data-bd-season]");
-    if (sb) { picked = Number(sb.dataset.bdSeason); paint(); }
+    if (sb) { picked = Number(sb.dataset.bdSeason); paint(); return; }
+    if (e.target.closest("[data-bd-elite]")) { wrap.remove(); opts.onElite?.(); }
   });
   (document.getElementById("stage")||document.body).appendChild(wrap);
 }

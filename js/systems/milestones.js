@@ -3,7 +3,9 @@
  * 按「累计结缘数」阶梯发奖，不按首次点亮；每档只能领一次。
  * 存档：save.milestones = { 档位: 领取时间戳 }（不新增存档版本，旧档按空对象处理）。
  */
-import { ITEM_TYPES } from "./build.js?v=67";
+import { ITEM_TYPES, rarityOf, LEGENDARY_DEX } from "./build.js?v=549";
+import { addMon, hasDex } from "../storage.js?v=549";
+import { getPokemon } from "../../engine/readable/play-core.js?v=549";
 
 /** 档位表（S13 定案）：累计收集数 → 篮球币 + 道具 */
 export const MILESTONES = [
@@ -15,6 +17,84 @@ export const MILESTONES = [
   { n: 200, coins: 1000, items: { skill: 2 } },
   { n: 291, coins: 2000, items: { power: 2, speed: 2, skill: 2 }, label: "+2000 币 · 三系药剂 ×2" },
 ];
+
+/** 收集奖励横幅（图鉴页顶部，每 10 只领 1 只） */
+export function monRewardBannerHtml(save) {
+  const info = monRewardInfo(save);
+  const state = info.claimable > 0
+    ? `<button class="ms-btn" data-mon-claim>领取 ×${info.claimable}</button>`
+    : `<span class="ms-r"><b>再收集 ${info.remainToNext} 只</b><small>${info.got} 只 · 每 ${info.step} 只领 1 只</small></span>`;
+  return `<div class="ms-box mon-rw-box">
+    <div class="ms-head"><b>收集奖励</b><span>已领 ${info.claimed} 次</span></div>
+    <div class="ms-next">每收集 ${info.step} 只，随机结缘 1 只尚未见过的精灵（不出传说）</div>
+    <div class="ms-bar"><i style="width:${Math.round(((info.got % info.step) / info.step) * 100)}%"></i></div>
+    <div class="ms-row reached">${state}</div>
+  </div>`;
+}
+
+/* ---------------- 属性收集奖励：每个属性集齐 8 种领 1 只同属性 ---------------- */
+export const TYPE_STEP = 8;
+export const TYPE_CN = {
+  Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰",
+  Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力",
+  Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精",
+};
+
+const typeOfDex = (dex) => {
+  const p = getPokemon(dex);
+  return (p.types && p.types[0]) || "Normal";
+};
+
+/** 各属性收集进度与领取状态 */
+export function typeRewardRows(save) {
+  const owned = save?.dex || {};
+  const claimed = save.typeRewards || (save.typeRewards = {});
+  const counts = {};
+  for (const dex of Object.keys(owned)) {
+    const t = typeOfDex(Number(dex));
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  return Object.keys(TYPE_CN).map((type) => {
+    const have = counts[type] || 0;
+    return {
+      type,
+      cn: TYPE_CN[type],
+      have,
+      step: TYPE_STEP,
+      reached: have >= TYPE_STEP,
+      claimed: !!claimed[type],
+      canClaim: have >= TYPE_STEP && !claimed[type],
+      remain: Math.max(0, TYPE_STEP - have),
+    };
+  });
+}
+
+/** 领取某属性的收集奖励：同属性未结缘优先，普通 78% / 稀有 22%；同属性已集齐则退到全池 */
+export function claimTypeReward(save, type) {
+  const row = typeRewardRows(save).find((r) => r.type === type);
+  if (!row) return { ok: false, error: "未知属性" };
+  if (row.claimed) return { ok: false, error: "该属性奖励已领取" };
+  if (!row.reached) return { ok: false, error: `该属性还差 ${row.remain} 种` };
+  const rows = (window.__PJ_DEX_ROWS || []).filter(
+    (r) => !LEGENDARY_DEX.has(r[0]) && !hasDex(save, r[0])
+  );
+  let pool = rows.filter((r) => typeOfDex(r[0]) === type);
+  if (!pool.length) pool = rows;
+  if (!pool.length) return { ok: false, error: "可结缘的精灵已全部收集" };
+  const wantRare = Math.random() < MON_RARE_ODDS;
+  let pick = pool.filter((r) => (rarityOf(r[0]) === "稀有") === wantRare);
+  if (!pick.length) pick = pool;
+  const dex = pick[Math.floor(Math.random() * pick.length)][0];
+  const r = addMon(save, dex, { from: "dex_type", level: 5 });
+  if (!r.ok) return { ok: false, error: r.error || "领取失败" };
+  save.typeRewards ||= {};
+  save.typeRewards[type] = Date.now();
+  const row2 = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
+  return {
+    ok: true, dex, placed: r.movedTo,
+    name: row2 ? String(row2[1]).replace(/#\d+$/, "") : "",
+  };
+}
 
 export function dexCount(save) {
   return Object.keys(save?.dex || {}).length;
@@ -48,6 +128,53 @@ export function milestoneRows(save) {
 /** 下一个未达成档位（主页/图鉴进度用） */
 export function nextMilestone(save) {
   return milestoneRows(save).find((r) => !r.reached) || null;
+}
+
+/* ---------------- 收集奖励：每收集 10 只领 1 只精灵 ---------------- */
+export const MON_STEP = 10;
+const MON_RARE_ODDS = 0.22;
+
+/** 收集进度与可领次数（图鉴页展示用） */
+export function monRewardInfo(save) {
+  const got = dexCount(save);
+  const earned = Math.floor(got / MON_STEP);
+  const claimed = save.monMilestoneClaims || 0;
+  return {
+    step: MON_STEP,
+    got,
+    earned,
+    claimed,
+    claimable: Math.max(0, earned - claimed),
+    nextAt: (earned + 1) * MON_STEP,
+    remainToNext: Math.max(0, (earned + 1) * MON_STEP - got),
+  };
+}
+
+/** 从未结缘精灵中抽 1 只：普通 78% / 稀有 22%，不出传说 */
+function rollUnowned(save) {
+  const rows = (window.__PJ_DEX_ROWS || []).filter(
+    (r) => !LEGENDARY_DEX.has(r[0]) && !hasDex(save, r[0])
+  );
+  if (!rows.length) return null;
+  const wantRare = Math.random() < MON_RARE_ODDS;
+  let pool = rows.filter((r) => (rarityOf(r[0]) === "稀有") === wantRare);
+  if (!pool.length) pool = rows;
+  return pool[Math.floor(Math.random() * pool.length)][0];
+}
+
+/** 领取一次收集奖励（调用方负责 writeSave） */
+export function claimMonReward(save) {
+  const info = monRewardInfo(save);
+  if (info.claimable <= 0) {
+    return { ok: false, error: `再收集 ${info.remainToNext} 只可领取` };
+  }
+  const dex = rollUnowned(save);
+  if (!dex) return { ok: false, error: "可结缘的精灵已全部收集" };
+  const r = addMon(save, dex, { from: "dex", level: 5 });
+  if (!r.ok) return { ok: false, error: r.error || "领取失败" };
+  save.monMilestoneClaims = (save.monMilestoneClaims || 0) + 1;
+  const row = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
+  return { ok: true, dex, name: row ? String(row[1]).replace(/#\d+$/, "") : "", placed: r.movedTo };
 }
 
 /** 领取一档：写币、发道具、记录时间；返回 { ok, coins, items } */

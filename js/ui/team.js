@@ -4,17 +4,17 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=86";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=75";
-import { openDetail } from "./detail.js?v=92";
-import { ICON } from "./icons.js?v=63";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=549";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=549";
+import { openDetail } from "./detail.js?v=549";
+import { ICON } from "./icons.js?v=549";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
-  assignStarterSlot, substituteBenchToSlot, substituteStarterToBench,
+  assignStarterSlot, substituteBenchToSlot, substituteStarterToBench, isOnGrass,
   starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=67";
+} from "../systems/build.js?v=549";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
@@ -72,6 +72,7 @@ function slotCard(pos, id, per) {
   const rarity = rarityOf(m.dex);
   return `<div class="lineup-slot" data-slot="${pos}">
     <button class="slot-card" data-open="${id}" data-drag="${id}" data-drag-from="start" style="--tc:${color}">
+      ${(m.train?.free || 0) + (m.train?.bank || 0) > 0 ? `<span class="slot-train">训练 +${(m.train.free || 0) + (m.train.bank || 0)}</span>` : ""}
       <span class="slot-img"><img src="./sprites/${m.dex}.png" alt="" draggable="false"></span>
       <span class="slot-name">${b.name}</span>
       <span class="slot-meta"><b>${ovr}</b><small>Lv.${m.level}</small><small class="slot-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</small></span>
@@ -125,6 +126,8 @@ export function renderTeam(page, save) {
         .slot-rar{font-size:8.5px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 3px;line-height:1.45;white-space:nowrap}
         .slot-rec{font-size:9px;color:rgba(255,255,255,.66);background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:0 6px;line-height:1.5}
         .slot-label{font:700 13px var(--sport,sans-serif);color:var(--gold);letter-spacing:.1em}
+        .slot-train{position:absolute;top:4px;right:4px;font:700 9px var(--sport);color:#0a1128;background:var(--gold);border-radius:8px;padding:1px 5px;letter-spacing:.02em}
+        .bench-train{position:absolute;top:3px;right:3px;font:700 8.5px var(--sport);color:#0a1128;background:var(--gold);border-radius:7px;padding:0 4px}
         .slot-empty{width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px dashed rgba(255,255,255,.18);border-radius:14px;color:var(--text-dim);background:rgba(0,0,0,.14)}
         .slot-empty small{font-size:10px}
         .lineup-slot.drop-hot{transform:scale(1.04)}
@@ -363,12 +366,14 @@ function benchCard(id) {
   const b = getPokemon(m.dex);
   const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
   const rarity = rarityOf(m.dex);
-  return `<button class="bench-card" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}">
+  const onGrass = isOnGrass(_save, id);
+  return `<button class="bench-card" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}" title="${onGrass ? "草地挂机中，收回后才能上场" : ""}">
+    ${(m.train?.free || 0) + (m.train?.bank || 0) > 0 ? `<span class="bench-train">+${(m.train.free || 0) + (m.train.bank || 0)}</span>` : ""}
     <img src="./sprites/${m.dex}.png" alt="" draggable="false">
     <b class="sc-ovr">${mainOVR(m)}</b>
     <span class="bc-name">${b.name}</span>
     <span class="bench-rar" style="--rc:${RARITY_COLOR[rarity]}">${rarity}</span>
-    <span class="bench-rec no-zh">${recommendedPositions(m).join("/")}</span>
+    <span class="bench-rec no-zh">${onGrass ? "草地中 · 不可上场" : recommendedPositions(m).join("/")}</span>
   </button>`;
 }
 

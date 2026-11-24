@@ -5,12 +5,15 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=75";
-import { gameAudio } from "../platform/audio.js?v=64";
-import { getPokemon } from "../../engine/readable/play-core.js?v=86";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=67";
-import { openDetail } from "./detail.js?v=92";
-import { milestoneRows, rewardText, claimMilestone } from "../systems/milestones.js?v=63";
+import { loadSave, writeSave } from "../storage.js?v=549";
+import { gameAudio } from "../platform/audio.js?v=549";
+import { getPokemon } from "../../engine/readable/play-core.js?v=549";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=549";
+import { openDetail } from "./detail.js?v=549";
+import {
+  milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
+  typeRewardRows, claimTypeReward,
+} from "../systems/milestones.js?v=549";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...
@@ -150,6 +153,26 @@ function milestoneHtml(save) {
     </div>`;
 }
 
+/** 属性收集奖励：每个属性集齐 8 种，可领 1 只同属性未结缘精灵 */
+function typeRewardHtml(save) {
+  const rows = typeRewardRows(save);
+  const ready = rows.filter((r) => r.canClaim);
+  const done = rows.filter((r) => r.claimed).length;
+  return `
+    <div class="ms-box ty-rw-box">
+      <div class="ms-head"><b>属性收集奖励</b><span>已领 ${done} / ${rows.length}</span></div>
+      <div class="ms-next">每个属性集齐 ${rows[0]?.step || 8} 种，可领 1 只同属性未结缘精灵${ready.length ? ` · <b style="color:var(--gold)">${ready.length} 个可领</b>` : ""}</div>
+      ${ready.length ? `<button class="ms-btn" data-ty-claim="${ready[0].type}" style="align-self:flex-start">领取 ${ready[0].cn}</button>` : ""}
+      <div class="ty-grid">
+        ${rows.map((r) => `
+          <button class="ty-chip ${r.canClaim ? "ready" : ""} ${r.claimed ? "done" : ""}"
+            ${r.canClaim ? `data-ty-claim="${r.type}"` : "disabled"}>
+            <b>${r.cn}</b><small>${r.claimed ? "已领" : `${r.have}/${r.step}`}</small>
+          </button>`).join("")}
+      </div>
+    </div>`;
+}
+
 /** 渲染图鉴页到 root（全屏页，主界面菜单项进入） */
 export function renderDex(root) {
   const owned = ownedSet();
@@ -162,6 +185,14 @@ export function renderDex(root) {
       .dex-chips.rarity-chips button.on{background:var(--rc);color:#10203f;box-shadow:0 0 8px var(--rc)}
       .dex-card .dex-rar{position:absolute;right:6px;top:5px;font-style:normal;font-size:9px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 4px;background:rgba(0,0,0,.28)}
       .dex-card.off .dex-rar{opacity:.55}
+      .ty-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
+      .ty-chip{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:5px;
+        border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(0,0,0,.18);color:var(--text-dim)}
+      .ty-chip b{font-size:10px;font-weight:700;color:var(--text)}
+      .ty-chip small{font:700 8.5px var(--sport);font-variant-numeric:tabular-nums}
+      .ty-chip.ready{border-color:var(--gold);background:rgba(245,197,66,.14)}
+      .ty-chip.ready b,.ty-chip.ready small{color:var(--gold)}
+      .ty-chip.done{opacity:.45}
     </style>
     <div class="page-head">
       <button class="back" data-back>‹</button>
@@ -170,6 +201,8 @@ export function renderDex(root) {
     </div>
     <p class="page-sub">收集你结缘过的精灵 · 剪影代表尚未结缘 · 卡边框=属性色</p>
     ${milestoneHtml(save)}
+    ${monRewardBannerHtml(save)}
+    ${typeRewardHtml(save)}
     <div class="dex-chips">
       <button data-f="all"${curFilter === "all" ? ' class="on"' : ""}>全部</button>
       <button data-f="own"${curFilter === "own" ? ' class="on"' : ""}>已获得</button>
@@ -186,6 +219,27 @@ export function renderDex(root) {
   root.addEventListener("click", (e) => {
     if (e.target.closest("[data-ms-toggle]")) {
       msOpen = !msOpen;
+      renderDex(root);
+      return;
+    }
+    const tyBtn = e.target.closest("[data-ty-claim]");
+    if (tyBtn) {
+      const fresh = loadSave() || {};
+      const r = claimTypeReward(fresh, tyBtn.dataset.tyClaim);
+      if (!r.ok) return toast(r.error);
+      writeSave(fresh);
+      gameAudio.play("coin");
+      toast(`${r.name || "精灵"} 加入${r.placed === "box" ? "仓库" : "队伍"}`);
+      renderDex(root);
+      return;
+    }
+    if (e.target.closest("[data-mon-claim]")) {
+      const fresh = loadSave() || {};
+      const r = claimMonReward(fresh);
+      if (!r.ok) return toast(r.error);
+      writeSave(fresh);
+      gameAudio.play("coin");
+      toast(`收集奖励：${r.name || "精灵"} 加入${r.placed === "box" ? "仓库" : "队伍"}`);
       renderDex(root);
       return;
     }

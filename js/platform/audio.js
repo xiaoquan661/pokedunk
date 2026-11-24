@@ -4,7 +4,7 @@
  * - music.js：原版程序化 BGM（菜单轮播 / 比赛静音）
  * - 偏好键沿用本项目：pokedunk.muted / pokedunk.music / pokedunk.announcer
  */
-import { MusicManager } from "./music.js?v=60";
+import { MusicManager } from "./music.js?v=549";
 
 const SFX_KEY = "pokedunk.muted";
 const MUSIC_KEY = "pokedunk.music";
@@ -100,10 +100,21 @@ class AudioController {
     this.crowd.gain.value = 0.04;
     src.connect(filter).connect(this.crowd).connect(this.master);
     src.start();
+    // 记住循环源与滤波器：stopCrowd 必须真正停掉它们，
+    // 否则每场比赛都会残留一条循环噪声源，长时间游玩会累积。
+    this.crowdSrc = src;
+    this.crowdFilter = filter;
   }
 
   stopCrowd() {
-    try { this.crowd?.disconnect(); } catch {}
+    try { this.crowdSrc?.stop(); } catch {}
+    try {
+      this.crowdSrc?.disconnect();
+      this.crowdFilter?.disconnect();
+      this.crowd?.disconnect();
+    } catch {}
+    this.crowdSrc = null;
+    this.crowdFilter = null;
     this.crowd = null;
   }
 
@@ -135,6 +146,9 @@ class AudioController {
       osc.frequency.value = freq;
       g.gain.value = level * 0.5;
       osc.connect(g).connect(lp);
+      osc.onended = () => {
+        try { osc.disconnect(); g.disconnect(); } catch {}
+      };
       osc.start(t);
       osc.stop(t + len + 0.05);
     }
@@ -151,6 +165,9 @@ class AudioController {
     g.gain.setValueAtTime(gain, t);
     g.gain.exponentialRampToValueAtTime(1e-4, t + dur);
     osc.connect(g).connect(this.master);
+    osc.onended = () => {
+      try { osc.disconnect(); g.disconnect(); } catch {}
+    };
     osc.start(t);
     osc.stop(t + dur + 0.02);
   }
@@ -167,6 +184,9 @@ class AudioController {
     g.gain.setValueAtTime(gain, t);
     g.gain.exponentialRampToValueAtTime(1e-4, t + dur);
     src.connect(filter).connect(g).connect(this.master);
+    src.onended = () => {
+      try { src.disconnect(); filter.disconnect(); g.disconnect(); } catch {}
+    };
     src.start(t, Math.random() * 0.5);
     src.stop(t + dur + 0.02);
   }

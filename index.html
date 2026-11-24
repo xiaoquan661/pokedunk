@@ -38,17 +38,188 @@
   #rotate-hint b { font-size: 20px; color: #ffcb05; letter-spacing: 2px; }
   #rotate-hint small { font-size: 13px; color: #9aa0c0; line-height: 1.6; }
   @keyframes rh-tilt { 0%, 45% { transform: rotate(0deg); } 65%, 100% { transform: rotate(90deg); } }
+  /* 启动兜底：模块冷加载/存档结算期间先显示加载页，避免只有黑屏 */
+  #boot-screen {
+    position: fixed; inset: 0; z-index: 99998;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    background: #05060f; color: #f4f1e8; text-align: center; padding: 24px;
+    font-family: "FusionPixel", "PingFang SC", "Microsoft YaHei", monospace;
+    transition: opacity .22s ease;
+  }
+  #boot-screen.hide { opacity: 0; pointer-events: none; }
+  #boot-screen .bs-logo { font-size: 24px; font-weight: 800; letter-spacing: 6px; color: #ffcb05; }
+  #boot-screen .bs-spin {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.18); border-top-color: #ffcb05;
+    animation: bs-spin .8s linear infinite;
+  }
+  #boot-screen p { margin: 0; font-size: 12px; color: #9aa0c0; line-height: 1.6; }
+  #boot-screen button {
+    padding: 9px 18px; border: 2px solid #ffcb05; border-radius: 4px;
+    background: transparent; color: #ffcb05; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  #boot-screen button[hidden] { display: none; }
+  @keyframes bs-spin { to { transform: rotate(360deg); } }
 </style>
 <link rel="stylesheet" href="./css/main.css?v=50" />
 <link rel="stylesheet" href="./css/original.css?v=33" />
-<link rel="stylesheet" href="./css/game-override.css?v=72" />
-<link rel="stylesheet" href="./css/menu-legacy.css?v=132" />
+<link rel="stylesheet" href="./css/game-override.css?v=76" />
+<link rel="stylesheet" href="./css/menu-legacy.css?v=139" />
 <link id="ui-theme-style" rel="stylesheet" href="./css/black.css?v=46" />
 <link rel="stylesheet" href="./css/battle-ui.css?v=33" />
 <script>try{var __all=new URLSearchParams(location.search).get("themes")==="1";var __saved=localStorage.getItem("pokedunk.uiTheme")||"black";var __ok=__all?["retro","black","classic","valorant","stardew","terraria"]:["retro","black"];var __t=__ok.indexOf(__saved)>=0?__saved:"black";var __map={retro:"./css/retro.css?v=59",classic:"./css/classic.css?v=32",valorant:"./css/valorant.css?v=41",stardew:"./css/stardew.css?v=35",terraria:"./css/terraria.css?v=34",black:"./css/black.css?v=46"};document.getElementById("ui-theme-style").href=__map[__t]||__map.black;document.documentElement.dataset.uiTheme=__t;}catch(e){}</script>
 </head>
 <body>
+<div id="boot-screen" aria-live="polite">
+  <div class="bs-logo">口袋灌篮</div>
+  <div class="bs-spin" aria-hidden="true"></div>
+  <p id="boot-msg">正在读取存档…</p>
+  <button id="boot-retry" type="button" hidden>重新加载</button>
+</div>
+<script>
+/* 启动加载页兜底：模块加载完成或首屏渲染后由 app.js 调用 __pjBootDone */
+(function () {
+  var boot = document.getElementById("boot-screen");
+  if (!boot) return;
+  var msg = document.getElementById("boot-msg");
+  var retry = document.getElementById("boot-retry");
+  var slow = setTimeout(function () { if (msg) msg.textContent = "加载时间较长，请稍候…"; }, 6000);
+  var fail = setTimeout(function () {
+    if (!boot || boot.classList.contains("hide")) return;
+    if (msg) msg.textContent = "加载失败，请检查网络后重试";
+    if (retry) retry.hidden = false;
+  }, 15000);
+  if (retry) retry.addEventListener("click", function () { location.reload(); });
+  window.__pjBootDone = function () {
+    clearTimeout(slow);
+    clearTimeout(fail);
+    if (!boot || !boot.parentNode) return;
+    boot.classList.add("hide");
+    setTimeout(function () { boot.remove(); }, 240);
+  };
+})();
+</script>
 <div id="stage"><div id="app"></div></div>
+<script>
+/* 崩溃兜底：运行中未捕获异常时不再黑屏，显示可操作的恢复界面并记录错误 */
+(function () {
+  var LOG_KEY = "pokedunk.err.log";
+  var shown = false;
+  window.__pjStart = Date.now();
+  function sessionInfo() {
+    var mins = Math.round((Date.now() - (window.__pjStart || Date.now())) / 60000);
+    var heap = 0;
+    try { heap = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0; } catch (e) {}
+    return { mins: mins, heap: heap };
+  }
+  function logErr(kind, msg) {
+    try {
+      var arr = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+      var si = sessionInfo();
+      arr.push({
+        t: Date.now(), kind: kind, msg: String(msg || "").slice(0, 400),
+        ua: navigator.userAgent.slice(0, 160),
+        mem: navigator.deviceMemory || null, cpu: navigator.hardwareConcurrency || null,
+        up: si.mins, heap: si.heap
+      });
+      localStorage.setItem(LOG_KEY, JSON.stringify(arr.slice(-5)));
+    } catch (e) {}
+  }
+  function ignorable(msg) {
+    var s = String(msg || "");
+    return /AbortError|NotAllowedError|play\(\) failed|ResizeObserver|Script error/i.test(s);
+  }
+  function modal(kind, msg) {
+    if (shown || !document.body) return;
+    shown = true;
+    logErr(kind, msg);
+    var ov = document.createElement("div");
+    ov.id = "pj-fatal";
+    ov.style.cssText = [
+      "position:fixed", "inset:0", "z-index:999999", "display:flex", "align-items:center", "justify-content:center",
+      "padding:20px", "background:rgba(3,4,8,.94)", "font-family:'FusionPixel','PingFang SC','Microsoft YaHei',sans-serif"
+    ].join(";");
+    ov.innerHTML =
+      '<div style="width:100%;max-width:320px;padding:18px 16px;border:3px solid var(--r-ink,#f2f2f2);border-radius:4px;' +
+      'background:var(--r-paper,#060606);color:var(--r-ink,#f2f2f2);box-shadow:7px 7px 0 rgba(255,255,255,.3)">' +
+      '<b style="display:block;font-size:17px;letter-spacing:.04em">页面遇到问题</b>' +
+      '<p style="margin:8px 0 14px;font-size:12px;line-height:1.6;color:var(--text-dim,#9a9a9a)">' +
+      '可能是设备内存不足或 WebView 中断。点下方按钮重新进入，进度会自动保存。</p>' +
+      '<button id="pj-fatal-reload" style="width:100%;padding:12px 0;border:2px solid var(--r-ink,#f2f2f2);border-radius:3px;' +
+      'background:var(--gold,#ff7a1a);color:#111;font-weight:800;font-size:14px;letter-spacing:.04em">重新加载</button>' +
+      '<button id="pj-fatal-continue" style="width:100%;margin-top:8px;padding:10px 0;border:2px solid var(--line,#3a3a3a);border-radius:3px;' +
+      'background:transparent;color:var(--text-dim,#9a9a9a);font-weight:700;font-size:12px">继续游戏</button>' +
+      '<button id="pj-fatal-copy" style="width:100%;margin-top:8px;padding:8px 0;border:1px dashed var(--line,#3a3a3a);border-radius:3px;' +
+      'background:transparent;color:var(--text-dim,#9a9a9a);font-weight:700;font-size:11px">复制错误信息</button>' +
+      '<p id="pj-fatal-detail" style="margin:10px 0 0;font-size:10px;line-height:1.5;color:var(--text-dim,#9a9a9a);word-break:break-all"></p>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var detail = ov.querySelector("#pj-fatal-detail");
+    var si = sessionInfo();
+    if (detail) {
+      detail.textContent = "错误信息：" + String(msg || kind || "").slice(0, 160) +
+        " · 已玩 " + si.mins + " 分钟" + (si.heap ? " · 堆内存 " + si.heap + "MB" : "");
+    }
+    ov.querySelector("#pj-fatal-continue").addEventListener("click", function () { ov.remove(); shown = false; });
+    ov.querySelector("#pj-fatal-reload").addEventListener("click", function () {
+      shown = false;
+      location.reload();
+    });
+    ov.querySelector("#pj-fatal-copy").addEventListener("click", function () {
+      var report = [
+        "口袋灌篮错误报告",
+        "时间: " + new Date().toISOString(),
+        "类型: " + kind,
+        "错误: " + String(msg || "").slice(0, 400),
+        "已玩: " + si.mins + " 分钟",
+        "堆内存: " + (si.heap || "未知") + "MB",
+        "设备内存: " + (navigator.deviceMemory || "未知") + "GB",
+        "CPU 核心: " + (navigator.hardwareConcurrency || "未知"),
+        "UA: " + navigator.userAgent.slice(0, 200)
+      ];
+      try {
+        var arr = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
+        if (arr.length) report.push("最近错误: " + arr.map(function (x) { return x.kind + "@" + x.up + "min"; }).join(", "));
+      } catch (e) {}
+      var text = report.join("\n");
+      var btn = this;
+      var done = function () { btn.textContent = "已复制"; setTimeout(function () { btn.textContent = "复制错误信息"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallback(); });
+      } else fallback();
+      function fallback() {
+        // 复制被系统拒绝时，把报告摊开成可长按选中的文本，至少能手动复制
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.readOnly = true;
+          ta.style.cssText = "width:100%;height:96px;margin-top:8px;box-sizing:border-box;padding:6px;border:1px solid var(--line,#3a3a3a);border-radius:3px;background:#000;color:#ccc;font-size:10px;line-height:1.4";
+          if (detail && detail.parentNode) detail.parentNode.insertBefore(ta, detail.nextSibling);
+          ta.focus();
+          ta.select();
+          var ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) {}
+          if (ok) done();
+          else btn.textContent = "长按上面文字复制";
+        } catch (e) {}
+      }
+    });
+  }
+  // 供比赛渲染看门狗等模块调用
+  window.__pjFatal = modal;
+  window.addEventListener("error", function (e) {
+    if (e && e.target && e.target !== window && e.target.tagName) return; // 资源加载失败不触发兜底
+    if (ignorable(e && e.message)) return;
+    // 不在异常当下打断渲染，稍后如已黑屏则接管
+    setTimeout(function () { modal("error", (e && e.message) || "unknown error"); }, 1000);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var msg = e && e.reason && (e.reason.message || e.reason);
+    if (ignorable(msg)) return;
+    setTimeout(function () { modal("rejection", msg || "promise rejection"); }, 1000);
+  });
+})();
+</script>
 <div id="rotate-hint" hidden>
   <svg class="rh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.2"/><path d="M10 5.2h4"/><circle cx="12" cy="18.4" r="0.8" fill="currentColor" stroke="none"/></svg>
   <b>请竖屏体验</b>
@@ -77,8 +248,11 @@
       document.body.appendChild(probe);
     }
     var cs = getComputedStyle(probe);
+    // 安卓 WebView 的 env(safe-area-inset-top) 常为 0，但系统状态栏仍压在页面上；
+    // Lamps 父页可以通过 getStatusBarInfo 下发真实状态栏高度，取两者较大值。
+    var lampTop = Number(window.__stageStatusTop) || 0;
     return {
-      top: parseFloat(cs.paddingTop) || 0,
+      top: Math.max(parseFloat(cs.paddingTop) || 0, lampTop),
       bottom: parseFloat(cs.paddingBottom) || 0,
     };
   }
@@ -132,10 +306,44 @@
 <script src="./js/platform/lamps-rewarded-video-platform.js"></script>
 <script src="./js/platform/lamps-status-bar-bridge.js"></script>
 <script src="./js/platform/lamps-status-bar-platform.js"></script>
+<script>
+/* 状态栏安全顶同步：Lamps 父页异步下发状态栏高度，拿到后重新计算舞台顶部偏移，
+   避免安卓 WebView 中 env(safe-area-inset-top)=0 时顶部按钮被系统状态栏盖住。 */
+(function () {
+  var tries = 0;
+  function sync() {
+    try {
+      if (!window.LampsGame || typeof window.LampsGame.getStatusBarInfo !== "function") return false;
+      window.LampsGame.getStatusBarInfo().then(function (res) {
+        var h = res && res.data && Number(res.data.height);
+        window.__stageStatusTop = isFinite(h) && h > 0 ? h : 0;
+        if (window.__stageApply) window.__stageApply();
+      }).catch(function () {});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  if (!sync()) {
+    var timer = setInterval(function () {
+      if (sync() || ++tries > 20) clearInterval(timer);
+    }, 100);
+  }
+  window.addEventListener("orientationchange", function () {
+    setTimeout(function () {
+      window.__stageStatusTop = 0;
+      sync();
+    }, 150);
+  });
+  window.addEventListener("load", function () { sync(); });
+  window.addEventListener("pageshow", function () { sync(); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) sync(); });
+})();
+</script>
 <script>window.addEventListener("orientationchange",function(){try{window.LampsGame&&window.LampsGame.applyStatusBarSafeTop&&window.LampsGame.applyStatusBarSafeTop()}catch(e){}});</script>
-<script src="./js/zh.js?v=58"></script>
-<script src="./js/dex-data.js?v=56"></script>
-<script type="module" src="./js/app.js?v=361"></script>
+<script src="./js/zh.js?v=549"></script>
+<script src="./js/dex-data.js?v=549"></script>
+<script type="module" src="./js/app.js?v=549"></script>
 </body>
 </html>
 

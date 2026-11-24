@@ -3,11 +3,11 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=75";
-import { gameAudio } from "../platform/audio.js?v=64";
+import { loadSave, writeSave } from "../storage.js?v=549";
+import { gameAudio } from "../platform/audio.js?v=549";
 import {
   dailyPreview, dailyMissionRows, dailyScoreRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=92";
+} from "../journey/daily.js?v=549";
 
 const DAILY_CSS = `
 .daily-score{display:flex;flex-direction:column;gap:6px}
@@ -20,6 +20,25 @@ const DAILY_CSS = `
 .dsr-row .dsr-txt small{font-size:10.5px;color:var(--text-dim)}
 .dsr-row .dsr-tag{flex-shrink:0;padding:5px 10px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.16));color:var(--text-dim);font:700 11px var(--sport);white-space:nowrap}
 .dsr-row.reached .dsr-tag{border-color:var(--gold);color:var(--gold)}
+.dsr-ico{flex:0 0 auto;width:52px;height:52px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  border:1px solid var(--line,rgba(255,255,255,.16));background:rgba(0,0,0,.28);overflow:hidden}
+.dsr-ico img{width:40px;height:40px;object-fit:contain;image-rendering:pixelated}
+.dsr-ico b{font:800 15px var(--sport);color:var(--gold)}
+.dsr-ico small{font-size:8px;color:var(--text-dim);line-height:1}
+.dsr-ico.rare{border-color:rgba(79,157,255,.6);background:rgba(79,157,255,.1)}
+.dsr-ico.legend{border-color:rgba(245,197,66,.65);background:linear-gradient(160deg,rgba(245,197,66,.2),rgba(0,0,0,.25))}
+.dsr-ico .qm{font:800 24px var(--sport);color:var(--text-dim);line-height:1}
+.dsr-ico.rare .qm{color:#7fb8ff}
+.dsr-ico.legend .qm{color:var(--gold)}
+.dsr-bar{position:relative;height:5px;margin:6px 2px 0;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.dsr-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#4f9dff,#f5c542)}
+.dsr-need{flex:0 0 auto;text-align:right;font:700 9.5px var(--sport);color:var(--text-dim);line-height:1.35;min-width:44px}
+.dsr-need b{display:block;font-size:11px;color:var(--gold)}
+.dsr-need span{font-size:9.5px}
+.dsr-row.claimed .dsr-need b{color:#9fe3b0}
+.dsr-top{padding:7px 10px;border-radius:7px;border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent);
+  background:rgba(245,197,66,.07);font-size:10.5px;color:var(--text-dim);line-height:1.5}
+.dsr-top b{color:var(--gold);font:700 12px var(--sport)}
 .daily-score-help{padding:9px 11px;margin-bottom:10px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:6px;background:var(--panel-2,rgba(0,0,0,.18))}
 .daily-score-help > b{display:block;margin-bottom:4px;font-size:12px;color:var(--gold)}
 .daily-score-help p{margin:0 0 4px;font-size:12px;line-height:1.55;color:var(--text)}
@@ -114,20 +133,58 @@ export function openDaily(save, actions = {}) {
 
       <div class="dsec daily-sec">计分方式 <small>每场只记最高分</small></div>
       <div class="daily-score-help">
-        <b>挑战分 = 我方得分 + 扣篮×3 + 三分×2 + 抢断×2 + 盖帽×2 + 胜利×10</b>
-        <p>例：40 分 + 扣篮 5×3 + 三分 6×2 + 抢断 4×2 + 盖帽 3×2 + 胜利 10 = <b>91 分</b></p>
-        <small>扣篮、三分、抢断、盖帽按全队技术统计累加；失败没有胜利分。</small>
+        <b>挑战分 = 我方得分 + 今日风格分 + 胜利×10</b>
+        ${(() => {
+          const w = p.scoreRule;
+          const ex = 40 + 6 * w.tpm + 5 * w.dnk + 4 * w.stl + 3 * w.blk + 8 * (w.reb || 0) + w.win;
+          const parts = [`三分 6×${w.tpm}`, `扣篮 5×${w.dnk}`, `抢断 4×${w.stl}`, `盖帽 3×${w.blk}`];
+          if (w.reb) parts.push(`篮板 8×${w.reb}`);
+          return `<p>今日权重：${w.label}<br>例：40 分 + ${parts.join(" + ")} + 胜利 ${w.win} = <b>${ex} 分</b></p>`;
+        })()}
+        <small>风格分按全队技术统计累加；失败没有胜利分。局内比分板底栏会实时显示挑战分与加分播报。</small>
       </div>
 
-      <div class="dsec daily-sec">分数奖励 <small>达到即自动发放 · 0 点刷新 · 传说每周限 1 只</small></div>
+      <div class="dsec daily-sec">分数奖励 <small>打每日挑战得分 · 达到自动发放 · 0 点刷新</small></div>
+      ${(() => {
+        const best = p.best || 0;
+        const next = scoreRows.find((m) => !m.claimed && !m.weeklyLocked && best < m.score);
+        const txt = next
+          ? `再得 <b>${next.score - best}</b> 分领「${next.legend ? "随机传说精灵" : next.mon ? "随机稀有精灵" : `+${next.coin} 币`}」`
+          : "今日档位奖励已全部达成";
+        return `<div class="dsr-top">今日最高 <b>${best}</b> 分 · ${txt}</div>`;
+      })()}
       <div class="daily-score">
         ${scoreRows.map((m) => {
-          const reward = m.legend ? (m.weeklyLocked ? "本周已领 · 折算 200 币" : "随机传说精灵") : `+${m.coin} 币`;
-          const state = m.claimed ? "已领取" : m.weeklyLocked ? "本周已领" : m.reached ? "已达成" : "未达成";
+          const reward = m.legend
+            ? (m.weeklyLocked ? "本周已领 · 折算 200 币" : "随机传说精灵")
+            : m.mon
+              ? (m.weeklyLocked ? "本周已领 · 折算 200 币" : "随机稀有精灵")
+              : `+${m.coin} 币`;
+          const sub = m.legend
+            ? "达到即发 · 从尚未结缘的传说中随机 1 只 · 每周限 1"
+            : m.mon
+              ? "达到即发 · 从尚未结缘的稀有精灵中随机 1 只 · 每周限 1"
+              : "达到即发 · 直接进账";
+          const best = p.best || 0;
+          const pct = Math.min(100, Math.round((best / m.score) * 100));
+          const icon = m.legend
+            ? `<span class="qm">?</span><small>传说</small>`
+            : m.mon
+              ? `<span class="qm">?</span><small>稀有</small>`
+              : `<b>+${m.coin}</b><small>币</small>`;
+          const right = m.claimed
+            ? `<b>已领取</b>`
+            : m.weeklyLocked
+              ? `<b>本周已领</b>`
+              : m.reached
+                ? `<b>已达成</b>`
+                : `<b>还差</b><span>${m.score - best} 分</span>`;
           return `<div class="dsr-row ${m.claimed ? "claimed" : m.reached ? "reached" : ""}">
             <span class="dsr-score">${m.score} 分</span>
-            <span class="dsr-txt"><b>${reward}</b><small>${m.legend ? "从尚未结缘的传说中随机获得" : "每日挑战分数奖励"}</small></span>
-            <span class="dsr-tag">${state}</span>
+            <span class="dsr-ico ${m.legend ? "legend" : m.mon ? "rare" : ""}">${icon}</span>
+            <span class="dsr-txt"><b>${reward}</b><small>${sub}</small>
+              <span class="dsr-bar"><i style="width:${pct}%"></i></span></span>
+            <span class="dsr-need">${right}</span>
           </div>`;
         }).join("")}
       </div>

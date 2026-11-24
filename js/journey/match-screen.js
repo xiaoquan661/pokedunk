@@ -9,13 +9,14 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR } from "../../engine/readable/play-core.js?v=87";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=87";
-import { loadSet, saveSet } from "../ui/settings.js?v=117";
-import { STAT_KEYS } from "./gyms.js?v=63";
-import { currentMatchInfo, matchSeed } from "./season.js?v=74";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=67";
-import { createMatchHype } from "../ui/match-hype.js?v=64";
+import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=549";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=549";
+import { loadSet, saveSet } from "../ui/settings.js?v=549";
+import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=549";
+import { currentMatchInfo, matchSeed } from "./season.js?v=549";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=549";
+import { createMatchHype } from "../ui/match-hype.js?v=549";
+import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=549";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
@@ -74,6 +75,130 @@ export function buildGymMatch(save, mode = "league") {
       ? (info.playoffRound === "final" ? "legend" : "allstar")
       : diffOfRound(info.venue);
   return { home, away, difficulty, quarterLen, ...prefs, seed: matchSeed(save, info), gym, mode, info, stamina: true };
+}
+
+/* ---------------- 快速比赛（无存档娱乐模式） ---------------- */
+export const QUICK_LEVELS = [
+  { id: "easy", name: "轻松", hint: "对手 -6", extra: -6, difficulty: "rookie" },
+  { id: "normal", name: "标准", hint: "对手原强度", extra: 0, difficulty: "pro" },
+  { id: "hard", name: "硬仗", hint: "对手 +8", extra: 8, difficulty: "allstar" },
+];
+
+/** 快速比赛的对手阵容（原版道馆阵容，不写存档，只读） */
+export function quickRoster(stage = "gym1", level = "normal") {
+  const gym = gymOfStage(stage);
+  const lv = QUICK_LEVELS.find((x) => x.id === level) || QUICK_LEVELS[1];
+  return pickGymRoster(stage, gym.types || ["Normal"], lv.extra);
+}
+
+const QUICK_POS = ["PG", "SG", "SF", "PF", "C"];
+
+/**
+ * 快速比赛选秀池：每个位置给 3 只候选，按对手强度取相近 OVR。
+ * 只读引擎注册表，与外面存档完全无关。
+ */
+export function quickDraftPool(stage = "gym1", level = "normal") {
+  const opp = quickRoster(stage, level);
+  const target = opp.length ? opp.reduce((a, p) => a + p.ovr, 0) / opp.length : 70;
+  const used = new Set();
+  const out = {};
+  for (const pos of QUICK_POS) {
+    let picked = [];
+    for (const band of [10, 16, 99]) {
+      const cands = POKEMON_LIST.filter((p) => p.pos === pos && !used.has(p.dex) && Math.abs(p.ovr - target) <= band);
+      for (let i = cands.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cands[i], cands[j]] = [cands[j], cands[i]];
+      }
+      picked = cands.slice(0, 3);
+      if (picked.length >= 3) break;
+    }
+    if (picked.length < 3) {
+      const extra = POKEMON_LIST.filter((p) => p.pos === pos && !used.has(p.dex) && !picked.includes(p));
+      for (let i = extra.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [extra[i], extra[j]] = [extra[j], extra[i]];
+      }
+      picked = picked.concat(extra.slice(0, 3 - picked.length));
+    }
+    picked.forEach((p) => used.add(p.dex));
+    out[pos] = picked.map((p) => p.dex);
+  }
+  return out;
+}
+
+/**
+ * 快速比赛配置：我方用临时选秀阵容（dexes），对手用原版道馆阵容。
+ * 与外部存档完全隔离，不改战绩/赛季/金币/XP。
+ * stage: "gym1".."gym8" | "elite"
+ */
+export function buildQuickMatch(save, stage = "gym1", level = "normal", dexes = []) {
+  const set = loadSet();
+  const prefs = { autoSwitch: set.autoSwitch === true, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
+  const gym = gymOfStage(stage);
+  const lv = QUICK_LEVELS.find((x) => x.id === level) || QUICK_LEVELS[1];
+  const roster = quickRoster(stage, level);
+  const away = {
+    name: gym.name, abbr: gym.abbr, color: gym.color, color2: gym.color2,
+    roster, bench: [], human: false, boost: 0, elite: stage === "elite",
+  };
+  const draft = (dexes || []).slice(0, 5);
+  const homeRoster = draft.length
+    ? draft.map((d) => buildPlayer(d, {}))
+    : buildMyRoster(save, 1);
+  const home = {
+    name: "快速队",
+    abbr: "QK",
+    color: "#3b6fd8",
+    color2: "#16224a",
+    roster: homeRoster,
+    bench: [],
+    human: true,
+    boost: 0,
+  };
+  return {
+    home, away, difficulty: lv.difficulty, quarterLen: 120, quarters: 2, ...prefs,
+    seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0,
+    gym: { ...gym, elite: stage === "elite" },
+    mode: "quick", info: null, stamina: true,
+    quick: { stage, level: lv.id, dexes: homeRoster.map((p) => p.dex) },
+  };
+}
+
+/* ---------------- 野球场1v1（无赛季结算） ---------------- */
+const cnDexName = (dex, fallback = "") => {
+  const row = (window.__PJ_DEX_ROWS || []).find((r) => Number(r[0]) === Number(dex));
+  return row ? String(row[1]).replace(/#\d+$/, "") : fallback;
+};
+
+/** 1v1 篮球配置：每边 1 只精灵，2 节 × 60 秒，无换人。 */
+export function buildWildMatch(save, route, monId, opp) {
+  if (!save?.mons?.[monId] || !route || !opp) return null;
+  const set = loadSet();
+  const me = buildMatchPlayer(save, monId, new Map());
+  const wild = buildPlayer(opp.dex, opp.bonus || {});
+  return {
+    home: {
+      name: "野球挑战", abbr: "ME", color: "#3b6fd8", color2: "#16224a",
+      roster: [me], bench: [], human: true, boost: 0,
+    },
+    away: {
+      name: cnDexName(opp.dex, opp.name), abbr: "WLD", color: route.color, color2: route.color2,
+      roster: [wild], bench: [], human: false, boost: 0,
+    },
+    difficulty: route.difficulty || "pro",
+    quarterLen: 60,
+    quarters: 2,
+    autoSwitch: false,
+    userAutoSubs: false,
+    specialFx: set.specialFx !== false,
+    seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0,
+    mode: "wild",
+    halfCourt: true,
+    stamina: false,
+    gym: { name: route.name, abbr: "WLD", color: route.color, color2: route.color2, elite: false },
+    wild: { routeId: route.id, monId, opp },
+  };
 }
 
 const SIM_CPU_BOOST = { rookie: -14, pro: -5, allstar: 0, legend: 4 };
@@ -344,6 +469,7 @@ function installPauseTuningReset(tune) {
 export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
   const spectator = !!opts.spectator;
   let hype = null;
+  let dailyHud = null;
   let camera = null;
   let touchUI = null;
   const handle = startMatchLoop(
@@ -357,6 +483,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
       spectator,
       onFrame: (engine, events, input, dt) => {
         hype?.onFrame(engine, events);
+        dailyHud?.onFrame(engine, events);
         camera?.frame(engine, dt);
         touchUI?.frame(engine, dt);
         opts.onFrame?.(engine, events, input, dt);
@@ -367,6 +494,33 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
   // 竖屏镜头推进 + 自动跟随（球与操控角色的加权中点）
   camera = createPortraitCamera(root);
   touchUI = createTouchUI(root);
+
+  // 画面看门狗：部分机型（如小米 WebView）偶发 canvas 停止绘制/上下文失效，
+  // 连续两次检测到全透明画面时弹出可重新进入的提示，避免整屏黑屏。
+  if (!spectator) {
+    let blankCount = 0;
+    let checked = 0;
+    const timer = setInterval(() => {
+      if (!root.isConnected) { clearInterval(timer); return; }
+      checked++;
+      if (checked < 3) return; // 跳过开场
+      const canvas = root.querySelector("canvas");
+      const ctx = canvas && canvas.getContext && canvas.getContext("2d");
+      if (!canvas || !ctx) return;
+      let blank = true;
+      try {
+        const w = canvas.width, h = canvas.height;
+        const pts = [[0.5, 0.5], [0.2, 0.3], [0.8, 0.7], [0.5, 0.85]];
+        blank = pts.every(([px, py]) => ctx.getImageData((w * px) | 0, (h * py) | 0, 1, 1).data[3] === 0);
+      } catch { blank = false; }
+      blankCount = blank ? blankCount + 1 : 0;
+      if (blankCount >= 2) {
+        clearInterval(timer);
+        root.__stopBg?.();
+        window.__pjFatal?.("canvas", "比赛画面停止渲染");
+      }
+    }, 5000);
+  }
 
   // 暂停菜单：新增「重新开始」（同一对阵重开一局，不计负）
   if (!spectator) {
@@ -385,6 +539,8 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     }
   }
 
+  if (cfg.daily) root.querySelector(".game")?.classList.add("daily");
+  if (cfg.daily && !spectator) dailyHud = createDailyScoreHud(root, cfg.dailyMod?.id);
   if (!spectator && cfg.specialFx !== false) hype = createMatchHype(root);
 
   if (spectator) {
@@ -410,7 +566,8 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     onFinal(done, cfg, false, true);
   });
   root.querySelector(".game")?.appendChild(btn);
-  if (spectator || cfg.daily) btn.hidden = true;
+  // 四天王只允许手打，不提供一键模拟
+  if (spectator || cfg.daily || cfg.mode === "elite") btn.hidden = true;
 
   // 横竖屏切换：方向锁优先，失败落 CSS 旋转兜底
   const rotBtn = document.createElement("button");
@@ -451,6 +608,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
   return {
     stop() {
       hype?.destroy();
+      dailyHud?.destroy();
       handle.stop();
       btn.remove();
       rotBtn.remove();

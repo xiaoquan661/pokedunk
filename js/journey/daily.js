@@ -5,26 +5,28 @@
  *   - 对手战力跟随玩家队伍战力（+2，夹在 45~97），无限次尝试、只记当日最高分
  *   - 结算分 = 我方得分 + 扣篮×3 + 三分×2 + 抢断×2 + 盖帽×2 + 胜利 10；模拟 ×0.8
  *   - 每日首胜 +100 币；3 个当日任务（完成场次/首胜/单场扣篮）另领币
- *   - 分数奖励：80 分 +80 币 / 110 分 +150 币 / 140 分随机传说（每周限 1 只）
+ *   - 分数奖励：60 分 +80 币 / 90 分随机稀有（每周限 1 只）/ 120 分随机传说（每周限 1 只）
  *   - 不推进赛季、不计生涯战绩、不给 XP/签约，避免与训练师之旅互相刷取
  * 状态：save.daily（按 date 懒重置，history 保留最近 7 天）
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=87";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=163";
-import { teamPower, STAT_KEYS } from "../systems/build.js?v=67";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=75";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=60";
+} from "../../engine/readable/play-core.js?v=549";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=549";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=549";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=549";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=549";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=549";
 
 const FIRST_WIN_COINS = 100;
 const DAILY_LEGEND_DUPE_COINS = 200;
+const DAILY_RARE_DUPE_COINS = 200;
 
 /** 每日挑战分数奖励：达到即自动发放，0 点随每日状态重置 */
 export const DAILY_SCORE_MILESTONES = [
-  { id: "s80", score: 80, coin: 80 },
-  { id: "s110", score: 110, coin: 150 },
-  { id: "s140", score: 140, legend: true },
+  { id: "s60", score: 60, coin: 80 },
+  { id: "s90", score: 90, mon: true },
+  { id: "s120", score: 120, legend: true },
 ];
 
 /** 每日 modifier 轮换表（buff 同时作用于双方） */
@@ -107,11 +109,12 @@ export function dailyScoreRows(save) {
   const d = ensureDaily(save);
   const week = weekKey();
   const legendLocked = save.dailyLegend?.week === week;
+  const rareLocked = save.dailyRare?.week === week;
   return DAILY_SCORE_MILESTONES.map((m) => ({
     ...m,
     reached: (d.best || 0) >= m.score,
     claimed: !!d.scoreClaims?.[m.id],
-    weeklyLocked: !!m.legend && legendLocked,
+    weeklyLocked: (!!m.legend && legendLocked) || (!!m.mon && rareLocked),
   }));
 }
 
@@ -202,6 +205,7 @@ export function dailyPreview(save) {
     plays: d.plays || 0,
     wins: d.wins || 0,
     firstWin: !!d.firstWin,
+    scoreRule: scoreWeights(mod.id),
   };
 }
 
@@ -229,6 +233,7 @@ export function buildDailyMatch(save) {
     seed,
     stamina: true,
     daily: true,
+    dailyMod: { id: mod.id, name: mod.name, desc: mod.desc },
     gym: { name: "每日挑战", abbr: "DLY", color: "#7a5cf0", color2: "#2a1b52", gym: "daily", badge: "daily", types: [mod.type] },
   };
 }
@@ -240,21 +245,45 @@ export async function simulateDailyMatch(save) {
   return { engine, cfg };
 }
 
-/** 挑战分：得分 + 风格分（扣篮/三分/抢断/盖帽）+ 胜利分
+/** 挑战分：实际得分 + 当日规则风格分 + 胜利分
  *  技术统计取自 engine.players（模拟局不生成 engine.box）。 */
-export function challengeScore(engine, won) {
-  let pts = 0, tpm = 0, stl = 0, blk = 0, dnk = 0;
-  for (const p of Object.values(engine?.players || {})) {
-    if (p.team !== 0) continue;
-    const s = p.stats || {};
-    pts += s.pts || 0; tpm += s.tpm || 0; stl += s.stl || 0; blk += s.blk || 0; dnk += s.dnk || 0;
-  }
-  if (!pts) pts = engine?.score?.[0] || 0;
-  const style = dnk * 3 + tpm * 2 + stl * 2 + blk * 2 + (won ? 10 : 0);
-  return { total: pts + style, pts, tpm, stl, blk, dnk, winBonus: won ? 10 : 0 };
+export function challengeScore(engine, won, modId) {
+  const d = liveScore(engine, modId || modOfToday().id);
+  const winBonus = won ? (d.weights.win || 10) : 0;
+  return {
+    total: d.total + winBonus,
+    pts: d.pts,
+    tpm: d.tpm,
+    stl: d.stl,
+    blk: d.blk,
+    dnk: d.dnk,
+    reb: d.reb,
+    style: d.style,
+    weights: d.weights,
+    winBonus,
+  };
 }
 
-/** 140 分传说奖励：优先未结缘传说，每周最多 1 只；重复/集齐折算 200 币 */
+/** 90 分稀有奖励：优先未结缘稀有，每周最多 1 只；重复/集齐/满员折算 200 币 */
+function grantDailyRare(save) {
+  const week = weekKey();
+  if (save.dailyRare?.week === week) {
+    return { ok: false, reason: "weekly", coin: DAILY_RARE_DUPE_COINS };
+  }
+  const pool = POKEMON_LIST.filter(
+    (p) => !LEGENDARY_DEX.has(p.dex) && rarityOf(p.dex) === "稀有" && !hasDex(save, p.dex)
+  );
+  if (!pool.length) {
+    return { ok: false, reason: "owned", coin: DAILY_RARE_DUPE_COINS };
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const r = addMon(save, pick.dex, { from: "daily" });
+  if (!r.ok) return { ok: false, reason: "error", coin: DAILY_RARE_DUPE_COINS };
+  save.dailyRare = { week, dex: pick.dex, at: Date.now() };
+  return { ok: true, dex: pick.dex, name: dexName(pick.dex) || pick.name, placed: r.movedTo, first: r.isNewDex };
+}
+
+/** 120 分传说奖励：优先未结缘传说，每周最多 1 只；重复/集齐折算 200 币 */
 function grantDailyLegend(save) {
   const week = weekKey();
   if (save.dailyLegend?.week === week) {
@@ -273,7 +302,7 @@ function grantDailyLegend(save) {
 
 /**
  * 每日挑战结算：记录场次/胜场/最高分/最佳扣篮，发首胜币。
- * 新增分数里程碑：80/110 分发币，140 分随机传说（每周限 1 只）。
+ * 分数里程碑：60 分发币，90 分随机稀有 / 120 分随机传说（各每周限 1 只）。
  * 不写 stats.w/l、不推进赛季、不发 XP。
  */
 export function settleDaily(save, engine, quit = false, simulated = false) {
@@ -282,7 +311,7 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
   const myScore = engine.score[0];
   const oppScore = engine.score[1];
   const won = myScore > oppScore;
-  const detail = challengeScore(engine, won);
+  const detail = challengeScore(engine, won, modOfToday().id);
   const score = Math.round(detail.total * (simulated ? 0.8 : 1));
 
   d.plays++;
@@ -304,8 +333,13 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
   for (const m of DAILY_SCORE_MILESTONES) {
     if (score < m.score || claims[m.id]) continue;
     claims[m.id] = true;
-    const item = { id: m.id, score: m.score, coin: m.coin || 0, legend: null };
+    const item = { id: m.id, score: m.score, coin: m.coin || 0, legend: null, mon: null };
     if (m.coin) coins += m.coin;
+    if (m.mon) {
+      const mon = grantDailyRare(save);
+      item.mon = mon;
+      if (!mon.ok) coins += mon.coin || DAILY_RARE_DUPE_COINS;
+    }
     if (m.legend) {
       const legend = grantDailyLegend(save);
       item.legend = legend;

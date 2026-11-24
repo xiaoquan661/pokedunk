@@ -173,7 +173,7 @@
 | 2 | $e/Ua（291 注册表） | `engine/data/pokemon.js`（POKEMON 表 + getPokemon(dex)/buildPlayer(dex,bonus)） | 291 精灵数据+个体构造 | 全系统 |
 | 3 | Ka | `engine/data/type-chart.js`（TYPE_CHART） | 18 系攻防克制 | 比赛引擎 |
 | 4 | Fs | 同上（xpToNext(level)=60+25×(L−1)） | 经验曲线 | 树果/比赛结算 |
-| 5 | mn | `engine/growth.js`（rollGrowth(player)） | 位置权重随机加点（掷 2 点，cap 99） | 升级循环 |
+| 5 | mn | `engine/growth.js`（rollGrowth(player)） | 位置权重随机加点（掷 1 点，cap 99） | 升级循环 |
 | 6 | Lt/Ha | `engine/data/evolutions.js`（EVOLUTIONS） | 120 条进化表+播报 | 升级循环 |
 | 7 | na | `engine/data/pokemon.js`（calcOVR） | OVR 公式（→25~99） | 全系统 |
 | 8 | Vr | `engine/match-result.js`（settleMatch） | 结算（比分/XP/受伤/进化） | 训练师之旅 |

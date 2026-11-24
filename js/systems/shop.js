@@ -1,43 +1,42 @@
 /**
  * shop.js —— 每日商店（S2）· pokedunk-v2 · v13（S13 经济定案）
  * 行为规格移植自旧 pokedunk journey-core/shop（用户定稿设计）：
- *   货架 6 格 = 2 精灵 + 普通蛋 + 高级蛋 + 普通树果 + 高级树果；懒刷新（跨天重摇）；撞车置灰；
+ *   货架 10 格 = 6 精灵 + 普通蛋 + 高级蛋 + 普通树果 + 高级树果；懒刷新（跨天重摇）；撞车置灰；
  *   蛋购买时定 dex（防改时间刷稀有）；树果库存制入背包。
- * S13 数值：精灵按种族 OVR 分档 80/120/180/240/320；普通蛋 70；高级蛋 220/3h/必稀有；
+ * S15：精灵 4→6 格，普通蛋 3 个/天、高级蛋 2 个/天；S14 数值：精灵按种族 OVR 分档 80/120/180/240/320；普通蛋 50/20min；高级蛋 160/2h/必稀有；
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=75";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=67";
+import { addMon, hasDex } from "../storage.js?v=549";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=549";
 
-const MIN30 = 30 * 60 * 1000;
-const HOUR3 = 3 * 60 * 60 * 1000;
+const MIN20 = 20 * 60 * 1000;
+const HOUR2 = 2 * 60 * 60 * 1000;
 
-/** 蛋档位：传说独立判定；高级蛋必出稀有 */
+/** 蛋档位：传说独立判定；高级蛋必出稀有。S14：孵化时间与价格下调 */
 export const EGG_TIERS = {
-  normal: { id: "normal", name: "普通蛋", price: 70, hatchMs: MIN30, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
-  premium: { id: "premium", name: "高级蛋", price: 220, hatchMs: HOUR3, legendOdds: 3, odds: { 普通: 0, 稀有: 100 } },
+  normal: { id: "normal", name: "普通蛋", price: 50, hatchMs: MIN20, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
+  premium: { id: "premium", name: "高级蛋", price: 160, hatchMs: HOUR2, legendOdds: 6, odds: { 普通: 0, 稀有: 100 } },
 };
-export const PRICES = { mon: 80, monMax: 320, egg: 70, premiumEgg: 220, berry: 30, berryPremium: 90 };
-export const HATCH_MS = MIN30;
+export const PRICES = { mon: 80, monMax: 320, egg: 50, premiumEgg: 160, berry: 12, berryPremium: 60 };
+export const HATCH_MS = MIN20;
 export const EGG_SLOTS = 1;
 export const DUPE_REFUND = 35;
 export const DUPE_REFUND_PREMIUM = 110;
 export const DUPE_REFUND_LEGEND = 200;
-export const BERRY_XP = { normal: 50, premium: 300 };
-/** 每日限购：蛋按档位、树果按档位；跨天重置，广告刷新不重置 */
+export const BERRY_XP = { normal: 50, premium: 800 };
+/** 每日限购：蛋按档位；普通树果不限购，高级树果每日 3 个 */
 export const SHOP_LIMITS = {
-  egg_normal: 1,
-  egg_premium: 1,
-  berry_normal: 3,
-  berry_premium: 2,
+  egg_normal: 3,
+  egg_premium: 2,
+  berry_premium: 3,
 };
-const emptyBought = () => ({ egg_normal: 0, egg_premium: 0, berry_normal: 0, berry_premium: 0 });
-/** 高级蛋 / 高级树果：不看币，用激励视频领取 */
-const isPremiumAd = (it) => (it.t === "egg" || it.t === "berry") && it.tier === "premium";
+const emptyBought = () => ({ egg_normal: 0, egg_premium: 0, berry_premium: 0 });
+/** 高级蛋：不看币，用激励视频领取；高级树果金币购买，每日限购 */
+const isPremiumAd = (it) => it.t === "egg" && it.tier === "premium";
 const limitKeyOf = (it) => {
   if (it.t === "egg") return it.tier === "premium" ? "egg_premium" : "egg_normal";
-  if (it.t === "berry") return it.tier === "premium" ? "berry_premium" : "berry_normal";
+  if (it.t === "berry" && it.tier === "premium") return "berry_premium";
   return null;
 };
 
@@ -103,15 +102,17 @@ function weightedPick(list, used) {
 }
 
 const RARE_SLOT_CHANCE = 0.55;
-/** 货架精灵：2 格；优先未拥有；第 1 格普通档，第 2 格 55% 稀有 */
+const SHOP_MON_SLOTS = 6;
+/** 货架精灵：6 格；只出未拥有；每天至少 1 只稀有（新手期除外） */
 function pickShopMons(save) {
   const all = (window.__PJ_DEX_ROWS || []).filter((r) => !LEGENDARY_DEX.has(r[0]));
-  const unowned = all.filter((r) => !save.dex || !save.dex[r[0]]);
-  let pool = unowned.length ? unowned : all;
-  // 新手之路：货架只出低价精灵，保证 300 开局币能买齐 2 只
-  if (save.newbie && !save.newbie.done) {
+  let pool = all.filter((r) => !save.dex || !save.dex[r[0]]);
+  if (!pool.length) return [];
+  const isNewbie = !!(save.newbie && !save.newbie.done);
+  // 新手之路：货架只出低价精灵，保证 300 开局币能买齐
+  if (isNewbie) {
     const cheap = pool.filter((r) => (getPokemon(r[0]).ovr || 0) < 70);
-    if (cheap.length >= 2) pool = cheap;
+    if (cheap.length >= SHOP_MON_SLOTS) pool = cheap;
   }
   const common = pool.filter((r) => rarityOf(r[0]) === "普通");
   const rare = pool.filter((r) => rarityOf(r[0]) !== "普通");
@@ -129,11 +130,28 @@ function pickShopMons(save) {
   // 第 2 格：55% 稀有，否则普通；池子不足时从全量补
   if (rare.length && Math.random() < RARE_SLOT_CHANCE) take(rare);
   else take(common);
-  while (picks.length < 2 && take(all)) {}
-  return picks.slice(0, 2);
+  // 第 3 格：普通档为主，补足每日可购数量
+  if (!take(common)) take(rare);
+  // 第 4 格：仅 20% 稀有，其余普通，控制强势精灵投放
+  if (rare.length && Math.random() < 0.2) take(rare);
+  else take(common);
+  // 第 5、6 格：以普通档为主（15% 稀有），把日常可购数量提到 6
+  for (let i = 0; i < 2; i++) {
+    if (rare.length && Math.random() < 0.15) take(rare);
+    else if (!take(common)) take(rare);
+  }
+  while (picks.length < SHOP_MON_SLOTS && take(pool)) {}
+  // 每日稀有保底：非新手期货架至少 1 只稀有（OVR≥70）
+  if (!isNewbie && picks.length && !picks.some((r) => rarityOf(r[0]) !== "普通")) {
+    const pickedDex = new Set(picks.map((r) => r[0]));
+    const rareLeft = rare.filter((r) => !pickedDex.has(r[0]));
+    const rr = weightedPick(rareLeft, new Set());
+    if (rr) picks[picks.length - 1] = rr;
+  }
+  return picks.slice(0, SHOP_MON_SLOTS);
 }
 
-/** 重摇当日货架（2 精灵 + 普通蛋 + 高级蛋 + 树果） */
+/** 重摇当日货架（6 精灵 + 普通蛋 + 高级蛋 + 树果） */
 function rollShop(save) {
   const items = [];
   for (const r of pickShopMons(save)) {
@@ -146,7 +164,7 @@ function rollShop(save) {
   const day = todayStr();
   const sameDay = save.shop?.date === day;
   const bought = sameDay ? { ...emptyBought(), ...(save.shop.bought || {}) } : emptyBought();
-  save.shop = { date: day, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, freeDay: save.shop?.freeDay || null, bought };
+  save.shop = { date: day, genV: 5, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, freeDay: save.shop?.freeDay || null, bought };
 }
 
 /** 懒刷新：跨天重摇货架（写回 save.shop） */
@@ -154,7 +172,7 @@ function shopEnsure(save) {
   const slots = Array.isArray(save.shop?.slots) ? save.shop.slots : [];
   const hasPremium = slots.some((it) => it.t === "egg" && it.tier === "premium");
   const hasLegendMon = slots.some((it) => it.t === "mon" && LEGENDARY_DEX.has(it.dex));
-  if (save.shop && save.shop.date === todayStr() && slots.length === 6 && hasPremium && !hasLegendMon) {
+  if (save.shop && save.shop.date === todayStr() && save.shop.genV === 5 && hasPremium && !hasLegendMon) {
     save.shop.bought = { ...emptyBought(), ...(save.shop.bought || {}) };
     return;
   }
@@ -198,14 +216,15 @@ export function shopFreeRefreshLeft(save) {
   return save.shop.freeDay && save.shop.freeDay.date === day ? Math.max(0, 1 - (save.shop.freeDay.count || 0)) : 1;
 }
 
-/** 货架视图：[{slot, type, dex, price, owned}] */
+/** 货架视图：[{slot, type, dex, price, owned}]；已拥有的精灵不再展示 */
 export function shopList(save) {
   shopEnsure(save);
-  return save.shop.slots.map((it, i) => {
+  return save.shop.slots.flatMap((it, i) => {
+    if (it.t === "mon" && hasDex(save, it.dex)) return [];
     const key = limitKeyOf(it);
     const limit = key ? SHOP_LIMITS[key] : 0;
     const bought = key ? (save.shop.bought?.[key] || 0) : 0;
-    return {
+    return [{
       slot: i,
       type: it.t,
       tier: it.tier || null,
@@ -219,7 +238,7 @@ export function shopList(save) {
       left: key ? Math.max(0, limit - bought) : null,
       soldOut: key ? bought >= limit : false,
       ad: isPremiumAd(it),
-    };
+    }];
   });
 }
 
@@ -259,22 +278,22 @@ export function shopBuy(save, slot) {
 
   if (it.t === "berry") {
     const key = limitKeyOf(it);
-    const bought = save.shop.bought?.[key] || 0;
-    if (bought >= SHOP_LIMITS[key]) return { ok: false, error: `今日限购 ${SHOP_LIMITS[key]} 个，明天再来` };
+    const bought = key ? (save.shop.bought?.[key] || 0) : 0;
+    if (key && bought >= SHOP_LIMITS[key]) return { ok: false, error: `今日限购 ${SHOP_LIMITS[key]} 个，明天再来` };
     if (save.coins < it.price) return { ok: false, error: "篮球币不足" };
     save.coins -= it.price;
-    save.shop.bought[key] = bought + 1;
+    if (key) save.shop.bought[key] = bought + 1;
     const premium = it.tier === "premium";
     const bagKey = premium ? "berryPremium" : "berryNormal";
     save.bag[bagKey] = (save.bag[bagKey] || 0) + 1;
-    return { ok: true, kind: "berry", tier: premium ? "premium" : "normal", count: save.bag[bagKey], left: SHOP_LIMITS[key] - bought - 1 };
+    return { ok: true, kind: "berry", tier: premium ? "premium" : "normal", count: save.bag[bagKey], left: key ? SHOP_LIMITS[key] - bought - 1 : null };
   }
   return { ok: false, error: "bad-item" };
 }
 
 /**
- * 看广告领取高级商品（高级蛋 / 高级树果）：不扣币，按每日限领计数。
- * 返回 { ok, kind, tier, stock/count, left } 或 { ok:false, error }
+ * 看广告领取高级蛋：不扣币，按每日限领计数。
+ * 返回 { ok, kind, tier, stock, left } 或 { ok:false, error }
  */
 export function shopAdClaim(save, slot) {
   shopEnsure(save);
@@ -285,16 +304,10 @@ export function shopAdClaim(save, slot) {
   const bought = save.shop.bought?.[key] || 0;
   if (bought >= limit) return { ok: false, error: `今日限领 ${limit} 个，明天再来` };
   save.shop.bought[key] = bought + 1;
-  if (it.t === "egg") {
-    const tier = "premium";
-    save.eggs.stock ||= [];
-    save.eggs.stock.push({ eggTier: tier, dex: it.dex ?? rollEggDex(save, tier) });
-    return { ok: true, kind: "egg", tier, stock: save.eggs.stock.length, left: limit - bought - 1 };
-  }
-  const premium = true;
-  const bagKey = premium ? "berryPremium" : "berryNormal";
-  save.bag[bagKey] = (save.bag[bagKey] || 0) + 1;
-  return { ok: true, kind: "berry", tier: "premium", count: save.bag[bagKey], left: limit - bought - 1 };
+  const tier = "premium";
+  save.eggs.stock ||= [];
+  save.eggs.stock.push({ eggTier: tier, dex: it.dex ?? rollEggDex(save, tier) });
+  return { ok: true, kind: "egg", tier, stock: save.eggs.stock.length, left: limit - bought - 1 };
 }
 
 
