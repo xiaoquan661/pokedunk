@@ -13,7 +13,7 @@ import { openDetail } from "./detail.js?v=549";
 import {
   milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
   typeRewardRows, claimTypeReward,
-} from "../systems/milestones.js?v=549";
+} from "../systems/milestones.js?v=550";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...

@@ -72,6 +72,13 @@ function yesterdayStr() {
   const d = new Date(Date.now() - 86400000);
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
+/** 每日任务页是否有可领取：今日未签到，或有已完成未领的任务 */
+export function dailyClaimable(save) {
+  if (!signInfo(save).signedToday) return true;
+  const d = daily();
+  return TASKS.some((t) => !d.claimed[t.id] && t.check(save));
+}
+
 /** 签到状态：只读，不写存档 */
 export function signInfo(save) {
   save.signin ||= { streak: 0, lastDate: "" };

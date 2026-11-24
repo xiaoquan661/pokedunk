@@ -120,7 +120,6 @@
 .screen-menu .coin-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;background:rgba(0,0,0,.55);border:2px solid #f5c542;border-radius:999px;color:#f5c542;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .screen-menu .badge-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:rgba(0,0,0,.55);border:2px solid #2f5599;border-radius:999px;color:#fff;font-size:14px}
 .screen-menu .top-row{position:relative;z-index:3;display:flex;align-items:center;gap:8px;padding:calc(var(--safe-t, 0px) + 8px) 12px 0}
-.screen-menu .title{margin-top:24px}
 .screen-menu .top-row .spacer{flex:1;min-width:0}
 .screen-menu .guide-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.35);color:var(--text);font:700 10.5px var(--sport);letter-spacing:.06em;text-shadow:none;flex-shrink:0}
 
@@ -128,7 +127,8 @@
 /* 画布铺满修复 */
 .screen-menu .menu{height:100%}
 .screen-menu .attract-canvas{height:100%;width:100%}
-.screen-menu .menu-in > .title{margin-top:4px}
+/* 报头白线下移：居中布局下 16px 视觉位移需上边距 +32px（原 4px → 36px） */
+.screen-menu .menu-in > .title{margin-top:36px}
 .screen-menu .menu-in > .menu-fold{margin-bottom:0}
 
 
@@ -1065,6 +1065,9 @@ body:has(.detail-wrap) .menu,body:has(.pj-scrim) .menu,body:has(.hatch-ov) .menu
   border-radius:0;background:none;color:#fff;cursor:pointer;font-family:inherit;
 }
 .screen-menu .home-menu .hm-item:nth-last-child(-n+2){border-bottom:0}
+/* 九宫格红点：对应页面有可领取内容 */
+.screen-menu .home-menu .hm-item{position:relative}
+.screen-menu .home-menu .hm-item .dot{position:absolute;top:7px;right:6px;width:7px;height:7px;border-radius:50%;background:#ff5a5a;border:1px solid #0a0a0a;pointer-events:none}
 .screen-menu .home-menu .hm-item:active{background:rgba(255,255,255,.05)}
 .screen-menu .home-menu .hm-item .hm-txt b{font:700 14px var(--sport);color:#fff;white-space:nowrap}
 .screen-menu .home-menu .hm-item .hm-txt small{font-size:9.5px;color:rgba(173,190,226,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

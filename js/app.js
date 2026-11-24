@@ -26,8 +26,10 @@ import { openAchievements } from "./ui/achv-ui.js?v=549";
 import { startTutorial } from "./ui/tutorial.js?v=549";
 import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=549";
 import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=549";
-import { openEarn, openDailyTasks, bumpDaily, signInfo } from "./ui/earn.js?v=549";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=550";
 import { ACHV } from "./systems/achv.js?v=549";
+import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=550";
+import { eggList } from "./systems/egg.js?v=550";
 import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=549";
 import { playEvolve, playAcquire } from "./ui/anim.js?v=549";
 import { ICON } from "./ui/icons.js?v=549";
@@ -35,7 +37,7 @@ import { LINE_ICON } from "./ui/menu-line-icons.js?v=549";
 import { pendingLegend } from "./journey/legend.js?v=549";
 import { syncAcquireLevel } from "./systems/acquire.js?v=549";
 import { openLegendPicker } from "./ui/legend.js?v=549";
-import { openWild } from "./ui/wild.js?v=549";
+import { openWild } from "./ui/wild.js?v=550";
 import { wildLeft, wildMax } from "./journey/wild.js?v=549";
 import {
   getPokemon,
@@ -604,6 +606,18 @@ function showHome(save, justStarted = false) {
   const grassBusy = gslots.some((g) => !g.empty);
   const grassXp = gslots.reduce((s, g) => s + (g.empty ? 0 : g.xp), 0);
   const trainHint = grassBusy ? (grassXp > 0 ? `挂机中 · +${grassXp} XP` : "草地挂机中") : "今日未安排";
+  // 九宫格红点：对应页面是否有可领取内容
+  const safeDot = (fn) => { try { return !!fn(); } catch { return false; } };
+  const dot = {
+    achv: safeDot(() => ACHV.list(save).some((x) => x.unlocked && !x.claimed && x.reward)),
+    tasks: safeDot(() => dailyClaimable(save)),
+    dex: safeDot(() => milestoneRows(save).some((r) => r.canClaim)
+      || monRewardInfo(save).claimable > 0
+      || typeRewardRows(save).some((r) => r.canClaim)),
+    train: safeDot(() => gslots.some((g) => !g.empty && g.xp > 0)),
+    egg: safeDot(() => eggList(save).slots.some((e) => e && e.ready)),
+  };
+  const dotHtml = (on) => on ? '<i class="dot"></i>' : "";
   const noticeUnread = (() => {
     try { return localStorage.getItem(NOTICE_KEY) !== NOTICE_VERSION; } catch { return false; }
   })();
@@ -691,19 +705,19 @@ function showHome(save, justStarted = false) {
           <div class="hm-grid">
             <button class="hm-item" data-go="achv">
               <span class="hm-ico">${LINE_ICON.trophy}</span>
-              <span class="hm-txt"><b>成就</b></span>
+              <span class="hm-txt"><b>成就</b></span>${dotHtml(dot.achv)}
             </button>
             <button class="hm-item" data-go="tasks">
               <span class="hm-ico">${LINE_ICON.daily}</span>
-              <span class="hm-txt"><b>每日任务</b><small style="color:var(--gold)">${sign.signedToday ? "今日已签到" : "签到待领 · 稀有"}</small></span>
+              <span class="hm-txt"><b>每日任务</b><small style="color:var(--gold)">${sign.signedToday ? "今日已签到" : "签到待领 · 稀有"}</small></span>${dotHtml(dot.tasks)}
             </button>
             <button class="hm-item" data-go="dex">
               <span class="hm-ico">${LINE_ICON.book}</span>
-              <span class="hm-txt"><b>图鉴</b></span>
+              <span class="hm-txt"><b>图鉴</b></span>${dotHtml(dot.dex)}
             </button>
             <button class="hm-item" data-go="train">
               <span class="hm-ico">${LINE_ICON.pokeball}</span>
-              <span class="hm-txt"><b>培养</b><small>${trainHint}</small></span>
+              <span class="hm-txt"><b>培养</b><small>${trainHint}</small></span>${dotHtml(dot.train)}
             </button>
             <button class="hm-item" data-go="team">
               <span class="hm-ico">${LINE_ICON.team}</span>
@@ -715,7 +729,7 @@ function showHome(save, justStarted = false) {
             </button>
             <button class="hm-item" data-go="egg">
               <span class="hm-ico">${LINE_ICON.egg}</span>
-              <span class="hm-txt"><b>孵蛋</b></span>
+              <span class="hm-txt"><b>孵蛋</b></span>${dotHtml(dot.egg)}
             </button>
             <button class="hm-item" data-go="bag">
               <span class="hm-ico">${LINE_ICON.bag}</span>

@@ -148,7 +148,9 @@ function renderRoutes(save, opts = {}) {
     <p class="page-sub">半场 1v1 · 打赢野生精灵就加入</p>
     <div class="wd-sec">选择野球场</div>
     <div class="wd-routes">${WILD_ROUTES.map((r) => routeCard(save, r)).join("")}</div>
-    ${left <= 0 && !w.adUsed ? `<div class="wd-actions"><button type="button" class="wd-btn main" data-ad>看广告 +1 次</button></div>` : ""}
+    <div class="wd-actions">
+      <button type="button" class="wd-btn${w.adUsed ? "" : " main"}" data-ad ${w.adUsed ? "disabled" : ""}>${w.adUsed ? "今日广告次数已用完" : "看广告 +1 次"}</button>
+    </div>
     <p class="wd-note">每次挑战打一场 2 节 × 60 秒的半场 1v1；不推进赛季、不计战绩。参赛精灵获得 XP，赢了野生精灵加入；同种已拥有则折算 100 币 + 普通树果。</p>
   </div>`);
   mountModal(page);
@@ -279,6 +281,7 @@ function renderResult(save, route, opp, monId, result, engine, opts = {}) {
   ensureCss();
   const score = engine?.score || [0, 0];
   const left = wildLeft(save);
+  const w = wildEnsure(save);
   const lv = result.after > result.before ? `Lv.${result.before} → Lv.${result.after}` : `Lv.${result.before || save.mons[monId]?.level || 1}`;
   const page = el(`<div class="sub-page wd-page">
     <div class="page-head">
@@ -299,14 +302,27 @@ function renderResult(save, route, opp, monId, result, engine, opts = {}) {
       <button type="button" class="wd-btn" data-routes>返回野球场</button>
       <button type="button" class="wd-btn main" data-again ${left <= 0 ? "disabled" : ""}>再来一次</button>
     </div>
+    ${left <= 0 && !w.adUsed ? `<div class="wd-actions"><button type="button" class="wd-btn main" data-ad-result>看广告 +1 次</button></div>` : ""}
     <div class="wd-actions">
       <button type="button" class="wd-btn" data-home>回主页</button>
     </div>
   </div>`);
   mountModal(page);
-  page.addEventListener("click", (e) => {
+  page.addEventListener("click", async (e) => {
     if (e.target.closest("[data-routes]")) { closeModal(page); return renderRoutes(loadSave() || save, opts); }
     if (e.target.closest("[data-home]")) { closeModal(page); return opts.onBack?.(); }
+    const adBtn = e.target.closest("[data-ad-result]");
+    if (adBtn) {
+      adBtn.disabled = true;
+      adBtn.textContent = "广告中…";
+      const ad = await watchRewardedAd("wild_attempt");
+      if (!ad.ok) { adBtn.disabled = false; adBtn.textContent = "广告暂不可用"; return; }
+      const fresh = loadSave() || save;
+      if (!wildGrantAdAttempt(fresh)) { toast("今日广告次数已用完"); closeModal(page); return renderRoutes(fresh, opts); }
+      writeSave(fresh);
+      closeModal(page);
+      return renderPreMatch(fresh, route, opts);
+    }
     if (e.target.closest("[data-again]")) {
       const fresh = loadSave() || save;
       if (wildLeft(fresh) <= 0) return toast("今日次数已用完");
