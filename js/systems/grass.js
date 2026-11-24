@@ -6,9 +6,9 @@
  *   - 上线时自动结算离线收益并弹窗汇报；页面上可随时手动领取
  * 存档：save.grass = { slots: [null | { monId, dex, lastTs, bankXp }], seenAt }
  */
-import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=549";
-import { grantXp } from "./xp.js?v=549";
-import { starterIds, ensureLineupSlots } from "./build.js?v=549";
+import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=557";
+import { grantXp } from "./xp.js?v=557";
+import { starterIds, ensureLineupSlots } from "./build.js?v=557";
 
 export { GRASS_SLOTS };
 

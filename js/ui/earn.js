@@ -6,13 +6,14 @@
  *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
  */
-import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=549";
+import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=557";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { LEGENDARY_DEX } from "../systems/build.js?v=549";
-import { watchRewardedAd } from "../platform/ads.js?v=549";
-import { gameAudio } from "../platform/audio.js?v=549";
-import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=549";
-import { ICON } from "./icons.js?v=549";
+import { LEGENDARY_DEX } from "../systems/build.js?v=557";
+import { watchRewardedAd } from "../platform/ads.js?v=557";
+import { gameAudio } from "../platform/audio.js?v=557";
+import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=557";
+import { ICON } from "./icons.js?v=557";
+import { playAcquire } from "./anim.js?v=557";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 100;     // 每次看广告奖励（S18：不限次数）
@@ -300,7 +301,16 @@ export function openDailyTasks(save, onCoins) {
       writeSave(save);
       gameAudio.play(r.dex ? "special" : "coin");
       earnToast(r.text);
-      render();
+      if (r.dex) {
+        playAcquire({
+          dex: r.dex,
+          kicker: "七日签到",
+          title: `获得 ${r.name || ""}`,
+          sub: r.text,
+        }, () => render());
+      } else {
+        render();
+      }
       return;
     }
     const rf = e.target.closest("[data-task-refresh]");

@@ -3,12 +3,12 @@
  * 行为规格移植自旧 pokedunk journey-core/shop（用户定稿设计）：
  *   货架 10 格 = 6 精灵 + 普通蛋 + 高级蛋 + 普通树果 + 高级树果；懒刷新（跨天重摇）；撞车置灰；
  *   蛋购买时定 dex（防改时间刷稀有）；树果库存制入背包。
- * S15：精灵 4→6 格，普通蛋 3 个/天、高级蛋 2 个/天；S14 数值：精灵按种族 OVR 分档 80/120/180/240/320；普通蛋 50/20min；高级蛋 160/2h/必稀有；
+ * S15：精灵 4→6 格，普通蛋 3 个/天、高级蛋 2 个/天；精灵按种族 OVR 分档 100/150/220/300/400；普通蛋 50/20min；高级蛋 160/2h/必稀有；
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=549";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=549";
+import { addMon, hasDex } from "../storage.js?v=557";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=557";
 
 const MIN20 = 20 * 60 * 1000;
 const HOUR2 = 2 * 60 * 60 * 1000;
@@ -18,7 +18,7 @@ export const EGG_TIERS = {
   normal: { id: "normal", name: "普通蛋", price: 50, hatchMs: MIN20, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
   premium: { id: "premium", name: "高级蛋", price: 160, hatchMs: HOUR2, legendOdds: 6, odds: { 普通: 0, 稀有: 100 } },
 };
-export const PRICES = { mon: 80, monMax: 320, egg: 50, premiumEgg: 160, berry: 12, berryPremium: 60 };
+export const PRICES = { mon: 100, monMax: 400, egg: 50, premiumEgg: 160, berry: 12, berryPremium: 60 };
 export const HATCH_MS = MIN20;
 export const EGG_SLOTS = 1;
 export const DUPE_REFUND = 35;
@@ -43,11 +43,11 @@ const limitKeyOf = (it) => {
 /** 精灵售价：按种族 OVR 分档，购买时用未养成个体 */
 export function monPrice(dex) {
   const ovr = getPokemon(dex).ovr || 0;
-  if (ovr < 60) return 80;
-  if (ovr < 70) return 120;
-  if (ovr < 80) return 180;
-  if (ovr < 90) return 240;
-  return 320;
+  if (ovr < 60) return 100;
+  if (ovr < 70) return 150;
+  if (ovr < 80) return 220;
+  if (ovr < 90) return 300;
+  return 400;
 }
 
 const todayStr = () => {
@@ -229,7 +229,8 @@ export function shopList(save) {
       type: it.t,
       tier: it.tier || null,
       dex: it.dex ?? null,
-      price: it.price,
+      // 精灵价实时按 OVR 档位计算，避免旧货架沿用历史价格
+      price: it.t === "mon" ? monPrice(it.dex) : it.price,
       ovr: it.t === "mon" ? getPokemon(it.dex).ovr : null,
       rarity: it.t === "mon" ? rarityOf(it.dex) : null,
       owned: it.t === "mon" ? hasDex(save, it.dex) : false,
@@ -253,10 +254,11 @@ export function shopBuy(save, slot) {
 
   if (it.t === "mon") {
     if (hasDex(save, it.dex)) return { ok: false, error: "已拥有同种精灵" };
-    if (save.coins < it.price) return { ok: false, error: "篮球币不足" };
-    save.coins -= it.price;
+    const price = monPrice(it.dex);
+    if (save.coins < price) return { ok: false, error: "篮球币不足" };
+    save.coins -= price;
     const r = addMon(save, it.dex, { from: "shop" });
-    if (!r.ok) { save.coins += it.price; return { ok: false, error: r.error }; }
+    if (!r.ok) { save.coins += price; return { ok: false, error: r.error }; }
     return { ok: true, kind: "mon", dex: it.dex, placed: r.movedTo, first: r.isNewDex, mon: getPokemon(it.dex) };
   }
 

@@ -33,10 +33,10 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { rollGrowth } from "../engine/growth.js?v=549";
-import { ensureSeason } from "./journey/season.js?v=549";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=549";
-import { minAcquireLevel } from "./systems/acquire.js?v=549";
+import { rollGrowth } from "../engine/growth.js?v=557";
+import { ensureSeason } from "./journey/season.js?v=557";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=557";
+import { minAcquireLevel } from "./systems/acquire.js?v=557";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";

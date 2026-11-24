@@ -7,17 +7,17 @@
  *   - 1v1 篮球（2 节 × 60 秒，无换人）
  *   - 赢了野生精灵加入；输了只给 XP
  */
-import { loadSave, writeSave } from "../storage.js?v=549";
-import { getPokemon } from "../../engine/readable/play-core.js?v=549";
-import { mainOVR } from "../systems/build.js?v=549";
+import { loadSave, writeSave } from "../storage.js?v=557";
+import { getPokemon } from "../../engine/readable/play-core.js?v=557";
+import { mainOVR } from "../systems/build.js?v=557";
 import {
   WILD_ROUTES, wildEnsure, wildLeft, wildMax, wildUseAttempt, wildGrantAdAttempt,
   wildRouteUnlocked, wildEligibleMons, pickWildOpponent, recordWildResult, badgeCount,
-} from "../journey/wild.js?v=549";
-import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=549";
-import { gameAudio } from "../platform/audio.js?v=549";
-import { watchRewardedAd } from "../platform/ads.js?v=549";
-import { playAcquire } from "./anim.js?v=549";
+} from "../journey/wild.js?v=557";
+import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=557";
+import { gameAudio } from "../platform/audio.js?v=557";
+import { watchRewardedAd } from "../platform/ads.js?v=557";
+import { playAcquire } from "./anim.js?v=557";
 
 const el = (html) => {
   const t = document.createElement("template");

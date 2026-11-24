@@ -3,11 +3,12 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=549";
-import { gameAudio } from "../platform/audio.js?v=549";
+import { loadSave, writeSave } from "../storage.js?v=557";
+import { gameAudio } from "../platform/audio.js?v=557";
 import {
   dailyPreview, dailyMissionRows, dailyScoreRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=549";
+} from "../journey/daily.js?v=557";
+import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=557";
 
 const DAILY_CSS = `
 .daily-score{display:flex;flex-direction:column;gap:6px}
@@ -43,6 +44,23 @@ const DAILY_CSS = `
 .daily-score-help > b{display:block;margin-bottom:4px;font-size:12px;color:var(--gold)}
 .daily-score-help p{margin:0 0 4px;font-size:12px;line-height:1.55;color:var(--text)}
 .daily-score-help small{display:block;font-size:10.5px;line-height:1.5;color:var(--text-dim)}
+.daily-rank{display:flex;flex-direction:column;margin:0 0 4px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:8px;background:rgba(0,0,0,.18);overflow:hidden}
+.dr-row{display:grid;grid-template-columns:34px minmax(0,1fr) 58px;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.dr-row:last-child{border-bottom:none}
+.dr-row.me{background:rgba(245,197,66,.1)}
+.dr-rank{text-align:center;font:700 12px var(--sport);color:var(--text-dim);font-variant-numeric:tabular-nums}
+.dr-row.top1 .dr-rank{color:#ffd75e}
+.dr-row.top2 .dr-rank{color:#d8e4f5}
+.dr-row.top3 .dr-rank{color:#e9a06b}
+.dr-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--text)}
+.dr-row.me .dr-name{color:var(--gold);font-weight:700}
+.dr-name em{font-style:normal;margin-left:4px;font:700 9px var(--sport);color:var(--gold)}
+.dr-score{text-align:right;font:700 12px var(--sport);color:var(--gold);font-variant-numeric:tabular-nums}
+.dr-empty,.dr-loading{margin:0;padding:12px 10px;text-align:center;font-size:10.5px;color:var(--text-dim);line-height:1.5}
+.dr-refresh{display:block;margin:0 auto 10px;padding:5px 14px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.18));background:rgba(0,0,0,.24);color:var(--text);font:700 10.5px var(--sport)}
+.dr-mine{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-top:1px solid rgba(245,197,66,.22);background:rgba(245,197,66,.06);font-size:10.5px;color:var(--text-dim)}
+.dr-mine b{color:var(--gold);font:700 12px var(--sport);font-variant-numeric:tabular-nums}
+.dr-total{margin:0;padding:5px 10px 7px;text-align:right;font-size:9.5px;color:var(--text-dim)}
 `;
 function ensureCss() {
   if (document.getElementById("pj-daily-score-style")) return;
@@ -77,6 +95,7 @@ const monName = (dex) => {
   return row ? String(row[1]).replace(/#\d+$/, "") : "#" + dex;
 };
 const typeText = (types) => TYPE_ZH[types?.[0]] || types?.[0] || "";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 /**
  * 打开每日挑战面板。
@@ -94,6 +113,52 @@ export function openDaily(save, actions = {}) {
   const body = wrap.querySelector(".daily-body");
 
   const close = () => wrap.remove();
+
+  let rankSeq = 0;
+  function renderRank(box, r) {
+    if (!r.supported) {
+      box.innerHTML = '<p class="dr-empty">排行榜在 Lamps 平台内开放；当前为本地预览。</p>';
+      return;
+    }
+    if (r.message && !r.list.length) {
+      box.innerHTML = `<p class="dr-empty">${esc(r.message)}</p><button type="button" class="dr-refresh" data-rank-refresh>重试</button>`;
+      return;
+    }
+    const list = (r.list || []).slice(0, 10);
+    const rows = list.map((it) => {
+      const rank = Number(it.rank) || 0;
+      const top = rank >= 1 && rank <= 3 ? ` top${rank}` : "";
+      return `<div class="dr-row${it.isCurrentUser ? " me" : ""}${top}">
+        <span class="dr-rank">${rank || "-"}</span>
+        <span class="dr-name">${esc(it.nickname || "选手")}${it.isCurrentUser ? "<em>我</em>" : ""}</span>
+        <span class="dr-score">${Number(it.score) || 0}</span>
+      </div>`;
+    }).join("");
+    const mine = r.record;
+    const inTop = !!(mine && list.some((x) => x.isCurrentUser));
+    const mineHtml = mine && !inTop
+      ? `<div class="dr-mine"><span>我的排名</span><span>#${mine.rank} · <b>${Number(mine.score) || 0}</b> 分</span></div>`
+      : (!mine ? '<div class="dr-mine"><span>我的排名</span><span>今日尚未上榜</span></div>' : "");
+    box.innerHTML = (rows
+      ? `<div class="dr-list">${rows}</div>`
+      : '<p class="dr-empty">今日还没有人上榜，打完一局抢占第一。</p>')
+      + mineHtml
+      + `<p class="dr-total">今日共 ${Number(r.total) || 0} 人上榜 · 显示前 ${list.length} 名</p>`;
+  }
+
+  async function loadRank(date) {
+    const box = body.querySelector("#daily-rank");
+    if (!box) return;
+    if (!leaderboardSupported()) {
+      renderRank(box, { supported: false });
+      return;
+    }
+    const seq = ++rankSeq;
+    box.innerHTML = '<p class="dr-loading">加载中…</p>';
+    const r = await fetchDailyLeaderboard(date);
+    if (seq !== rankSeq || !box.isConnected) return;
+    renderRank(box, r);
+  }
 
   function render() {
     const p = dailyPreview(save);
@@ -128,6 +193,9 @@ export function openDaily(save, actions = {}) {
         <div><b>${p.plays}</b><small>挑战次数</small></div>
         <div><b>${p.wins}</b><small>今日胜场</small></div>
       </div>
+
+      <div class="dsec daily-sec">今日排行榜 <small>每日挑战分 · 每日 0 点换榜</small></div>
+      <div class="daily-rank" id="daily-rank"><p class="dr-loading">加载中…</p></div>
 
       <div class="daily-note">${p.firstWin ? "今日首胜奖励已领取" : "今日首胜额外 +100 篮球币"} · 3 分钟 × 4 节 · 本模式仅限手动比赛</div>
 
@@ -204,10 +272,12 @@ export function openDaily(save, actions = {}) {
       <div class="daily-actions">
         <button class="pk-btn-gold" id="daily-play">开 球</button>
       </div>`;
+    loadRank(p.date);
   }
 
   body.addEventListener("click", (e) => {
     if (e.target.closest("[data-close]")) { close(); return; }
+    if (e.target.closest("[data-rank-refresh]")) { render(); return; }
     const mb = e.target.closest("[data-mission]");
     if (mb && !mb.disabled) {
       save = loadSave() || save;

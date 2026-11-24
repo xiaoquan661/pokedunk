@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=549";
+} from "./store-bridge.js?v=557";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -1606,9 +1606,9 @@ class MatchEngine {
       (this.clock = e.quarterLen),
       (this.tipWinner = this.rng() < 0.5 ? 0 : 1),
       (this.ball = {
-        x: 47,
+        x: e.halfCourt ? 62 : 47,
         y: 25,
-        z: 4,
+        z: e.halfCourt ? 4.5 : 4,
         vx: 0,
         vy: 0,
         vz: 0,
@@ -1896,7 +1896,8 @@ class MatchEngine {
     const i = this.ball;
     ((i.owner = null),
       (i.mode = "loose"),
-      (i.x = 47),
+      // 半场 1v1 的跳球发生在右半场罚球弧顶，球不能留在全场中圈（x=47）
+      (i.x = this.cfg.halfCourt ? 62 : 47),
       (i.y = 25),
       (i.z = 4.5),
       (i.vx = 0),
@@ -2148,8 +2149,29 @@ class MatchEngine {
       o < s && ((s = o), (t = n));
     }
     t != null || (t = this.teamPlayers(this.offense)[0]);
-    // 24 秒违例后的重发球：接球人站到本方后场发球点，由对方（新进攻方）重新进攻
-    if (this.__serveTeam === this.offense && t) {
+    if (this.cfg.halfCourt) {
+      // 半场 1v1 每次重新开球都回到弧顶：进攻方持球，防守方站在他与篮筐之间。
+      // 否则进球后新进攻方会直接站在篮下发球，形成无限补篮。
+      if (t) {
+        t.x = 62;
+        t.y = COURT_MID_Y;
+        t.vx = 0;
+        t.vy = 0;
+        t.vz = 0;
+        t.z = 0;
+        t.state = "free";
+      }
+      const d = this.teamPlayers(1 - this.offense).find((p) => p.state === "free");
+      if (d) {
+        d.x = 70;
+        d.y = COURT_MID_Y;
+        d.vx = 0;
+        d.vy = 0;
+        d.vz = 0;
+        d.z = 0;
+      }
+    } else if (this.__serveTeam === this.offense && t) {
+      // 24 秒违例后的重发球：接球人站到本方后场发球点，由对方（新进攻方）重新进攻
       const bx = hoopXOf(1 - this.offense);
       t.x = bx + (bx > COURT_MID_X ? -8 : 8);
       t.y = COURT_MID_Y;
