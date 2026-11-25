@@ -3,14 +3,14 @@
  * 存档：pokedunk.achv.v1（{成就id: 解锁时间戳}）。
  * 判定源：v2 生涯存档（stats/journey/mons/dex）+ 启动全量评估；比赛类成就由 settle 结算后调 evaluateMatch。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=589";
-import { writeSave } from "../storage.js?v=589";
-import { rollEggDex } from "./shop.js?v=589";
+import { getPokemon } from "../../engine/readable/play-core.js?v=598";
+import { writeSave } from "../storage.js?v=598";
+import { rollEggDex } from "./shop.js?v=598";
 
 const KEY = "pokedunk.achv.v1";
 const SAVE_KEY = "pokedunk.save.v1";
 /** 只靠历史记录、不随当前存档状态回退的成就 */
-const KEEP_IDS = new Set(["w1", "close5", "blow20", "rich1k", "score100", "score120"]);
+const KEEP_IDS = new Set(["w1", "close5", "blow20", "rich1k", "score100", "score120", "stage1", "badges2", "badges4", "badges8", "champion", "tour1"]);
 
 function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } }
 function persist(a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {} }
@@ -27,6 +27,12 @@ function hasChampion(save) {
     || !!j.season?.champion
     || (j.season?.history || []).some((h) => h.champion)
     || j.stage === "tour";
+}
+/** 每日挑战最高分：包含当天尚未滚入 history 的 best */
+function dailyBest(save) {
+  const cur = Number(save?.daily?.best) || 0;
+  const hist = (save?.daily?.history || []).reduce((m, d) => Math.max(m, Number(d.best) || 0), 0);
+  return Math.max(cur, hist);
 }
 
 /** 成就是否仍与当前存档匹配（防止换档/回档后沿用旧成就） */
@@ -57,8 +63,8 @@ function isStillValid(id, save) {
     case "w50": return (save?.stats?.w || 0) >= 50;
     case "sign1": return !!save?.flags?.sign1;
     case "streak7": return (save?.signin?.streak || 0) >= 7;
-    case "daily90": return (save?.daily?.history || []).some((d) => (d.best || 0) >= 90);
-    case "daily120": return (save?.daily?.history || []).some((d) => (d.best || 0) >= 120);
+    case "daily90": return dailyBest(save) >= 90;
+    case "daily120": return dailyBest(save) >= 120;
     default: return true;
   }
 }
@@ -169,8 +175,8 @@ const defs = [
   { id: "w50",     name: "五十胜", desc: "生涯取得 50 场胜利",             check: (s) => s.stats.w >= 50, reward: { coins: 150 } },
   { id: "sign1",   name: "签约达人", desc: "首次签下胜利后的精灵合同",      check: (s) => !!s.flags?.sign1, reward: { coins: 25, item: "hatch" } },
   { id: "streak7", name: "全勤一周", desc: "连续签到 7 天",                check: (s) => (s.signin?.streak || 0) >= 7, reward: { coins: 75, item: "berryPremium" } },
-  { id: "daily90", name: "每日之星", desc: "每日挑战单日拿到 90 分",        check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 90), reward: { coins: 50 } },
-  { id: "daily120", name: "挑战极限", desc: "每日挑战单日拿到 120 分",      check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 120), reward: { coins: 100, item: "hatch", n: 1 } },
+  { id: "daily90", name: "每日之星", desc: "每日挑战单日拿到 90 分",        check: (s) => dailyBest(s) >= 90, reward: { coins: 50 } },
+  { id: "daily120", name: "挑战极限", desc: "每日挑战单日拿到 120 分",      check: (s) => dailyBest(s) >= 120, reward: { coins: 100, item: "hatch", n: 1 } },
 ];
 
 /** 所有进化后的形态（作为其他形态的进化目标出现） */

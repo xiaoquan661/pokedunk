@@ -4,10 +4,12 @@
  * 核心循环：选路线 → 和野生精灵打一场 1v1 篮球 → 赢了它加入，参赛精灵获得 XP。
  * 不推进赛季、不计生涯战绩、不发合同；每天 3 次，广告 +1 次。
  */
-import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=589";
-import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=589";
-import { addMon, hasDex } from "../storage.js?v=589";
-import { grantXp } from "../systems/xp.js?v=589";
+import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=598";
+import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=598";
+import { addMon, hasDex } from "../storage.js?v=598";
+import { grantXp } from "../systems/xp.js?v=598";
+import { bumpDaily } from "../ui/earn.js?v=598";
+import { ACHV } from "../systems/achv.js?v=598";
 
 export const WILD_ATTEMPTS = 3;
 export const WILD_AD_ATTEMPTS = 1;
@@ -158,6 +160,11 @@ export function recordWildResult(save, { won, opp, monId, engine }) {
       save.bag.berryNormal = (save.bag.berryNormal || 0) + 1;
     }
   }
+  // 野球场也属于“打完一场”：接入每日任务计数与比赛类成就
+  const myScore = Number(engine?.score?.[0]) || 0;
+  const oppScore = Number(engine?.score?.[1]) || 0;
+  bumpDaily("match");
+  ACHV.evaluateMatch(save, { won, margin: Math.abs(myScore - oppScore), myScore });
   w.last = { at: Date.now(), dex: opp.dex, won, xp, recruit: !!recruit, dup, coins };
   return {
     won, xp, events, recruit, dup, coins,

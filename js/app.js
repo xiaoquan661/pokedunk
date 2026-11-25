@@ -3,45 +3,45 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=589"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=589";
-import { renderDex } from "./ui/dex.js?v=589";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=589";
-import { openSettings } from "./ui/settings.js?v=589";
-import { renderBag } from "./ui/bag.js?v=589";
-import { renderTeam } from "./ui/team.js?v=589";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=589";
-import { openDetail } from "./ui/detail.js?v=589";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=589";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=589";
-import { watchRewardedAd } from "./platform/ads.js?v=589";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=589";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=589";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=589";
-import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=589";
-import { showOfflineGrass } from "./ui/offline-grass.js?v=589";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=589";
-import { openDaily } from "./ui/daily.js?v=589";
-import { openCoachProfile } from "./ui/coach.js?v=589";
-import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=589";
-import { submitDailyScore } from "./platform/leaderboard.js?v=589";
-import { openAchievements } from "./ui/achv-ui.js?v=589";
-import { startTutorial } from "./ui/tutorial.js?v=589";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=589";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=589";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=589";
-import { ACHV } from "./systems/achv.js?v=589";
-import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=589";
-import { eggList } from "./systems/egg.js?v=589";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=589";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=589";
-import { ICON } from "./ui/icons.js?v=589";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=589";
-import { pendingLegend } from "./journey/legend.js?v=589";
-import { syncAcquireLevel } from "./systems/acquire.js?v=589";
-import { openLegendPicker } from "./ui/legend.js?v=589";
-import { openWild } from "./ui/wild.js?v=589";
-import { wildLeft, wildMax } from "./journey/wild.js?v=589";
+import "./systems/evo-rules.js?v=598"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=598";
+import { renderDex } from "./ui/dex.js?v=598";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=598";
+import { openSettings } from "./ui/settings.js?v=598";
+import { renderBag } from "./ui/bag.js?v=598";
+import { renderTeam } from "./ui/team.js?v=598";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=598";
+import { openDetail } from "./ui/detail.js?v=598";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=598";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=598";
+import { watchRewardedAd } from "./platform/ads.js?v=598";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=598";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=598";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=598";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=598";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=598";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=598";
+import { openDaily } from "./ui/daily.js?v=598";
+import { openCoachProfile } from "./ui/coach.js?v=598";
+import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=598";
+import { submitDailyScore } from "./platform/leaderboard.js?v=598";
+import { openAchievements } from "./ui/achv-ui.js?v=598";
+import { startTutorial } from "./ui/tutorial.js?v=598";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=598";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=598";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=598";
+import { ACHV } from "./systems/achv.js?v=598";
+import { milestoneRows, monRewardInfo } from "./systems/milestones.js?v=598";
+import { eggList } from "./systems/egg.js?v=598";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=598";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=598";
+import { ICON } from "./ui/icons.js?v=598";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=598";
+import { pendingLegend } from "./journey/legend.js?v=598";
+import { syncAcquireLevel } from "./systems/acquire.js?v=598";
+import { openLegendPicker } from "./ui/legend.js?v=598";
+import { openWild } from "./ui/wild.js?v=598";
+import { wildLeft, wildMax } from "./journey/wild.js?v=598";
 import {
   getPokemon,
   calcOVR,
@@ -57,7 +57,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=589";
+} from "../engine/readable/play-core.js?v=598";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -129,6 +129,7 @@ const NOTICE_LOG = [
     ["广告收益提升", "提高了看广告获得的金币、训练点、孵蛋加速、教练声望和赛后金币收益。"],
     ["战斗差异", "拉开不同属性在投篮、篮板、体力、冲刺、速度、控球和传球上的表现差距。"],
     ["局外成长与界面", "教练声望、离线收益和世代篇章接入局外成长；主页顶部入口重新排布。"],
+    ["经济重平衡", "精灵 300–1800 币、普通蛋 150、高级蛋 600、孵蛋槽 800、金币刷新货架 500；训练与树果同步涨价，比赛金币提高。看广告每日限 10 次（每次 200 币）。"],
   ]],
   ["2026-11-24", "", [
     ["野球场1v1", "新增半场 1v1 野球场，赢下后可获得野生精灵，每日次数可用广告增加。"],
@@ -151,19 +152,34 @@ const NOTICE_LOG = [
 const lineupSize = (save) => starterIds(save).filter((id) => save.mons[id]).length;
 const hasFullLineup = (save) => lineupSize(save) >= 5;
 
-/* ================= 新手之路：短教程 → 首发自动补齐 → 第一场比赛 ================= */
+/* ================= 新手之路：短教程 → 买精灵 → 队伍配置 → 第一场比赛 ================= */
 const newbieActive = (save) => !!(save?.newbie && !save.newbie.done);
 
 function newbieStep(save) {
   const nb = save?.newbie;
   if (!nb || nb.done) return 0;
-  return nb.tutorialDone ? 2 : 1;
+  if (!nb.tutorialDone) return 1;
+  if ((nb.shopBuys || 0) < 1) return 2;
+  if (!nb.teamDone) return 3;
+  return 4;
 }
 
 function newbieStepText(save) {
   const step = newbieStep(save);
   if (step === 1) return "第 1 步 · 完成约 2 分钟教程";
-  return "第 2 步 · 开始第一场比赛";
+  if (step === 2) return "第 2 步 · 商店买一只精灵";
+  if (step === 3) return "第 3 步 · 把新伙伴拖进首发";
+  return "第 4 步 · 开始第一场比赛";
+}
+
+/** 买到的新伙伴进入首发后，记录队伍配置完成 */
+function syncNewbieTeam(save) {
+  const nb = save?.newbie;
+  if (!nb || nb.done || nb.teamDone || !nb.lastBuyId) return false;
+  if (!starterIds(save).includes(Number(nb.lastBuyId))) return false;
+  nb.teamDone = true;
+  writeSave(save);
+  return true;
 }
 
 /** 打完第一场正式比赛即视为走完新手之路：顶部入口彻底隐藏（不管从哪个入口进的比赛） */
@@ -171,7 +187,7 @@ function syncNewbieDone(save) {
   const nb = save?.newbie;
   if (!nb || nb.done) return false;
   const played = (save.stats?.w || 0) + (save.stats?.l || 0);
-  if (!nb.tutorialDone || lineupSize(save) < 5 || played < 1) return false;
+  if (!nb.tutorialDone || (nb.shopBuys || 0) < 1 || !nb.teamDone || lineupSize(save) < 5 || played < 1) return false;
   nb.done = true;
   // 新手之路结束：确保完整的主页界面导引从第一步开始
   save.guide = { v: 1, step: 0, done: false };
@@ -200,17 +216,20 @@ function grantTutorialGift(save) {
   ensureLineupSlots(s);
   s.newbie.tutorialDone = true;
   s.newbie.giftDone = true;
-  s.newbie.shopBuys = 2;
-  s.newbie.teamDone = true;
+  s.newbie.shopBuys = 0;
+  s.newbie.teamDone = false;
+  delete s.newbie.lastBuyId;
   writeSave(s);
-  if (!got.length) return { text: "首发已经完整 · 新手补给 +100 篮球币", got: [] };
-  return { text: "首发五人已就位 · 新手补给 +100 篮球币", got };
+  if (!got.length) return { text: "新手补给 +100 篮球币 · 去商店挑一只新伙伴", got: [] };
+  return { text: "新伙伴加入 · 新手补给 +100 篮球币", got };
 }
 
 function startNewbieFirstMatch(save) {
   const cur = loadSave() || save;
   if (lineupSize(cur) < 5) return showHome(cur);
-  cur.newbie ||= { v: 1, tutorialDone: true, giftDone: true, shopBuys: 2, teamDone: true, done: false };
+  const nb = cur.newbie;
+  if (nb && !nb.done && ((nb.shopBuys || 0) < 1 || !nb.teamDone)) { openNewbieQuest(cur); return; }
+  cur.newbie ||= { v: 1, tutorialDone: true, giftDone: true, shopBuys: 1, teamDone: true, done: false };
   cur.newbie.done = true;
   cur.guide = { v: 1, step: 0, done: false };
   cur.guideV2 = 1;
@@ -225,6 +244,11 @@ function startNewbieTutorial(save) {
   startTutorial(app, s, {
     onDone: () => grantTutorialGift(s),
     onExit: () => showHome(loadSave() || s),
+    onContinue: () => {
+      const f = loadSave() || s;
+      showHome(f);
+      setTimeout(() => showSub(renderShop, loadSave() || f), 80);
+    },
     onStartMatch: () => startNewbieFirstMatch(loadSave() || s),
   });
 }
@@ -238,7 +262,11 @@ function openNewbieQuest(save) {
   const row = (ok, title, desc) => `<div class="nbq-row${ok ? " ok" : ""}"><i>${ok ? "✓" : ""}</i><div><b>${title}</b><small>${desc}</small></div></div>`;
   const actions = {
     1: ["去操作教程", () => { wrap.remove(); startNewbieTutorial(s); }],
-    2: ["开始第一场比赛", () => { wrap.remove(); startNewbieFirstMatch(loadSave() || s); }],
+    2: s.coins < 100
+      ? ["先看广告换金币", () => { wrap.remove(); openEarn(loadSave() || s); }]
+      : ["去商店买精灵", () => { wrap.remove(); showSub(renderShop, loadSave() || s); }],
+    3: ["去调整队伍", () => { wrap.remove(); showTeam(loadSave() || s); }],
+    4: ["开始第一场比赛", () => { wrap.remove(); startNewbieFirstMatch(loadSave() || s); }],
   };
   if (!document.getElementById("nbq-style")) {
     const st = document.createElement("style");
@@ -262,10 +290,12 @@ function openNewbieQuest(save) {
   wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
     <div class="page-head"><button class="back" data-back>‹</button><h2>新手之路</h2><span class="count">${lineup}/5 首发</span></div>
-    <p class="page-sub">先花约 2 分钟学会移动、传球、上篮、扣篮、空接、投篮、抢断和盖帽，首发会自动补齐。</p>
+    <p class="page-sub">完成教程后去商店买一只新伙伴，把他拖进首发，再开始第一场比赛。</p>
     <div class="pk-panel" style="padding:4px 12px">
       ${row(!!nb.tutorialDone, "完成操作教程", "移动、传球、上篮、扣篮、空接、投篮、抢断、盖帽，约 2 分钟")}
-      ${row(!!nb.tutorialDone && lineup >= 5, "开始第一场比赛", lineup >= 5 ? `首发 ${lineup}/5 已就位` : "完成教程后自动补齐首发")}
+      ${row((nb.shopBuys || 0) >= 1, "商店买一只精灵", (nb.shopBuys || 0) >= 1 ? "已买到新伙伴" : "新手货架优先低价，特惠 150 币一只")}
+      ${row(!!nb.teamDone, "把新伙伴放进首发", nb.teamDone ? "首发已调整" : "去队伍页，把新伙伴拖进首发槽")}
+      ${row(!!nb.teamDone && lineup >= 5, "开始第一场比赛", lineup >= 5 ? `首发 ${lineup}/5 已就位` : "首发不足 5 人")}
     </div>
     <button class="pk-btn-gold" id="nbq-go" style="width:100%;padding:12px;margin-top:12px">${actions[step][0]}</button>
     <p class="page-sub" style="text-align:center;margin-top:8px">${newbieStepText(s)}</p>
@@ -639,6 +669,7 @@ function showHome(save, justStarted = false) {
   homeBgStop = null;
   // 商店/孵蛋等子页会自己读档并写盘——返回主页时必须取最新存档，否则旧对象会覆盖刚发生的购买/孵化
   save = loadSave() || save;
+  syncNewbieTeam(save);
   syncNewbieDone(save);
   app.replaceChildren();
   // 展示精灵：优先「更换」选择的精灵，否则队伍首位
@@ -673,8 +704,7 @@ function showHome(save, justStarted = false) {
     achv: safeDot(() => ACHV.list(save).some((x) => x.unlocked && !x.claimed && x.reward)),
     tasks: safeDot(() => dailyClaimable(save)),
     dex: safeDot(() => milestoneRows(save).some((r) => r.canClaim)
-      || monRewardInfo(save).claimable > 0
-      || typeRewardRows(save).some((r) => r.canClaim)),
+      || monRewardInfo(save).claimable > 0),
     train: safeDot(() => gslots.some((g) => !g.empty && g.xp > 0)),
     egg: safeDot(() => eggList(save).slots.some((e) => e && e.ready)),
   };
@@ -740,7 +770,7 @@ function showHome(save, justStarted = false) {
       </div>
       ${newbieActive(save) ? `<button class="newbie-top" data-go="newbie">
         <span class="nt-ico">${LINE_ICON.tutorial}</span>
-        <span class="nt-txt"><b>新手之路 <em>${newbieStep(save)}/2</em></b><small>${newbieStepText(save)}</small></span>
+        <span class="nt-txt"><b>新手之路 <em>${newbieStep(save)}/4</em></b><small>${newbieStepText(save)}</small></span>
         <span class="nt-arrow">继续 ›</span>
       </button>` : ""}
       <div class="menu-in">
@@ -865,6 +895,8 @@ function showHome(save, justStarted = false) {
     b.addEventListener("click", () => {
       const go = b.dataset.go;
       if (go === "match") {
+        // 新手之路未完成时先走新手步骤，避免跳过买精灵/队伍配置
+        if (newbieActive(save) && newbieStep(save) > 0) { openNewbieQuest(save); return; }
         if (!hasFullLineup(save)) { openLineupGate(save); return; }
         sc.__stopBg?.(); openSeasonBoard(save);
       }
@@ -1134,6 +1166,7 @@ function showPreMatch(save, mode = "league") {
   const winP = Math.round(Math.max(0.05, Math.min(0.95, 0.5 + (teamPower - info.targetPower) * 0.03)) * 100);
   const gym = cfg.gym;
   const coach = save.coach?.name || "ME";
+  const coachTitle = save.coach?.title || "";
   const starters = starterIds(save);
   const starterSet = new Set(starters);
   const bench = save.team.filter((id) => save.mons[id] && !starterSet.has(id));
@@ -1187,7 +1220,7 @@ function showPreMatch(save, mode = "league") {
       <span class="brief-stage">${info.smallName}</span>
       <h2>${info.kind === "elite" ? "四天王挑战" : info.kind === "playoff" ? info.smallName : `第 ${info.round + 1} 轮 · ${gym.name}`}</h2>
       <div class="brief-vs">
-        <div class="brief-side"><b>${coach}</b><small>战力 ${teamPower}</small></div>
+        <div class="brief-side"><b>${coach}</b>${coachTitle ? `<em class="brief-coach-title">${coachTitle}</em>` : ""}<small>战力 ${teamPower}</small></div>
         <span class="brief-vs-txt">对阵</span>
         <div class="brief-side away" style="--tc:${gym.color}"><b>${info.kind === "elite" ? "四天王" : (GYM_LEADER_CN[(Number(gym.gym) || 1) - 1] || gym.name)}</b><small>${info.kind === "elite" ? "联盟四天王" : gym.name} · 战力 ${info.targetPower}</small></div>
       </div>
@@ -1525,7 +1558,7 @@ function showQuickResult(save, engine, cfg) {
 /** 新手判定：没有任何比赛记录、未看过引导，且没有走过新手之路的操作教程 */
 function isRookie(save) {
   if (!save?.journey || save.journey.guideDone) return false;
-  // 新手之路里已经完整教过移动/投篮/传球/抢断/冲刺/必杀，第一场正式比赛不再重复弹操作导引
+  // 新手之路里已经完整教过移动/传球/上篮/扣篮/空接/投篮/抢断/盖帽，第一场正式比赛不再重复弹操作导引
   if (save.newbie?.tutorialDone || save.newbie?.done) return false;
   const games = (save.stats?.w || 0) + (save.stats?.l || 0);
   const results = save.journey.season?.results?.length || 0;
@@ -2046,12 +2079,7 @@ function showDex(save) {
 }
 function showTeam(save) {
   const s = loadSave() || save;
-  const nb = s.newbie;
-  // 新手之路：买完 2 只后，进入队伍页即视为完成了“调整队伍”引导
-  if (nb && !nb.done && (nb.shopBuys || 0) >= 2 && !nb.teamDone) {
-    nb.teamDone = true;
-    writeSave(s);
-  }
+  // 新手之路：打开队伍页不直接算完成，回到主页后会检查新伙伴是否已进入首发
   openPageModal((page) => renderTeam(page, s), s);
 }
 function showBag(save) {
@@ -2072,7 +2100,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=589");
+window.__PC = await import("../engine/readable/play-core.js?v=598");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

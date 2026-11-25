@@ -5,17 +5,17 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=589";
-import { gameAudio } from "../platform/audio.js?v=589";
-import { getPokemon } from "../../engine/readable/play-core.js?v=589";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=589";
-import { openDetail } from "./detail.js?v=589";
-import { playAcquire } from "./anim.js?v=589";
+import { loadSave, writeSave } from "../storage.js?v=598";
+import { gameAudio } from "../platform/audio.js?v=598";
+import { getPokemon } from "../../engine/readable/play-core.js?v=598";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=598";
+import { openDetail } from "./detail.js?v=598";
+import { playAcquire } from "./anim.js?v=598";
 import {
   milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
   typeRewardRows, claimTypeReward,
-} from "../systems/milestones.js?v=589";
-import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=589";
+} from "../systems/milestones.js?v=598";
+import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=598";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...
@@ -166,7 +166,7 @@ function typeRewardHtml(save) {
   return `
     <div class="ms-box ty-rw-box">
       <div class="ms-head"><b>属性收集徽章</b><span>已点亮 ${done} / ${rows.length}</span></div>
-      <div class="ms-next">每个属性集齐 ${rows[0]?.step || 8} 种，点亮对应属性徽章${ready.length ? ` · <b style="color:var(--gold)">${ready.length} 个可点亮</b>` : ""}</div>
+      <div class="ms-next">每个属性集齐 ${rows[0]?.step || 8} 种，点亮对应属性徽章 · 纯收藏，不发资源${ready.length ? ` · <b style="color:var(--gold)">${ready.length} 个可点亮</b>` : ""}</div>
       ${ready.length ? `<button class="ms-btn" data-ty-claim="${ready[0].type}" style="align-self:flex-start">点亮 ${ready[0].cn}</button>` : ""}
       <div class="ty-grid">
         ${rows.map((r) => `

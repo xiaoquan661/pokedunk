@@ -6,11 +6,11 @@
  *   - 上线时自动结算离线收益并弹窗汇报；页面上可随时手动领取
  * 存档：save.grass = { slots: [null | { monId, dex, lastTs, bankXp }], seenAt }
  */
-import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=589";
-import { grantXp } from "./xp.js?v=589";
-import { xpToNext } from "../../engine/growth.js?v=589";
+import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=598";
+import { grantXp } from "./xp.js?v=598";
+import { xpToNext } from "../../engine/growth.js?v=598";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { starterIds, ensureLineupSlots } from "./build.js?v=589";
+import { starterIds, ensureLineupSlots } from "./build.js?v=598";
 
 export { GRASS_SLOTS };
 

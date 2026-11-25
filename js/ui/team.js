@@ -4,17 +4,17 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=589";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=589";
-import { openDetail } from "./detail.js?v=589";
-import { ICON } from "./icons.js?v=589";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=598";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=598";
+import { openDetail } from "./detail.js?v=598";
+import { ICON } from "./icons.js?v=598";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench, isOnGrass,
   starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=589";
+} from "../systems/build.js?v=598";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
@@ -109,6 +109,8 @@ export function renderTeam(page, save) {
     ? Math.round(lineup.reduce((a, e) => a + monPower(save.mons[e.id], e.pos, per.get(save.mons[e.id])), 0) / lineup.length)
     : 0;
   const active = activeBonds(save);
+  const nbBuyId = save.newbie && !save.newbie.done && !save.newbie.teamDone && (save.newbie.shopBuys || 0) >= 1
+    ? Number(save.newbie.lastBuyId) : null;
 
   page.innerHTML = `
     <div class="sub-inner">
@@ -144,6 +146,9 @@ export function renderTeam(page, save) {
         .box-rar{font-style:normal;color:var(--rc);font-weight:700}
         .drag-ghost{position:fixed;z-index:1200;pointer-events:none;opacity:.9;transform:translate(-50%,-50%) scale(.86);filter:drop-shadow(0 12px 20px rgba(0,0,0,.65))}
         .team-drag-hint{margin:8px 0 0;text-align:center;font-size:10.5px;color:rgba(173,190,226,.65)}
+        .nb-team-hint{margin:8px 0 0;padding:9px 10px;border:1px solid var(--gold,#f5c542);border-radius:4px;background:rgba(245,197,66,.12);color:var(--gold,#f5c542);font-size:11.5px;line-height:1.5;font-weight:700}
+        .bench-card.nb-new{border-color:var(--gold,#f5c542);box-shadow:0 0 0 2px rgba(245,197,66,.45),0 0 18px rgba(245,197,66,.35)}
+        .bench-card .bc-new{position:absolute;top:3px;left:3px;font:700 8.5px var(--sport);color:#101010;background:var(--gold,#f5c542);border-radius:7px;padding:0 4px}
         .bond-panel{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
         .bond-item{padding:8px 10px;border-radius:4px;background:var(--r-paper-3,rgba(0,0,0,.2));border:1px solid var(--r-line,rgba(255,255,255,.1));border-left:3px solid var(--r-green,#b8e63c)}
         .bi-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
@@ -154,6 +159,7 @@ export function renderTeam(page, save) {
       </style>
       <div class="page-head"><button class="back" data-back>‹</button><h2>我的球队</h2><span class="count">${save.team.length}/10</span></div>
       <p style="color:var(--text-dim);font-size:12px">独立存档 · 单机自动保存</p>
+      ${nbBuyId != null ? `<div class="nb-team-hint">新手之路：把刚买的新伙伴拖进任意首发槽</div>` : ""}
       <div style="display:flex;gap:10px;margin:10px 0">
         <div class="pk-panel" style="flex:1;padding:10px;text-align:center"><b style="font-size:22px;color:var(--gold)">${teamOvr}</b><small style="display:block;color:var(--text-dim);font-size:11px">队伍评分</small></div>
         <div class="pk-panel" style="flex:1;padding:10px;text-align:center"><b style="font-size:22px;color:var(--gold)">${startersOvr}</b><small style="display:block;color:var(--text-dim);font-size:11px">首发评分</small></div>
@@ -292,6 +298,13 @@ function bindTeamDrag(page) {
     if (t !== hot) { clearHot(); hot = t; hot?.classList.add("drop-hot"); }
   };
 
+  // 新伙伴进入首发后，立即标记新手之路的队伍配置完成
+  const markNewbieTeam = (s) => {
+    const nb = s?.newbie;
+    if (!nb || nb.done || nb.teamDone || !nb.lastBuyId) return;
+    if (starterIds(s).includes(Number(nb.lastBuyId))) nb.teamDone = true;
+  };
+
   const onUp = (e) => {
     if (!drag) return;
     if (drag.active) {
@@ -304,13 +317,13 @@ function bindTeamDrag(page) {
           if (drag.from === "start") {
             if (s.assign?.[drag.id] !== pos) {
               const r = assignStarterSlot(s, drag.id, pos);
-              if (r.ok) { writeSave(s); renderTeam(page, s); msg = r.swapped ? "已交换位置" : "位置已调整"; }
+              if (r.ok) { markNewbieTeam(s); writeSave(s); renderTeam(page, s); msg = r.swapped ? "已交换位置" : "位置已调整"; }
               else { msg = r.error || "换位失败"; bad = true; }
             }
           } else {
             const r = substituteBenchToSlot(s, drag.id, pos);
             if (r.ok) {
-              writeSave(s); renderTeam(page, s);
+              markNewbieTeam(s); writeSave(s); renderTeam(page, s);
               msg = `换人完成：${monZh(s.mons[drag.id].dex)} → ${pos}`;
             } else { msg = r.error || "换人失败"; bad = true; }
           }
@@ -321,7 +334,7 @@ function bindTeamDrag(page) {
             : (benchMonIds(s)[0] ?? null);
           const r = substituteStarterToBench(s, drag.id, benchId);
           if (r.ok) {
-            writeSave(s); renderTeam(page, s);
+            markNewbieTeam(s); writeSave(s); renderTeam(page, s);
             msg = r.in != null
               ? `${monZh(s.mons[r.in].dex)} 进入首发 · ${monZh(s.mons[r.out].dex)} 回到替补席`
               : `${monZh(s.mons[r.out].dex)} 回到替补席，首发放出空位`;
@@ -367,7 +380,9 @@ function benchCard(id) {
   const color = TYPE_COLORS[typeOf(m)] || "#a8a77a";
   const rarity = rarityOf(m.dex);
   const onGrass = isOnGrass(_save, id);
-  return `<button class="bench-card" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}" title="${onGrass ? "草地挂机中，收回后才能上场" : ""}">
+  const isNewbieBuy = _save.newbie && !_save.newbie.done && !_save.newbie.teamDone && Number(_save.newbie.lastBuyId) === Number(id);
+  return `<button class="bench-card${isNewbieBuy ? " nb-new" : ""}" data-open="${id}" data-bench="${id}" data-drag="${id}" data-drag-from="bench" style="--tc:${color}" title="${onGrass ? "草地挂机中，收回后才能上场" : ""}">
+    ${isNewbieBuy ? `<span class="bc-new">新</span>` : ""}
     ${(m.train?.free || 0) + (m.train?.bank || 0) > 0 ? `<span class="bench-train">+${(m.train.free || 0) + (m.train.bank || 0)}</span>` : ""}
     <img src="./sprites/${m.dex}.png" alt="" draggable="false">
     <b class="sc-ovr">${mainOVR(m)}</b>

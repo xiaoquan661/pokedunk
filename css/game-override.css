@@ -251,3 +251,10 @@ button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
 html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"].pd-perfect{border-color:#fff8e8}
 html[data-ui-theme="retro"] .game.has-touch .touch .tb{border-color:#e9b45f;background:rgba(20,24,20,.72);color:#f4ead2}
 html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-color:#e9b45f;background:rgba(233,180,95,.18);color:#ffe0a8}
+
+/* 移动端：去掉点击后浏览器默认的蓝色焦点框（升级、培养、队伍卡片等） */
+#stage :focus { outline: none !important; }
+
+/* 教练称号：赛前对阵 + 首发动画 */
+.game .s5-head .s5-coach{color:#ffe08a;border:1px solid rgba(255,224,138,.55);background:rgba(0,0,0,.5);padding:3px 5px;font-size:.5rem;letter-spacing:.04em;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.brief-coach-title{font-style:normal;font-size:9.5px;line-height:1.4;color:var(--gold,#f5c542);border:1px solid rgba(245,197,66,.35);background:rgba(245,197,66,.1);border-radius:999px;padding:0 7px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}

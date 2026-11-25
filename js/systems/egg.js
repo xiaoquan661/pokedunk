@@ -5,17 +5,17 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=589";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS, rollEggDex } from "./shop.js?v=589";
-import { LEGENDARY_DEX } from "./build.js?v=589";
-import { syncAcquireLevel } from "./acquire.js?v=589";
+import { addMon, writeSave } from "../storage.js?v=598";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS, rollEggDex } from "./shop.js?v=598";
+import { LEGENDARY_DEX } from "./build.js?v=598";
+import { syncAcquireLevel } from "./acquire.js?v=598";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
 /** 孵蛋加速券：背包道具 id（战斗掉落） */
 export const HATCH_ITEM = "hatch";
 export const EGG_AD_REDUCE_MS = 4 * 60 * 60 * 1000;
 export const EGG_SLOT_MAX = 3;
-export const EGG_SLOT_PRICE = 300;
+export const EGG_SLOT_PRICE = 800;
 
 /** 购买 1 个孵蛋槽位（上限 3，只能购买一次） */
 export function eggBuySlot(save) {

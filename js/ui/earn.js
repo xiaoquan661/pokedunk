@@ -5,17 +5,18 @@
  *  2. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）。
  */
-import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=589";
+import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=598";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { LEGENDARY_DEX } from "../systems/build.js?v=589";
-import { watchRewardedAd } from "../platform/ads.js?v=589";
-import { gameAudio } from "../platform/audio.js?v=589";
-import { rollEggDex } from "../systems/shop.js?v=589";
-import { ICON } from "./icons.js?v=589";
-import { playAcquire } from "./anim.js?v=589";
+import { LEGENDARY_DEX } from "../systems/build.js?v=598";
+import { watchRewardedAd } from "../platform/ads.js?v=598";
+import { gameAudio } from "../platform/audio.js?v=598";
+import { rollEggDex } from "../systems/shop.js?v=598";
+import { ICON } from "./icons.js?v=598";
+import { playAcquire } from "./anim.js?v=598";
 
 const DAILY_KEY = "pokedunk.daily.v1";
-const AD_COINS = 300;     // 每次看广告奖励（S35：100→300，仍不限次数）
+const AD_COINS = 200;     // 每次看广告奖励（S46：300→200，并加每日上限）
+const AD_DAILY_MAX = 10;  // 每日看广告次数上限
 const monName = (dex) => {
   const r = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
   return r ? String(r[1]).replace(/#\d+$/, "") : "#" + dex;
@@ -259,8 +260,8 @@ export function openDailyTasks(save, onCoins) {
         <div class="pj-flbl">今日任务</div>
         <div class="pj-fdesc">每天 0 点重置 · 完成后领取金币 · 全部完成额外高级精灵蛋 ×1</div>
         <div class="task-refresh">
-          <span>看完广告可重置任务进度与领取状态${d.refresh ? ` · 今日已刷新 ${d.refresh} 次` : ""}</span>
-          <button class="pj-btn" data-task-refresh>看广告刷新</button>
+          <span>看完广告可重置任务进度与领取状态 · 每日 1 次${d.refresh ? ` · 今日已刷新 ${d.refresh} 次` : ""}</span>
+          <button class="pj-btn" data-task-refresh ${(d.refresh || 0) >= 1 ? "disabled" : ""}>${(d.refresh || 0) >= 1 ? "今日已刷新" : "看广告刷新"}</button>
         </div>
         ${TASKS.map((t) => {
           const done = !!d.claimed[t.id];
@@ -299,6 +300,8 @@ export function openDailyTasks(save, onCoins) {
     }
     const rf = e.target.closest("[data-task-refresh]");
     if (rf && !rf.disabled) {
+      const d0 = daily();
+      if ((d0.refresh || 0) >= 1) { earnToast("今日刷新次数已用完"); render(); return; }
       rf.disabled = true;
       rf.textContent = "广告中…";
       let settled = false;
@@ -385,14 +388,14 @@ export function openEarn(save, onCoins) {
 
   function render() {
     const d = daily();
-    const adsLeft = Infinity;
+    const adsLeft = Math.max(0, AD_DAILY_MAX - (d.adAt || 0));
     const coinEl = wrap.querySelector("#earn-coins");
     if (coinEl) coinEl.textContent = `${save.coins} 币`;
     wrap.querySelector("#pj-earn-body").innerHTML = `
       <div class="pj-block">
         <div class="pj-flbl">激励视频</div>
-        <div class="pj-fdesc">观看一段短广告，立刻获得金币（不限次数）</div>
-        <div class="pj-row"><span>看广告得 <span class="pj-coin">+${AD_COINS} 币</span></span><button class="pj-btn" id="pj-earn-ad" ${adsLeft <= 0 ? "disabled" : ""}>观看</button></div>
+        <div class="pj-fdesc">观看一段短广告，立刻获得金币（每日 ${AD_DAILY_MAX} 次，今日剩 ${adsLeft} 次）</div>
+        <div class="pj-row"><span>看广告得 <span class="pj-coin">+${AD_COINS} 币</span></span><button class="pj-btn" id="pj-earn-ad" ${adsLeft <= 0 ? "disabled" : ""}>${adsLeft <= 0 ? "今日已用完" : "观看"}</button></div>
       </div>
       <p class="pj-note">口袋灌篮 · 金币获取（每日活跃任务在主页「每日任务」）</p>`;
   }

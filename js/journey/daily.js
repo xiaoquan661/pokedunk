@@ -11,13 +11,15 @@
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=589";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=589";
-import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=589";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=589";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=589";
-import { loadSet } from "../ui/settings.js?v=589";
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=589";
+} from "../../engine/readable/play-core.js?v=598";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=598";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=598";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=598";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=598";
+import { loadSet } from "../ui/settings.js?v=598";
+import { bumpDaily } from "../ui/earn.js?v=598";
+import { ACHV } from "../systems/achv.js?v=598";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=598";
 
 const FIRST_WIN_COINS = 100;
 
@@ -218,7 +220,8 @@ export function buildDailyMatch(save) {
   const coach = save.coach?.name || "ME";
   return {
     home: {
-      name: `${coach}队`, abbr: coach.slice(0, 3).toUpperCase(), color: "#3b6fd8", color2: "#16224a",
+      name: `${coach}队`, abbr: coach.slice(0, 3).toUpperCase(), title: save.coach?.title || "",
+      color: "#3b6fd8", color2: "#16224a",
       roster: homeRoster, bench: [], human: true, boost: 0,
     },
     away: {
@@ -347,6 +350,9 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
   const seen = [];
   for (const team of engine.teams || []) for (const p of team.roster || []) if (p?.dex) seen.push(p.dex);
   markSeen(save, seen);
+  // 每日挑战也属于“打完一场”：接入每日任务计数与比赛类成就
+  bumpDaily("match");
+  ACHV.evaluateMatch(save, { won, margin: Math.abs(myScore - oppScore), myScore });
   writeSave(save);
   return {
     quit: false, won, myScore, oppScore, score, detail, simulated,

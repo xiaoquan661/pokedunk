@@ -3,15 +3,15 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=589";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=589";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=589";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=589";
-import { watchRewardedAd } from "../platform/ads.js?v=589";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=589";
-import { playHatch, playAcquire } from "./anim.js?v=589";
-import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=589";
-import { ICON, coinInline } from "./icons.js?v=589";
+import { loadSave, writeSave } from "../storage.js?v=598";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft, shopCoinRefresh, COIN_REFRESH_PRICE } from "../systems/shop.js?v=598";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=598";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=598";
+import { watchRewardedAd } from "../platform/ads.js?v=598";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=598";
+import { playHatch, playAcquire } from "./anim.js?v=598";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=598";
+import { ICON, coinInline } from "./icons.js?v=598";
 
 const AD_EGG_INSTANT_MAX = 2;
 const monName = (dex) => {
@@ -74,7 +74,7 @@ export function renderShop(root) {
       <span class="count">${coinInline}${save.coins}</span>
     </div>
     <p class="page-sub">每日货架（跨天自动刷新）· 精灵 ${PRICES.mon}–${PRICES.monMax} 币（按 OVR）/ 普通蛋 ${EGG_TIERS.normal.price} / 普通树果 ${PRICES.berry} 币不限购 / 高级树果 ${PRICES.berryPremium} 币（每日 3 个） · 高级蛋看广告领取</p>
-    <div class="shop-tools"><button class="shop-ad${shopFreeRefreshLeft(save) > 0 ? " free" : ""}" id="shop-refresh"${shopFreeRefreshLeft(save) <= 0 && shopAdRefreshLeft(save) <= 0 ? " disabled" : ""}>${shopFreeRefreshLeft(save) > 0 ? "免费刷新货架（今日 1 次）" : shopAdRefreshLeft(save) > 0 ? "看广告刷新货架（今日剩 1 次）" : "今日刷新已用完"}</button></div>
+    <div class="shop-tools" style="gap:6px;flex-wrap:wrap"><button class="shop-ad${shopFreeRefreshLeft(save) > 0 ? " free" : ""}" id="shop-refresh"${shopFreeRefreshLeft(save) <= 0 && shopAdRefreshLeft(save) <= 0 ? " disabled" : ""}>${shopFreeRefreshLeft(save) > 0 ? "免费刷新货架（今日 1 次）" : shopAdRefreshLeft(save) > 0 ? "看广告刷新货架（今日剩 1 次）" : "今日刷新已用完"}</button><button class="shop-ad" id="shop-refresh-coin"${save.coins < COIN_REFRESH_PRICE ? " disabled" : ""}>${COIN_REFRESH_PRICE} 币刷新货架</button></div>
     <div class="shop-grid">
       ${items.map((it) => {
         if (it.type === "mon")
@@ -115,13 +115,14 @@ export function renderShop(root) {
         }
         // 商店可能直接出售进化后的形态：等级抬到该形态的最低进化等级
         const mid = Object.keys(save.mons).find((id) => save.mons[id].dex === r.dex);
+        if (save.newbie && !save.newbie.done && mid != null) save.newbie.lastBuyId = mid;
         const level = mid != null ? syncAcquireLevel(save, mid, r.dex) : minAcquireLevel(r.dex);
         writeSave(save);
         const name = monName(r.dex);
         const finishBuy = () => {
           renderShop(root);
-          if (save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 2) {
-            toast("首发 5 人已凑齐，准备第一场比赛！", 2600);
+          if (save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 1 && !save.newbie.teamDone) {
+            toast("新伙伴已入队，去队伍页把他拖进首发", 2600);
             setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
           }
         };
@@ -190,6 +191,14 @@ export function renderShop(root) {
     if (!r.ok) return toast(r.error);
     writeSave(save);
     toast("货架已刷新");
+    renderShop(root);
+  });
+
+  root.querySelector("#shop-refresh-coin")?.addEventListener("click", () => {
+    const r = shopCoinRefresh(save);
+    if (!r.ok) return toast(r.error);
+    writeSave(save);
+    toast(`货架已刷新 · 消耗 ${r.price} 篮球币`);
     renderShop(root);
   });
 }

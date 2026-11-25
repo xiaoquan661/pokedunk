@@ -9,14 +9,14 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=589";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=589";
-import { loadSet, saveSet } from "../ui/settings.js?v=589";
-import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=589";
-import { currentMatchInfo, matchSeed } from "./season.js?v=589";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=589";
-import { createMatchHype } from "../ui/match-hype.js?v=589";
-import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=589";
+import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=598";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=598";
+import { loadSet, saveSet } from "../ui/settings.js?v=598";
+import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=598";
+import { currentMatchInfo, matchSeed } from "./season.js?v=598";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=598";
+import { createMatchHype } from "../ui/match-hype.js?v=598";
+import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=598";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
@@ -61,6 +61,7 @@ export function buildGymMatch(save, mode = "league") {
   const home = {
     name: (save.coach.name || "ME") + "队",
     abbr: (save.coach.name || "ME").slice(0, 3).toUpperCase(),
+    title: save.coach?.title || "",
     color: "#3b6fd8",
     color2: "#16224a",
     roster: buildMyRoster(save, 1),
@@ -149,6 +150,7 @@ export function buildQuickMatch(save, stage = "gym1", level = "normal", dexes = 
   const home = {
     name: "快速队",
     abbr: "QK",
+    title: save?.coach?.title || "",
     color: "#3b6fd8",
     color2: "#16224a",
     roster: homeRoster,

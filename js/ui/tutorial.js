@@ -3,10 +3,10 @@
  * 使用引擎 practice + drill：移动 / 传球 / 上篮 / 扣篮 / 空接 / 投篮 / 抢断 / 盖帽，约 2 分钟。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=589";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=589";
-import { gameAudio } from "../platform/audio.js?v=589";
-import { createTouchUI } from "../journey/match-screen.js?v=589";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=598";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=598";
+import { gameAudio } from "../platform/audio.js?v=598";
+import { createTouchUI } from "../journey/match-screen.js?v=598";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -216,6 +216,8 @@ export function startTutorial(root, save, actions = {}) {
   let rewarded = false;
   let moveSpotIdx = 0;
   let touchUI = null;
+  let drillDone = false;
+  let settleT = 0;
 
   const game = () => page.querySelector(".game");
   const strip = () => page.querySelector(".tut-strip");
@@ -249,6 +251,8 @@ export function startTutorial(root, save, actions = {}) {
     dist = 0;
     lastPos = null;
     lastBallMode = "";
+    drillDone = false;
+    settleT = 0;
     const d = DRILLS[idx];
     if (engine) {
       engine.setDrill(d.id);
@@ -340,17 +344,28 @@ export function startTutorial(root, save, actions = {}) {
           </div>
         </div>`
       : "";
-    const canStart = typeof actions.onStartMatch === "function";
+    const canContinue = typeof actions.onContinue === "function";
+    const canStart = !canContinue && typeof actions.onStartMatch === "function";
+    const primary = canContinue
+      ? { label: "去商店挑一只", done: "continue" }
+      : canStart
+        ? { label: "开始第一场比赛", done: "match" }
+        : { label: "返回主页", done: "exit" };
+    const hint = canContinue
+      ? "下一步：去商店挑一只新伙伴，再把他拖进首发。"
+      : giftDex.length
+        ? "首发五人已就位，直接打第一场。"
+        : "现在可以开始第一场比赛了。";
     const done = page.querySelector(".tut-done");
     done.innerHTML = `<div class="panel">
       <h2>准备开打</h2>
       ${giftHtml}
       <ul class="tut-sum">${summary}</ul>
       ${reward ? `<p class="tut-reward">${reward}</p>` : ""}
-      <p>${giftDex.length ? "首发五人已就位，直接打第一场。" : "现在可以开始第一场比赛了。"}</p>
+      <p>${hint}</p>
       <div class="tut-done-acts">
-        <button class="primary" data-done="${canStart ? "match" : "exit"}">${canStart ? "开始第一场比赛" : "返回主页"}</button>
-        ${canStart ? '<button data-done="exit">先回主页</button>' : ""}
+        <button class="primary" data-done="${primary.done}">${primary.label}</button>
+        ${canContinue || canStart ? '<button data-done="exit">先回主页</button>' : ""}
       </div>
     </div>`;
     done.removeAttribute("hidden");
@@ -390,6 +405,14 @@ export function startTutorial(root, save, actions = {}) {
     stats.elapsed += dt;
     feedEvents(events, d);
 
+    // 动作完成后先停留，让传球/投篮/扣篮动画播完再进入下一项
+    if (drillDone) {
+      settleT -= dt;
+      updateStrip("完成！", 1);
+      if (settleT <= 0) advanceDrill();
+      return;
+    }
+
     const u = engine.user;
     if (d.id === "movement" && u) {
       if (lastPos) dist += Math.hypot(u.x - lastPos.x, u.y - lastPos.y);
@@ -410,8 +433,13 @@ export function startTutorial(root, save, actions = {}) {
     if (d.id === "defense" && engine.offense !== 0) stats.defendS += dt;
 
     const p = drillProgress(d, stats);
-    updateStrip(p >= 1 ? "完成！" : d.tip, p);
-    if (p >= 1 || stats.elapsed >= d.time) advanceDrill();
+    if (p >= 1 || stats.elapsed >= d.time) {
+      drillDone = true;
+      settleT = p >= 1 ? 1.4 : 0.5;
+      updateStrip(p >= 1 ? "完成！" : "时间到，进入下一项", p);
+      return;
+    }
+    updateStrip(d.tip, p);
   }
 
   handle = startMatchLoop(
@@ -438,7 +466,7 @@ export function startTutorial(root, save, actions = {}) {
       <p class="tut-intro-sub">8 个小练习，约 2 分钟；跟着提示做一遍就开打。</p>
       <ul class="tut-keys">${CONTROLS.map(([k, t]) => `<li><i>${k}</i><span>${t}</span></li>`).join("")}</ul>
       <button class="tut-begin" type="button" data-tut="begin">开始训练</button>
-      <button class="tut-skip-all" type="button" data-tut="skip-all">跳过教程，直接开打</button>
+      <button class="tut-skip-all" type="button" data-tut="skip-all">跳过教程，直接领首发</button>
     </div></div><div class="tut-result" hidden></div><div class="tut-done" hidden></div>`);
   page.addEventListener("click", (ev) => {
       const t = ev.target.closest("[data-tut]")?.dataset.tut;
@@ -468,6 +496,12 @@ export function startTutorial(root, save, actions = {}) {
         handle?.stop();
         gameAudio.setTrack("menu");
         actions.onStartMatch?.();
+      }
+      if (d === "continue") {
+        finished = true;
+        handle?.stop();
+        gameAudio.setTrack("menu");
+        actions.onContinue?.();
       }
     });
 }

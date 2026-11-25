@@ -4,13 +4,13 @@
  * 第一刀：把比赛、每日挑战、野球场、今日任务和广告串成一个局外成长层。
  * 不给比赛数值，升级只解锁教练称号。
  */
-import { loadSave, writeSave } from "../storage.js?v=589";
-import { watchRewardedAd } from "../platform/ads.js?v=589";
-import { gameAudio } from "../platform/audio.js?v=589";
+import { loadSave, writeSave } from "../storage.js?v=598";
+import { watchRewardedAd } from "../platform/ads.js?v=598";
+import { gameAudio } from "../platform/audio.js?v=598";
 import {
   repInfo, repMissionRows, claimRepMission, claimRepAd, repAdLeft,
   REP_LEVEL_REWARDS, REP_SOURCES, levelRewardText,
-} from "../systems/reputation.js?v=589";
+} from "../systems/reputation.js?v=598";
 
 const COACH_CSS = `
 .coach-hero{padding:12px 14px;border:1px solid rgba(245,197,66,.32);border-radius:10px;background:linear-gradient(160deg,rgba(245,197,66,.12),rgba(0,0,0,.18));margin-bottom:10px}

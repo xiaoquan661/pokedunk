@@ -7,23 +7,23 @@
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=589";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=589";
+import { addMon, hasDex } from "../storage.js?v=598";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=598";
 
 const MIN20 = 20 * 60 * 1000;
 const HOUR2 = 2 * 60 * 60 * 1000;
 
 /** 蛋档位：传说独立判定；高级蛋必出稀有。S14：孵化时间与价格下调 */
 export const EGG_TIERS = {
-  normal: { id: "normal", name: "普通蛋", price: 50, hatchMs: MIN20, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
-  premium: { id: "premium", name: "高级蛋", price: 160, hatchMs: HOUR2, legendOdds: 6, odds: { 普通: 0, 稀有: 100 } },
+  normal: { id: "normal", name: "普通蛋", price: 150, hatchMs: MIN20, legendOdds: 1, odds: { 普通: 70, 稀有: 30 } },
+  premium: { id: "premium", name: "高级蛋", price: 600, hatchMs: HOUR2, legendOdds: 6, odds: { 普通: 0, 稀有: 100 } },
 };
-export const PRICES = { mon: 100, monMax: 400, egg: 50, premiumEgg: 160, berry: 12, berryPremium: 60 };
+export const PRICES = { mon: 300, monMax: 1800, egg: 150, premiumEgg: 600, berry: 25, berryPremium: 150 };
 export const HATCH_MS = MIN20;
 export const EGG_SLOTS = 1;
-export const DUPE_REFUND = 35;
-export const DUPE_REFUND_PREMIUM = 110;
-export const DUPE_REFUND_LEGEND = 200;
+export const DUPE_REFUND = 40;
+export const DUPE_REFUND_PREMIUM = 80;
+export const DUPE_REFUND_LEGEND = 300;
 export const BERRY_XP = { normal: 50, premium: 800 };
 /** 每日限购：蛋按档位；普通树果不限购，高级树果每日 3 个 */
 export const SHOP_LIMITS = {
@@ -43,11 +43,19 @@ const limitKeyOf = (it) => {
 /** 精灵售价：按种族 OVR 分档，购买时用未养成个体 */
 export function monPrice(dex) {
   const ovr = getPokemon(dex).ovr || 0;
-  if (ovr < 60) return 100;
-  if (ovr < 70) return 150;
-  if (ovr < 80) return 220;
-  if (ovr < 90) return 300;
-  return 400;
+  if (ovr < 60) return 300;
+  if (ovr < 70) return 500;
+  if (ovr < 80) return 800;
+  if (ovr < 90) return 1200;
+  return 1800;
+}
+
+/** 新手之路特惠：OVR<70 的精灵 150 币一只（开局 200 币够买），走完新手之路即恢复原价 */
+export const NEWBIE_MON_PRICE = 150;
+export function priceFor(save, dex) {
+  const ovr = getPokemon(dex).ovr || 0;
+  if (save?.newbie && !save.newbie.done && ovr < 70) return NEWBIE_MON_PRICE;
+  return monPrice(dex);
 }
 
 const todayStr = () => {
@@ -109,7 +117,7 @@ function pickShopMons(save) {
   let pool = all.filter((r) => !save.dex || !save.dex[r[0]]);
   if (!pool.length) return [];
   const isNewbie = !!(save.newbie && !save.newbie.done);
-  // 新手之路：货架只出低价精灵，保证 300 开局币能买齐
+  // 新手之路：货架只出低价精灵，保证开局 200 币能买一只
   if (isNewbie) {
     const cheap = pool.filter((r) => (getPokemon(r[0]).ovr || 0) < 70);
     if (cheap.length >= SHOP_MON_SLOTS) pool = cheap;
@@ -164,7 +172,7 @@ function rollShop(save) {
   const day = todayStr();
   const sameDay = save.shop?.date === day;
   const bought = sameDay ? { ...emptyBought(), ...(save.shop.bought || {}) } : emptyBought();
-  save.shop = { date: day, genV: 5, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, freeDay: save.shop?.freeDay || null, bought };
+  save.shop = { date: day, genV: 6, slots: items, soldFlags: {}, adDay: save.shop?.adDay || null, freeDay: save.shop?.freeDay || null, bought };
 }
 
 /** 懒刷新：跨天重摇货架（写回 save.shop） */
@@ -172,7 +180,7 @@ function shopEnsure(save) {
   const slots = Array.isArray(save.shop?.slots) ? save.shop.slots : [];
   const hasPremium = slots.some((it) => it.t === "egg" && it.tier === "premium");
   const hasLegendMon = slots.some((it) => it.t === "mon" && LEGENDARY_DEX.has(it.dex));
-  if (save.shop && save.shop.date === todayStr() && save.shop.genV === 5 && hasPremium && !hasLegendMon) {
+  if (save.shop && save.shop.date === todayStr() && save.shop.genV === 6 && hasPremium && !hasLegendMon) {
     save.shop.bought = { ...emptyBought(), ...(save.shop.bought || {}) };
     return;
   }
@@ -196,6 +204,18 @@ export function shopAdRefreshLeft(save) {
   shopEnsure(save);
   const day = todayStr();
   return save.shop.adDay && save.shop.adDay.date === day ? Math.max(0, 1 - (save.shop.adDay.count || 0)) : 1;
+}
+
+/** 金币刷新货架：常驻金币消耗点，按 500 币/次，不限次数 */
+export const COIN_REFRESH_PRICE = 500;
+export function shopCoinRefresh(save) {
+  shopEnsure(save);
+  if ((save.coins || 0) < COIN_REFRESH_PRICE) {
+    return { ok: false, error: `篮球币不足（需 ${COIN_REFRESH_PRICE}）` };
+  }
+  save.coins -= COIN_REFRESH_PRICE;
+  rollShop(save);
+  return { ok: true, price: COIN_REFRESH_PRICE, coins: save.coins };
 }
 
 /** 每日免费刷新货架 1 次（先用免费，再走广告刷新） */
@@ -229,8 +249,8 @@ export function shopList(save) {
       type: it.t,
       tier: it.tier || null,
       dex: it.dex ?? null,
-      // 精灵价实时按 OVR 档位计算，避免旧货架沿用历史价格
-      price: it.t === "mon" ? monPrice(it.dex) : it.price,
+      // 精灵价实时按 OVR 档位计算，避免旧货架沿用历史价格；新手之路走特惠价
+      price: it.t === "mon" ? priceFor(save, it.dex) : it.price,
       ovr: it.t === "mon" ? getPokemon(it.dex).ovr : null,
       rarity: it.t === "mon" ? rarityOf(it.dex) : null,
       owned: it.t === "mon" ? hasDex(save, it.dex) : false,
@@ -254,7 +274,7 @@ export function shopBuy(save, slot) {
 
   if (it.t === "mon") {
     if (hasDex(save, it.dex)) return { ok: false, error: "已拥有同种精灵" };
-    const price = monPrice(it.dex);
+    const price = priceFor(save, it.dex);
     if (save.coins < price) return { ok: false, error: "篮球币不足" };
     save.coins -= price;
     const r = addMon(save, it.dex, { from: "shop" });

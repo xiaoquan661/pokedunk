@@ -6,16 +6,16 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=589";
-import { rollGrowth } from "../../engine/growth.js?v=589";
-import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=589";
-import { monPrice } from "../systems/shop.js?v=589";
-import { ACHV } from "../systems/achv.js?v=589";
-import { bumpDaily } from "../ui/earn.js?v=589";
-import { currentMatchInfo, recordResult } from "./season.js?v=589";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=589";
-import { offerLegendReward } from "./legend.js?v=589";
-import { syncAcquireLevel } from "../systems/acquire.js?v=589";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=598";
+import { rollGrowth } from "../../engine/growth.js?v=598";
+import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=598";
+import { monPrice } from "../systems/shop.js?v=598";
+import { ACHV } from "../systems/achv.js?v=598";
+import { bumpDaily } from "../ui/earn.js?v=598";
+import { currentMatchInfo, recordResult } from "./season.js?v=598";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=598";
+import { offerLegendReward } from "./legend.js?v=598";
+import { syncAcquireLevel } from "../systems/acquire.js?v=598";
 
 const CONTRACT_DISCOUNT = 1; // 合同按商店原价出售，不再打折
 // S31：每场胜利 35% 概率出现合同；连续 3 胜未出，下一场必出
@@ -154,7 +154,7 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   const oppOvr = engine
     ? Math.round(engine.teams[1].roster.reduce((a, p) => a + p.ovr, 0) / engine.teams[1].roster.length)
     : (info.targetPower || 60);
-  const baseCoins = 20 + Math.round(oppOvr * 0.5);
+  const baseCoins = 40 + Math.round(oppOvr * 1.0);
   const coinMult = info.kind === "playoff"
     ? (info.playoffRound === "final" ? 2.0 : 1.5)
     : (KIND_COIN[info.kind] ?? 0.7);
@@ -165,8 +165,8 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   let coins = 0;
   let xp = 0;
   if (!quit && won) {
-    // 赛后奖励从“纯金币”改为“金币 + 树果”：金币总量减半
-    coins = baseCoins * coinMult * 0.5;
+    // 金币底座抬高（S46）：一场常规赛约 70–100 币，配合涨价后的商店
+    coins = baseCoins * coinMult;
     xp = (12 + margin) * xpMult;
     if (simulated) {
       coins *= 0.8;

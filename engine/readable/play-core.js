@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=589";
+} from "./store-bridge.js?v=598";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -2062,8 +2062,8 @@ class MatchEngine {
     if (this.cfg.autoSwitch === !1) return;
     const s = this.users[e],
       n = (h) => h.state !== "stun";
-    const marking = s && this.manOf(s) === t;
-    if (s && n(s) && (marking || dist2d(s.x, s.y, t.x, t.y) < 6)) return;
+    // 已在防他：保持不动（S47：原「离得近就不切」会让玩家一直操控非对位者，自动换防看起来没生效）
+    if (s && n(s) && this.manOf(s) === t) return;
     const o = this.teamPlayers(e).filter(n);
     if (!o.length) return;
     const r = (h) => dist2d(h.x, h.y, t.x, t.y),
@@ -8403,7 +8403,7 @@ function Xs(a, e, t) {
     .concat(s.color, ";--tc2:")
     .concat(s.color2, '">\n      <header class="s5-head"><small>')
     .concat(t ? "Your starting five" : "Starting five", "</small><strong>")
-    .concat(escapeHtml(s.name), "</strong><em>战力 ")
+    .concat(escapeHtml(s.name), "</strong>", s.title ? `<em class="s5-coach">${escapeHtml(s.title)}</em>` : "", "<em>战力 ")
     .concat(Rt(s.roster), '</em></header>\n      <ol class="s5-row">')
     .concat(o, "</ol>\n    </section>");
 }

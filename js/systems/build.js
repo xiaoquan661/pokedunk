@@ -5,7 +5,7 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=589";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=598";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 export { POSITION_ORDER };
 
@@ -106,8 +106,8 @@ export function versatility(mon) {
 }
 
 /* ---------------- 训练 ---------------- */
-export const TRAIN_COST_BASE = 10;
-export const TRAIN_COST_STEP = 3;
+export const TRAIN_COST_BASE = 30;
+export const TRAIN_COST_STEP = 10;
 export function trainPrice(mon) {
   tidy(mon);
   return TRAIN_COST_BASE + TRAIN_COST_STEP * (mon.train.paid || 0);
