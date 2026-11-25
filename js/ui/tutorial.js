@@ -1,12 +1,12 @@
 /**
  * ui/tutorial.js —— 新手教程（移植 pokedunk 的训练模式，适配 v2 竖屏 UI）
- * 使用引擎 practice + drill：移动 / 投篮 / 抢断，约 1 分钟。
+ * 使用引擎 practice + drill：移动 / 传球 / 上篮 / 扣篮 / 空接 / 投篮 / 抢断 / 盖帽，约 2 分钟。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=585";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=585";
-import { gameAudio } from "../platform/audio.js?v=585";
-import { createTouchUI } from "../journey/match-screen.js?v=585";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=589";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=589";
+import { gameAudio } from "../platform/audio.js?v=589";
+import { createTouchUI } from "../journey/match-screen.js?v=589";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -19,26 +19,51 @@ const MOVE_SPOTS = [
 
 const DRILLS = [
   {
-    id: "movement", title: "移动", metric: "move", target: 2, time: 12, keys: ["摇杆"],
-    intro: "拖动摇杆，踩亮两个落脚点。",
-    tip: "推满摇杆可以冲刺。",
+    id: "movement", title: "移动", metric: "move", target: 2, time: 10, keys: ["摇杆"],
+    intro: "拖动摇杆跑向篮筐，推满摇杆可以冲刺。",
+    tip: "推满摇杆冲刺更快。",
   },
   {
-    id: "jumpshots", title: "投篮", metric: "reps", target: 1, time: 20, keys: ["投篮"],
-    intro: "按住投篮，白条填满时松开。",
-    tip: "松开时机越准，命中越高。",
+    id: "passing", title: "传球", metric: "pass", target: 1, time: 10, keys: ["传球"],
+    intro: "按传球，把球交给队友。",
+    tip: "被包夹时先传球。",
   },
   {
-    id: "steals", title: "抢断", metric: "reps", target: 1, time: 18, keys: ["抢断"],
+    id: "layups", title: "上篮", metric: "layup", target: 1, time: 12, keys: ["投篮"],
+    intro: "运球靠近篮筐，按投篮上篮。",
+    tip: "离篮筐越近越稳。",
+  },
+  {
+    id: "dunks", title: "扣篮", metric: "dunk", target: 1, time: 12, keys: ["推满摇杆", "投篮"],
+    intro: "推满摇杆冲进禁区，再按投篮扣篮。",
+    tip: "推满摇杆时按投篮才是扣篮。",
+  },
+  {
+    id: "alleyoop", title: "空接", metric: "oop", target: 1, time: 15, keys: ["传球"],
+    intro: "队友已经切到篮下，按传球把球抛给他。",
+    tip: "空接会把球直接送向篮筐。",
+  },
+  {
+    id: "jumpshots", title: "投篮", metric: "jumpshot", target: 1, time: 15, keys: ["投篮"],
+    intro: "按住投篮，蓄力条进入完美区时松开。",
+    tip: "松手越准，命中越高。",
+  },
+  {
+    id: "steals", title: "抢断", metric: "steal", target: 1, time: 15, keys: ["抢断"],
     intro: "贴近持球人，按抢断。",
-    tip: "贴身再按，太远会挥空。",
+    tip: "推满摇杆时抢断会变成撞击。",
+  },
+  {
+    id: "blocks", title: "盖帽", metric: "block", target: 1, time: 18, keys: ["投篮"],
+    intro: "守住篮下，对手出手时按投篮起跳封盖。",
+    tip: "别起跳太早，等球离手再跳。",
   },
 ];
 
 const CONTROLS = [
-  ["摇杆", "移动 / 防守跟人"],
-  ["投篮", "投篮 / 盖帽"],
-  ["传球", "传球 / 换防"],
+  ["摇杆", "移动 / 防守跟人（推满冲刺）"],
+  ["投篮", "投篮 / 上篮 / 扣篮 / 盖帽"],
+  ["传球", "传球 / 空接 / 换防"],
   ["抢断", "抢断"],
 ];
 
@@ -249,11 +274,14 @@ export function startTutorial(root, save, actions = {}) {
       const mine = ev.player && ev.player.team === 0;
       if (!mine) continue;
       if (ev.kind === "score") {
-        if (d.id === "layups" && (ev.how === "layup" || ev.how === "dunk")) stats.reps++;
+        if (d.id === "layups" && ev.how === "layup") stats.reps++;
+        if (d.id === "dunks" && ev.how === "dunk") stats.reps++;
         if (d.id === "jumpshots" && ev.how === "jump") stats.reps++;
       } else if (ev.kind === "oop" && d.id === "alleyoop") {
         stats.reps++;
       } else if (ev.kind === "steal" && d.id === "steals") {
+        stats.reps++;
+      } else if (ev.kind === "block" && d.id === "blocks") {
         stats.reps++;
       }
     }
@@ -407,7 +435,7 @@ export function startTutorial(root, save, actions = {}) {
       <i class="tut-prog"></i>
     </div><div class="tut-intro"><div class="panel">
       <h2>先认识按键</h2>
-      <p class="tut-intro-sub">比赛中随时会用到下面这些操作。</p>
+      <p class="tut-intro-sub">8 个小练习，约 2 分钟；跟着提示做一遍就开打。</p>
       <ul class="tut-keys">${CONTROLS.map(([k, t]) => `<li><i>${k}</i><span>${t}</span></li>`).join("")}</ul>
       <button class="tut-begin" type="button" data-tut="begin">开始训练</button>
       <button class="tut-skip-all" type="button" data-tut="skip-all">跳过教程，直接开打</button>

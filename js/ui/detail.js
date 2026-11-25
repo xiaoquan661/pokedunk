@@ -5,18 +5,18 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=585";
+import { getPokemon, calcOVR, calcArchetype, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=589";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   growthZh, recommendedPositions,
-} from "../systems/build.js?v=585";
-import { rollGrowth } from "../../engine/growth.js?v=585";
-import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=585";
-import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=585";
-import { BERRY_XP } from "../systems/shop.js?v=585";
-import { bumpDaily } from "./earn.js?v=585";
-import { playEvolve } from "./anim.js?v=585";
-import { ICON } from "./icons.js?v=585";
+} from "../systems/build.js?v=589";
+import { rollGrowth } from "../../engine/growth.js?v=589";
+import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=589";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=589";
+import { BERRY_XP } from "../systems/shop.js?v=589";
+import { bumpDaily } from "./earn.js?v=589";
+import { playEvolve } from "./anim.js?v=589";
+import { ICON } from "./icons.js?v=589";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
 const STAT_ZH = { spd: "速度", sht: "投篮", ins: "终结", pas: "传球", def: "防守", blk: "盖帽", reb: "篮板", hnd: "控球" };

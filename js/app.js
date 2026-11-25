@@ -3,45 +3,45 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=585"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=585";
-import { renderDex } from "./ui/dex.js?v=585";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=585";
-import { openSettings } from "./ui/settings.js?v=585";
-import { renderBag } from "./ui/bag.js?v=585";
-import { renderTeam } from "./ui/team.js?v=585";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=585";
-import { openDetail } from "./ui/detail.js?v=585";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=585";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=585";
-import { watchRewardedAd } from "./platform/ads.js?v=585";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=585";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=585";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=585";
-import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=585";
-import { showOfflineGrass } from "./ui/offline-grass.js?v=585";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=585";
-import { openDaily } from "./ui/daily.js?v=585";
-import { openCoachProfile } from "./ui/coach.js?v=585";
-import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=585";
-import { submitDailyScore } from "./platform/leaderboard.js?v=585";
-import { openAchievements } from "./ui/achv-ui.js?v=585";
-import { startTutorial } from "./ui/tutorial.js?v=585";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=585";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=585";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=585";
-import { ACHV } from "./systems/achv.js?v=585";
-import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=585";
-import { eggList } from "./systems/egg.js?v=585";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=585";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=585";
-import { ICON } from "./ui/icons.js?v=585";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=585";
-import { pendingLegend } from "./journey/legend.js?v=585";
-import { syncAcquireLevel } from "./systems/acquire.js?v=585";
-import { openLegendPicker } from "./ui/legend.js?v=585";
-import { openWild } from "./ui/wild.js?v=585";
-import { wildLeft, wildMax } from "./journey/wild.js?v=585";
+import "./systems/evo-rules.js?v=589"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=589";
+import { renderDex } from "./ui/dex.js?v=589";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=589";
+import { openSettings } from "./ui/settings.js?v=589";
+import { renderBag } from "./ui/bag.js?v=589";
+import { renderTeam } from "./ui/team.js?v=589";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=589";
+import { openDetail } from "./ui/detail.js?v=589";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=589";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=589";
+import { watchRewardedAd } from "./platform/ads.js?v=589";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=589";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=589";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=589";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=589";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=589";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=589";
+import { openDaily } from "./ui/daily.js?v=589";
+import { openCoachProfile } from "./ui/coach.js?v=589";
+import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=589";
+import { submitDailyScore } from "./platform/leaderboard.js?v=589";
+import { openAchievements } from "./ui/achv-ui.js?v=589";
+import { startTutorial } from "./ui/tutorial.js?v=589";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=589";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=589";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=589";
+import { ACHV } from "./systems/achv.js?v=589";
+import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=589";
+import { eggList } from "./systems/egg.js?v=589";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=589";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=589";
+import { ICON } from "./ui/icons.js?v=589";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=589";
+import { pendingLegend } from "./journey/legend.js?v=589";
+import { syncAcquireLevel } from "./systems/acquire.js?v=589";
+import { openLegendPicker } from "./ui/legend.js?v=589";
+import { openWild } from "./ui/wild.js?v=589";
+import { wildLeft, wildMax } from "./journey/wild.js?v=589";
 import {
   getPokemon,
   calcOVR,
@@ -57,7 +57,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=585";
+} from "../engine/readable/play-core.js?v=589";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -162,7 +162,7 @@ function newbieStep(save) {
 
 function newbieStepText(save) {
   const step = newbieStep(save);
-  if (step === 1) return "第 1 步 · 完成约 1 分钟教程";
+  if (step === 1) return "第 1 步 · 完成约 2 分钟教程";
   return "第 2 步 · 开始第一场比赛";
 }
 
@@ -196,15 +196,15 @@ function grantTutorialGift(save) {
     } else missing++;
   }
   if (missing) s.coins += missing * 200;
-  s.coins += 200;
+  s.coins += 100;
   ensureLineupSlots(s);
   s.newbie.tutorialDone = true;
   s.newbie.giftDone = true;
   s.newbie.shopBuys = 2;
   s.newbie.teamDone = true;
   writeSave(s);
-  if (!got.length) return { text: "首发已经完整 · 新手补给 +200 篮球币", got: [] };
-  return { text: "首发五人已就位 · 新手补给 +200 篮球币", got };
+  if (!got.length) return { text: "首发已经完整 · 新手补给 +100 篮球币", got: [] };
+  return { text: "首发五人已就位 · 新手补给 +100 篮球币", got };
 }
 
 function startNewbieFirstMatch(save) {
@@ -262,9 +262,9 @@ function openNewbieQuest(save) {
   wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
     <div class="page-head"><button class="back" data-back>‹</button><h2>新手之路</h2><span class="count">${lineup}/5 首发</span></div>
-    <p class="page-sub">先花约 1 分钟学会移动、投篮和抢断，首发会自动补齐。</p>
+    <p class="page-sub">先花约 2 分钟学会移动、传球、上篮、扣篮、空接、投篮、抢断和盖帽，首发会自动补齐。</p>
     <div class="pk-panel" style="padding:4px 12px">
-      ${row(!!nb.tutorialDone, "完成操作教程", "移动、投篮、抢断，约 1 分钟")}
+      ${row(!!nb.tutorialDone, "完成操作教程", "移动、传球、上篮、扣篮、空接、投篮、抢断、盖帽，约 2 分钟")}
       ${row(!!nb.tutorialDone && lineup >= 5, "开始第一场比赛", lineup >= 5 ? `首发 ${lineup}/5 已就位` : "完成教程后自动补齐首发")}
     </div>
     <button class="pk-btn-gold" id="nbq-go" style="width:100%;padding:12px;margin-top:12px">${actions[step][0]}</button>
@@ -330,7 +330,7 @@ function openGuideMenu(save) {
     </button>
     <button class="guide-opt" data-guide-tut>
       <b>操作教程</b>
-      <small>进入练习赛，学习移动、投篮和抢断，约 1 分钟</small>
+      <small>进入练习赛，学习移动、传球、上篮、扣篮、空接、投篮、抢断和盖帽，约 2 分钟</small>
     </button>
   </div></div>`;
   wrap.addEventListener("click", (e) => {
@@ -543,7 +543,7 @@ function showStarter(save) {
       </div>
       <div class="starter-actions">
         <button class="pk-btn-gold no-zh" disabled>确 定</button>
-        <p class="starter-note">选好本命后直接进入手把手教程 · 开局赠送 300 篮球币</p>
+        <p class="starter-note">选好本命后直接进入手把手教程 · 开局赠送 100 篮球币</p>
       </div>
     </div>`);
   app.append(sc);
@@ -571,7 +571,7 @@ function showStarter(save) {
     const r = startJourney(save, STARTERS[selected].dex, "小智", STARTERS[selected].pos);
     if (!r.ok) return;
     sc.__stopBg?.();
-    save.coins = 300; // 开局启动资金（S13 待最终数值，先给可玩额度）
+    save.coins = 100; // 开局启动资金（S42：300→100，避免开局金币过剩、削弱广告动机）
     writeSave(save);
     startNewbieTutorial(save); // 选完本命伙伴 → 直接手把手教程
   });
@@ -2072,7 +2072,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=585");
+window.__PC = await import("../engine/readable/play-core.js?v=589");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

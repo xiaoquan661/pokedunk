@@ -11,13 +11,13 @@
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=585";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=585";
-import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=585";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=585";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=585";
-import { loadSet } from "../ui/settings.js?v=585";
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=585";
+} from "../../engine/readable/play-core.js?v=589";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=589";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=589";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=589";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=589";
+import { loadSet } from "../ui/settings.js?v=589";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=589";
 
 const FIRST_WIN_COINS = 100;
 

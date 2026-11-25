@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=585";
+} from "./store-bridge.js?v=589";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -1364,13 +1364,30 @@ const FREE_THROW_SPOTS = [82, 19],
       shotClock: !1,
     },
     passing: { userBall: !0, user: sn, cpu: Ht, cpuDribbleOnly: !1, shotClock: !1 },
+    dunks: {
+      userBall: !0,
+      user: [[82.5, 25], [70, 5], [70, 45], [86, 3], [86, 47]],
+      cpu: [[60, 10], [60, 40], [55, 18], [55, 32], [50, 25]],
+      cpuDribbleOnly: !1,
+      shotClock: !1,
+    },
     alleyoop: {
       userBall: !0,
-      user: [[64, 25], [66, 4], [66, 46], [70, 44], FREE_THROW_SPOTS],
-      cpu: Ht,
+      user: [[70, 25], [66, 4], [66, 46], [84, 20], FREE_THROW_SPOTS],
+      cpu: [[50, 10], [50, 40], [45, 18], [45, 32], [40, 25]],
       cpuDribbleOnly: !1,
       shotClock: !1,
       holdSpots: !0,
+      forcePassSlot: 3,
+      forceOop: !0,
+    },
+    blocks: {
+      userBall: !1,
+      user: [[16, 25], [11, 10], [11, 40], [8, 18], [8, 32]],
+      cpu: [[20, 25], [15, 10], [15, 40], [11, 18], [11, 32]],
+      cpuDribbleOnly: !1,
+      shotClock: !0,
+      shotClockSec: 6,
     },
     defense: {
       userBall: !1,
@@ -1409,6 +1426,7 @@ const FREE_THROW_SPOTS = [82, 19],
       ],
       cpuDribbleOnly: !0,
       shotClock: !1,
+      noShove: !0,
     },
   },
   an = [
@@ -1841,7 +1859,7 @@ class MatchEngine {
       (n.vy = 0),
       (n.vz = 0),
       (this.offense = s),
-      (this.shotClock = 24),
+      (this.shotClock = e.shotClockSec || 24),
       this.giveBall(
         this.players.find((r) => r.team === s && r.slot === 0),
         !0,
@@ -2586,10 +2604,16 @@ class MatchEngine {
   }
   doPass(e) {
     var o;
-    const t = (o = e.intent.passTo) != null ? o : this.pickPassTarget(e);
+    const drill = this.drillId ? Ts[this.drillId] : null;
+    let t = (o = e.intent.passTo) != null ? o : this.pickPassTarget(e);
+    // 教程空接：固定传给篮下队友，并强制成空接传球
+    if (drill && drill.forcePassSlot != null) {
+      const forced = this.teamPlayers(e.team).find((p) => p.slot === drill.forcePassSlot);
+      if (forced) t = forced;
+    }
     if (!t || t === e) return;
     const s = this.ball,
-      n = e.intent.turbo && this.distToHoop(t) < 17 && t.state === "free";
+      n = (e.intent.turbo || !!(drill && drill.forceOop)) && this.distToHoop(t) < 17 && t.state === "free";
     ((s.owner = null),
       (s.mode = "pass"),
       (s.lastTouch = e.team),
@@ -2610,7 +2634,8 @@ class MatchEngine {
     if (e.stealCd > 0 || e.z > 0.5) return;
     ((e.stealCd = 0.6), (e.state = "swipe"), (e.stateT = 0.25));
     const t = this.ball.mode === "held" ? this.ball.owner : null;
-    if (e.intent.turbo && (e.turbo > 0.25 || e.fx.surge > 0 || e.fire)) {
+    const drill = this.drillId ? Ts[this.drillId] : null;
+    if (!(drill && drill.noShove) && e.intent.turbo && (e.turbo > 0.25 || e.fx.surge > 0 || e.fire)) {
       let o = null;
       if (t && t.team !== e.team && dist2d(e.x, e.y, t.x, t.y) < 4.8 && t.state !== "dunk") o = t;
       else {
