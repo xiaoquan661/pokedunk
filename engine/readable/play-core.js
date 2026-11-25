@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=574";
+} from "./store-bridge.js?v=585";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -1710,7 +1710,7 @@ class MatchEngine {
   }
   greenWindow(e) {
     const t = e.human ? this.diff.green * (1 + 0.3 * this.catchup()) : 1;
-    return (0.022 + (e.r.sht / 100) * 0.045) * t * (e.fire ? 1.7 : 1);
+    return (0.012 + (e.r.sht / 100) * 0.055) * t * (e.fire ? 1.7 : 1);
   }
   isHumanTeam(e) {
     return this.teams[e].human;
@@ -2378,8 +2378,8 @@ class MatchEngine {
     let c;
     switch (n) {
       case "perfect":
-        // 完美出手也吃投篮：低投篮完美仍可能打铁，高投篮完美更稳
-        c = clampNum((r ? 0.78 : 0.86) + (e.r.sht - 60) * 0.003, 0.55, 0.97) - (1 - i) * 0.55;
+        // 完美出手也大幅吃投篮：40 投篮约 62%，99 投篮约 97%；三分线外再低 8 个百分点
+        c = clampNum((r ? 0.54 : 0.62) + (e.r.sht - 40) * 0.0059, 0.50, 0.97) - (1 - i) * 0.55;
         break;
       case "good":
         c = l * i + 0.06;

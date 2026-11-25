@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=574";
+import { loadSave, writeSave } from "../storage.js?v=585";
 
 const STEPS = [
   {
@@ -56,7 +56,7 @@ const NEWBIE_STEP = {
   screen: "home",
   target: '[data-go="newbie"]',
   title: "新手之路",
-  text: "顶部这条「新手之路」会一直显示。点进去跟着步骤走：完成操作教程 → 领取教程伙伴 → 去商店买 2 只 → 凑齐 5 人首发，就能开始第一场比赛。",
+  text: "顶部这条「新手之路」会一直显示。点进去完成约 1 分钟教程，首发会自动补齐，然后直接开始第一场比赛。",
   action: "知道了",
 };
 const stepsFor = (save) => (save?.newbie && !save.newbie.done ? [NEWBIE_STEP] : STEPS);

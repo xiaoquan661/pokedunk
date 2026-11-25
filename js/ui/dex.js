@@ -5,17 +5,17 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=574";
-import { gameAudio } from "../platform/audio.js?v=574";
-import { getPokemon } from "../../engine/readable/play-core.js?v=574";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=574";
-import { openDetail } from "./detail.js?v=574";
-import { playAcquire } from "./anim.js?v=574";
+import { loadSave, writeSave } from "../storage.js?v=585";
+import { gameAudio } from "../platform/audio.js?v=585";
+import { getPokemon } from "../../engine/readable/play-core.js?v=585";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=585";
+import { openDetail } from "./detail.js?v=585";
+import { playAcquire } from "./anim.js?v=585";
 import {
   milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
   typeRewardRows, claimTypeReward,
-} from "../systems/milestones.js?v=574";
-import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=574";
+} from "../systems/milestones.js?v=585";
+import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=585";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...

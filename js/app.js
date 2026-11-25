@@ -3,45 +3,45 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=574"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=574";
-import { renderDex } from "./ui/dex.js?v=574";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=574";
-import { openSettings } from "./ui/settings.js?v=574";
-import { renderBag } from "./ui/bag.js?v=574";
-import { renderTeam } from "./ui/team.js?v=574";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=574";
-import { openDetail } from "./ui/detail.js?v=574";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=574";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=574";
-import { watchRewardedAd } from "./platform/ads.js?v=574";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=574";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=574";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=574";
-import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=574";
-import { showOfflineGrass } from "./ui/offline-grass.js?v=574";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=574";
-import { openDaily } from "./ui/daily.js?v=574";
-import { openCoachProfile } from "./ui/coach.js?v=574";
-import { addRep, bumpRepMission, repInfo, repMissionRows, repAdLeft } from "./systems/reputation.js?v=574";
-import { submitDailyScore } from "./platform/leaderboard.js?v=574";
-import { openAchievements } from "./ui/achv-ui.js?v=574";
-import { startTutorial } from "./ui/tutorial.js?v=574";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=574";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=574";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=574";
-import { ACHV } from "./systems/achv.js?v=574";
-import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=574";
-import { eggList } from "./systems/egg.js?v=574";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=574";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=574";
-import { ICON } from "./ui/icons.js?v=574";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=574";
-import { pendingLegend } from "./journey/legend.js?v=574";
-import { syncAcquireLevel } from "./systems/acquire.js?v=574";
-import { openLegendPicker } from "./ui/legend.js?v=574";
-import { openWild } from "./ui/wild.js?v=574";
-import { wildLeft, wildMax } from "./journey/wild.js?v=574";
+import "./systems/evo-rules.js?v=585"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=585";
+import { renderDex } from "./ui/dex.js?v=585";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=585";
+import { openSettings } from "./ui/settings.js?v=585";
+import { renderBag } from "./ui/bag.js?v=585";
+import { renderTeam } from "./ui/team.js?v=585";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=585";
+import { openDetail } from "./ui/detail.js?v=585";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=585";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=585";
+import { watchRewardedAd } from "./platform/ads.js?v=585";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=585";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=585";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=585";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=585";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=585";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=585";
+import { openDaily } from "./ui/daily.js?v=585";
+import { openCoachProfile } from "./ui/coach.js?v=585";
+import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=585";
+import { submitDailyScore } from "./platform/leaderboard.js?v=585";
+import { openAchievements } from "./ui/achv-ui.js?v=585";
+import { startTutorial } from "./ui/tutorial.js?v=585";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=585";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=585";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=585";
+import { ACHV } from "./systems/achv.js?v=585";
+import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=585";
+import { eggList } from "./systems/egg.js?v=585";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=585";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=585";
+import { ICON } from "./ui/icons.js?v=585";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=585";
+import { pendingLegend } from "./journey/legend.js?v=585";
+import { syncAcquireLevel } from "./systems/acquire.js?v=585";
+import { openLegendPicker } from "./ui/legend.js?v=585";
+import { openWild } from "./ui/wild.js?v=585";
+import { wildLeft, wildMax } from "./journey/wild.js?v=585";
 import {
   getPokemon,
   calcOVR,
@@ -57,7 +57,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=574";
+} from "../engine/readable/play-core.js?v=585";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -70,7 +70,7 @@ const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", 
 const GYM_LEADER_CN = ["小刚", "小霞", "马志士", "莉佳", "阿桔", "娜姿", "夏伯", "坂木"];
 
 /** 更新公告：版本号变化后主轴按钮出现红点，并自动弹一次；文案直接改这里 */
-const NOTICE_VERSION = "s43-2026-11-24";
+const NOTICE_VERSION = "s44-2026-11-25";
 /** 公告日期跟随设备当天日期，避免下次更新忘记改 */
 const NOTICE_DATE = (() => {
   const d = new Date();
@@ -112,39 +112,58 @@ const NOTICE_ITEMS = [
   ["训练草地挂机", "培养页「草地」tab：把拥有的精灵直接拖上草坪挂机，每分钟 2 经验、离线也持续累积，没有上限；拖出草地即收回。"],
   ["树果与赛后奖励", "赛后奖励改为金币 + 树果，胜利金币减半；普通树果 12 币 / +50 XP 不限购；高级树果 60 币 / +800 XP，每日限购 3 个。"],
   ["体验修复", "比分条改为转播式布局；赛前首发取消卡片外框；修复部分手机顶部按钮被状态栏遮挡。"],
-  ["奖励精简", "教练升级改为只解锁称号；世代篇章只发纪念章/勋章；属性收集改为徽章；成就送蛋改为孵蛋加速券；每日挑战 90/120 分本周已领后不再折算金币；野球场重复折算 25 币。"],
-  ["广告收益提升", "金币广告 +100 → +300；训练广告 +5 → +10 自由点；孵蛋加速 2 → 4 小时且每日 2 → 3 次、立即孵出 1 → 2 次；教练应援 +50 → +100 声望；赛后金币翻倍改为 ×3。"],
-  ["成就金币减半", "33 项成就的金币奖励整体下调约一半（总量 5,175 → 2,590），道具奖励保持不变。"],
-  ["删除新手任务", "「获取金币」里的新手任务已删除；该入口现在只剩看广告 +300 币，每日任务仍在主页。"],
-  ["战斗差异拉开", "完美出手的投篮属性差加大：40→99 投篮的完美出手差距从约 12 个百分点提高到约 17 个百分点；篮板随机从 35 降到 24，高篮板优势更明显。"],
-  ["体力与冲刺调整", "耐力池改为由篮板/防守决定，高耐力冲刺更持久、额外耗体更低；冲刺速度改为随速度成长（速度 40→99 时加成约 1.40→1.55），体力耗尽后的惩罚从 18% 提高到 20%。"],
-  ["速度/控球/传球差异", "跑速公式压低低速下限、提高速度斜率；持球速度更吃控球；传球速度更吃传球属性。速度 40→99 的跑速差从约 35% 提高到约 47%，持球跑速差约 68%，传球球速差约 29%。"],
+  ["奖励精简", "调整了部分奖励结构，减少了重复发放的金币和道具；收集类奖励改为纪念章、徽章等展示内容。"],
+  ["广告收益提升", "提高了看广告获得的金币、训练点、孵蛋加速、教练声望和赛后金币收益。"],
+  ["成就金币下调", "下调了成就的金币奖励，道具奖励保持不变。"],
+  ["删除新手任务", "移除了获取金币入口里的新手任务，保留看广告和主页每日任务。"],
+  ["战斗差异拉开", "拉开了不同属性在投篮、篮板、体力、速度、控球和传球上的表现差距。"],
+  ["体力与冲刺调整", "高耐力球员冲刺更持久、耗体更低；速度会影响冲刺加成；体力耗尽后的惩罚更明显。"],
+  ["速度/控球/传球差异", "低速、低控球、低传球的球员会更吃亏，高属性球员的跑动和出球优势更明显。"],
+  ["教练声望与离线收益", "教练声望和离线收益接入局外成长；离线一段时间后会先弹出收益，可直接收取或看广告加倍。"],
+  ["主页顶部栏整理", "重新排布金币、教练等级、赛季徽章和指引/公告入口，修复窄屏溢出与红点常亮。"],
+];
+/** 更新日志：按日期分组，默认折叠 */
+const NOTICE_LOG = [
+  ["2026-11-25", "", [
+    ["奖励精简", "减少了重复发放的金币和道具，收集类奖励改为纪念章、徽章等展示内容。"],
+    ["广告收益提升", "提高了看广告获得的金币、训练点、孵蛋加速、教练声望和赛后金币收益。"],
+    ["战斗差异", "拉开不同属性在投篮、篮板、体力、冲刺、速度、控球和传球上的表现差距。"],
+    ["局外成长与界面", "教练声望、离线收益和世代篇章接入局外成长；主页顶部入口重新排布。"],
+  ]],
+  ["2026-11-24", "", [
+    ["野球场1v1", "新增半场 1v1 野球场，赢下后可获得野生精灵，每日次数可用广告增加。"],
+    ["合同与徽章", "调整了合同出现率和保底；移除了徽章页的免费球探。"],
+    ["草地与比赛", "首发上草地需要确认，草地中的精灵不能参加比赛；离线收益改为上线先结算。"],
+  ]],
+  ["2026-11-19", "", [
+    ["能力差异强化", "拉开了投篮、贴防和持球速度在比赛里的作用。"],
+    ["快速比赛与手动进化", "新增快速比赛；进化改为达到等级后由玩家手动确认。"],
+    ["升级与广告", "下调了升级经验需求；调整了金币广告和训练广告的收益。"],
+    ["签到与孵蛋", "新增签到；调整孵蛋、商店和赛后奖励。"],
+  ]],
+  ["2026-11-12", "", [
+    ["基础系统", "建立了赛季、每日挑战、图鉴里程碑、成就和排行榜等基础循环。"],
+    ["经济与进化", "确定了商店、合同、进化等级和比赛奖励的基本规则。"],
+  ]],
 ];
 
 /** 首发人数：比赛要求 5 人，不足时引导玩家先组队 */
 const lineupSize = (save) => starterIds(save).filter((id) => save.mons[id]).length;
 const hasFullLineup = (save) => lineupSize(save) >= 5;
 
-/* ================= 新手之路：教程 → 2 只伙伴 → 商店买 2 只 → 5 人首发 ================= */
-const NEWBIE_GIFT_DEX = [25, 133]; // 皮卡丘 / 伊布（教程试用的两只）
+/* ================= 新手之路：短教程 → 首发自动补齐 → 第一场比赛 ================= */
 const newbieActive = (save) => !!(save?.newbie && !save.newbie.done);
 
 function newbieStep(save) {
   const nb = save?.newbie;
   if (!nb || nb.done) return 0;
-  if (!nb.tutorialDone) return 1;
-  if ((nb.shopBuys || 0) < 2) return 2;
-  // 商店买完后先引导去队伍页检查/调整首发，不要直接开比赛
-  if (!nb.teamDone || lineupSize(save) < 5) return 3;
-  return 4;
+  return nb.tutorialDone ? 2 : 1;
 }
 
 function newbieStepText(save) {
   const step = newbieStep(save);
-  if (step === 1) return "第 1 步 · 完成操作教程";
-  if (step === 2) return `第 2 步 · 商店买精灵 ${save.newbie.shopBuys || 0}/2`;
-  if (step === 3) return `第 3 步 · 调整首发队伍 ${lineupSize(save)}/5`;
-  return "第 4 步 · 开始第一场比赛";
+  if (step === 1) return "第 1 步 · 完成约 1 分钟教程";
+  return "第 2 步 · 开始第一场比赛";
 }
 
 /** 打完第一场正式比赛即视为走完新手之路：顶部入口彻底隐藏（不管从哪个入口进的比赛） */
@@ -166,25 +185,37 @@ function grantTutorialGift(save) {
   s.newbie ||= { v: 1, tutorialDone: false, giftDone: false, shopBuys: 0, shopPrompted: false, done: false };
   const got = [];
   let missing = 0;
-  for (const dex of NEWBIE_GIFT_DEX) {
-    if (hasDex(s, dex)) { missing++; continue; }
-    const r = addMon(s, dex, { from: "tutorial" });
+  // 补齐剩下四个位置，教程结束直接凑出完整首发
+  for (const st of STARTERS) {
+    if (hasDex(s, st.dex)) continue;
+    const r = addMon(s, st.dex, { from: "tutorial" });
     if (r.ok) {
       const m = s.mons[r.id];
-      m.pos = getPokemon(dex).pos;
-      got.push(dex);
+      if (m) m.pos = st.pos;
+      got.push(st.dex);
     } else missing++;
   }
-  // 极端情况下（已经拥有这两只）补金币，避免流程断掉
   if (missing) s.coins += missing * 200;
-  // 新手补给：保证接下来一定买得起 2 只商店精灵，避免先去买蛋/树果后卡死
   s.coins += 200;
   ensureLineupSlots(s);
   s.newbie.tutorialDone = true;
   s.newbie.giftDone = true;
+  s.newbie.shopBuys = 2;
+  s.newbie.teamDone = true;
   writeSave(s);
-  if (!got.length) return { text: "教程伙伴已经在你队里了，已补发 600 篮球币。", got: [] };
-  return { text: `新手补给 +200 篮球币`, got: [...got] };
+  if (!got.length) return { text: "首发已经完整 · 新手补给 +200 篮球币", got: [] };
+  return { text: "首发五人已就位 · 新手补给 +200 篮球币", got };
+}
+
+function startNewbieFirstMatch(save) {
+  const cur = loadSave() || save;
+  if (lineupSize(cur) < 5) return showHome(cur);
+  cur.newbie ||= { v: 1, tutorialDone: true, giftDone: true, shopBuys: 2, teamDone: true, done: false };
+  cur.newbie.done = true;
+  cur.guide = { v: 1, step: 0, done: false };
+  cur.guideV2 = 1;
+  writeSave(cur);
+  startMatchNow(cur);
 }
 
 function startNewbieTutorial(save) {
@@ -194,6 +225,7 @@ function startNewbieTutorial(save) {
   startTutorial(app, s, {
     onDone: () => grantTutorialGift(s),
     onExit: () => showHome(loadSave() || s),
+    onStartMatch: () => startNewbieFirstMatch(loadSave() || s),
   });
 }
 
@@ -203,22 +235,10 @@ function openNewbieQuest(save) {
   if (!nb || nb.done) return showHome(s);
   const step = newbieStep(s);
   const lineup = lineupSize(s);
-  const buys = nb.shopBuys || 0;
   const row = (ok, title, desc) => `<div class="nbq-row${ok ? " ok" : ""}"><i>${ok ? "✓" : ""}</i><div><b>${title}</b><small>${desc}</small></div></div>`;
   const actions = {
     1: ["去操作教程", () => { wrap.remove(); startNewbieTutorial(s); }],
-    2: ["去每日商店", () => { wrap.remove(); showSub(renderShop, s); }],
-    3: ["去调整队伍", () => { wrap.remove(); showTeam(s); }],
-    4: ["开始第一场比赛", () => {
-      const cur = loadSave() || s;
-      cur.newbie.done = true;
-      // 新手之路结束：让首次主页界面导引从第一步开始
-      cur.guide = { v: 1, step: 0, done: false };
-      cur.guideV2 = 1;
-      writeSave(cur);
-      wrap.remove();
-      openSeasonBoard(cur);
-    }],
+    2: ["开始第一场比赛", () => { wrap.remove(); startNewbieFirstMatch(loadSave() || s); }],
   };
   if (!document.getElementById("nbq-style")) {
     const st = document.createElement("style");
@@ -242,12 +262,10 @@ function openNewbieQuest(save) {
   wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
     <div class="page-head"><button class="back" data-back>‹</button><h2>新手之路</h2><span class="count">${lineup}/5 首发</span></div>
-    <p class="page-sub">跟着步骤走，凑齐 5 人首发就能开始第一场比赛。</p>
+    <p class="page-sub">先花约 1 分钟学会移动、投篮和抢断，首发会自动补齐。</p>
     <div class="pk-panel" style="padding:4px 12px">
-      ${row(!!nb.tutorialDone, "完成操作教程", "学习移动、投篮、传球、抢断、推满摇杆冲刺与必杀")}
-      ${row(!!nb.giftDone, "领取教程伙伴", "皮卡丘、伊布加入队伍")}
-      ${row(buys >= 2, "在每日商店购买 2 只精灵", `已购买 ${buys}/2`)}
-      ${row(!!nb.teamDone && lineup >= 5, "调整首发队伍", nb.teamDone ? `当前 ${lineup}/5` : "去队伍页检查首发位置")}
+      ${row(!!nb.tutorialDone, "完成操作教程", "移动、投篮、抢断，约 1 分钟")}
+      ${row(!!nb.tutorialDone && lineup >= 5, "开始第一场比赛", lineup >= 5 ? `首发 ${lineup}/5 已就位` : "完成教程后自动补齐首发")}
     </div>
     <button class="pk-btn-gold" id="nbq-go" style="width:100%;padding:12px;margin-top:12px">${actions[step][0]}</button>
     <p class="page-sub" style="text-align:center;margin-top:8px">${newbieStepText(s)}</p>
@@ -312,7 +330,7 @@ function openGuideMenu(save) {
     </button>
     <button class="guide-opt" data-guide-tut>
       <b>操作教程</b>
-      <small>进入练习赛，学习移动、投篮、传球、抢断、推满摇杆冲刺与必杀</small>
+      <small>进入练习赛，学习移动、投篮和抢断，约 1 分钟</small>
     </button>
   </div></div>`;
   wrap.addEventListener("click", (e) => {
@@ -567,21 +585,52 @@ function openNotice() {
     <b style="font:700 12.5px var(--sport);color:var(--gold,#f5c542)">${title}</b>
     <p style="margin:3px 0 0;font-size:11.5px;line-height:1.6;color:var(--text-dim,#c9c0a8)">${body}</p>
   </div>`;
+  const current = NOTICE_ITEMS.slice(-9).reverse();
+  const logHtml = NOTICE_LOG.map(([date, _version, items]) => `<details class="notice-log-group">
+    <summary><span>${date}</span><i>›</i></summary>
+    <div class="nl-items">${items.map(([title, body]) => `<div class="nl-item"><b>${title}</b><p>${body}</p></div>`).join("")}</div>
+  </details>`).join("");
   const wrap = document.createElement("div");
   wrap.className = "pj-scrim page-modal";
   wrap.style.cssText = "position:fixed;inset:0;z-index:950;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
-  wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
-    <div class="page-head"><button class="back" data-close>‹</button><h2>更新公告</h2><span class="count">S32</span></div>
-    <p class="page-sub">${NOTICE_DATE} · 本次更新</p>
-    <div class="pk-panel" style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">
-      ${NOTICE_ITEMS.map(([title, body]) => row(title, body)).join("")}
-    </div>
-    <button class="pk-btn-gold" data-close style="width:100%;padding:12px;margin-top:12px">知道了</button>
-  </div></div>`;
+  wrap.innerHTML = `<style>
+    .notice-actions{display:flex;gap:8px;margin-top:12px}
+    .notice-actions .pk-btn-gold{flex:1;padding:11px 8px}
+    .notice-log{display:flex;flex-direction:column;gap:8px}
+    .notice-log-group{border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(0,0,0,.18);overflow:hidden}
+    .notice-log-group summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;cursor:pointer;list-style:none;font:700 12px var(--sport);color:var(--gold,#f5c542)}
+    .notice-log-group summary::-webkit-details-marker{display:none}
+    .notice-log-group summary i{font-style:normal;font-size:15px;line-height:1;color:var(--text-dim,#c9c0a8);transition:transform .16s}
+    .notice-log-group[open] summary i{transform:rotate(90deg)}
+    .notice-log-group .nl-items{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
+    .notice-log-group .nl-item b{display:block;font-size:11.5px;color:#fff}
+    .notice-log-group .nl-item p{margin:2px 0 0;font-size:10.5px;line-height:1.55;color:var(--text-dim,#c9c0a8)}
+  </style>
+  <div class="pj-page-card"><div class="sub-page pj-page-body notice-body"></div></div>`;
+  const body = wrap.querySelector(".notice-body");
+  const render = (mode) => {
+    body.innerHTML = mode === "log" ? `
+      <div class="page-head"><button class="back" data-log-back>‹</button><h2>更新日志</h2></div>
+      <p class="page-sub">按日期折叠 · 点击日期展开</p>
+      <div class="notice-log">${logHtml}</div>
+      <button class="pk-btn-gold" data-log-back style="width:100%;padding:12px;margin-top:12px">返回本次更新</button>` : `
+      <div class="page-head"><button class="back" data-close>‹</button><h2>更新公告</h2></div>
+      <p class="page-sub">${NOTICE_DATE} · 本次更新</p>
+      <div class="pk-panel" style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">
+        ${current.map(([title, text]) => row(title, text)).join("")}
+      </div>
+      <div class="notice-actions">
+        <button class="pk-btn-gold" data-close>知道了</button>
+        <button class="pk-btn-gold pm-ghost" data-log-open>更新日志</button>
+      </div>`;
+  };
   wrap.addEventListener("click", (e) => {
-    if (e.target === wrap || e.target.closest("[data-close]")) wrap.remove();
+    if (e.target === wrap || e.target.closest("[data-close]")) { wrap.remove(); return; }
+    if (e.target.closest("[data-log-open]")) { render("log"); return; }
+    if (e.target.closest("[data-log-back]")) { render("notice"); }
   });
   (document.getElementById("stage") || document.body).appendChild(wrap);
+  render("notice");
 }
 
 function showHome(save, justStarted = false) {
@@ -611,7 +660,7 @@ function showHome(save, justStarted = false) {
   const daily = dailyPreview(save);
   const sign = signInfo(save);
   const rep = repInfo(save);
-  const coachDot = repMissionRows(save).some((m) => m.canClaim) || repAdLeft(save) > 0;
+  const coachDot = repMissionRows(save).some((m) => m.canClaim);
   const wildN = wildLeft(save);
   const wildTotal = wildMax(save);
   const gslots = grassState(save);
@@ -663,31 +712,35 @@ function showHome(save, justStarted = false) {
         .screen-menu .newbie-top .nt-txt b em{font-style:normal;font-size:9.5px;color:var(--gold,#f5c542);margin-left:4px;font-weight:700}
         .screen-menu .newbie-top .nt-txt small{font-size:10px;color:var(--text-dim,#c9c0a8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .screen-menu .newbie-top .nt-arrow{flex-shrink:0;font-size:11px;font-weight:700;color:var(--gold,#f5c542)}
-        .screen-menu .top-row{gap:6px}
-        .screen-menu .top-row .badge-chip{white-space:nowrap;font-size:12px;padding:5px 8px;flex-shrink:0}
+        .screen-menu .top-row{gap:5px;padding-left:10px;padding-right:10px;flex-wrap:nowrap}
+        .screen-menu .top-row .badge-chip{white-space:nowrap;font-size:11px;padding:4px 7px;gap:4px;flex-shrink:0}
+        .screen-menu .top-row .coin-chip.coin-btn{padding:4px 4px 4px 9px;gap:5px;flex-shrink:0}
         .screen-menu .top-row .coin-chip.plain{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-        .screen-menu .top-row .coach-chip{position:relative;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;max-width:96px;min-width:0}
+        .screen-menu .top-row .coach-chip{position:relative;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;max-width:88px;min-width:0;padding:4px 8px}
+        .screen-menu .top-row .coach-chip.plain{max-width:82px}
         .screen-menu .top-row .coach-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
         .screen-menu .top-row .coach-chip em{font-style:normal;flex-shrink:0;font:700 9px var(--sport);color:var(--gold)}
         .screen-menu .top-row .coach-chip .dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#ff5a5a;border:1px solid #0a0a0a}
-        .screen-menu .notice-chip{position:relative;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;padding:5px 8px;border:1px solid var(--line,#b9ad92);border-radius:999px;background:rgba(0,0,0,.35);color:var(--text,#1c241e);font:700 10.5px var(--sport);letter-spacing:.06em;cursor:pointer}
-        .screen-menu .notice-chip svg{width:12px;height:12px;display:block}
+        .screen-menu .top-row .icon-chip{width:30px;height:30px;padding:0;justify-content:center;gap:0;border-radius:50%;flex-shrink:0}
+        .screen-menu .top-row .guide-chip svg{width:15px;height:15px;display:block}
+        .screen-menu .notice-chip{position:relative;display:inline-flex;align-items:center;flex-shrink:0;border:1px solid var(--line,#b9ad92);background:rgba(0,0,0,.35);color:var(--text,#1c241e);cursor:pointer}
+        .screen-menu .notice-chip svg{width:14px;height:14px;display:block}
         .screen-menu .notice-chip .dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#ff5a5a;border:1px solid #0a0a0a}
       </style>
       <div class="top-row">
         <button class="coin-chip coin-btn" id="earn-add" title="获取金币" aria-label="获取金币">${COIN_SVG}<b>${save.coins}</b><span class="coin-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></button>
-        <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>S${season.no} · ${badge}/8</b></button>
-        <button class="guide-chip" id="home-guide" type="button" title="新手指引">导引</button>
-        <button class="notice-chip" id="home-notice" type="button" title="更新公告" aria-label="更新公告">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8 8 0 0 1 0 12"/></svg>
-          <span>公告</span>${noticeUnread ? '<i class="dot"></i>' : ""}
-        </button>
-        <div class="spacer"></div>
         <button class="coin-chip plain coach-chip" id="home-coach" type="button" title="教练档案"><span>${save.coach.name}</span><em>Lv.${rep.level}</em>${coachDot ? '<i class="dot"></i>' : ""}</button>
+        <button class="badge-chip" id="home-badges" type="button" title="道馆徽章">${BADGE_SVG} <b>S${season.no} · ${badge}/8</b></button>
+        <div class="spacer"></div>
+        <button class="guide-chip icon-chip" id="home-guide" type="button" title="新手指引" aria-label="新手指引">${LINE_ICON.tutorial}</button>
+        <button class="notice-chip icon-chip" id="home-notice" type="button" title="更新公告" aria-label="更新公告">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8.5h6M9 12h6M9 15.5h4"/></svg>
+          ${noticeUnread ? '<i class="dot"></i>' : ""}
+        </button>
       </div>
       ${newbieActive(save) ? `<button class="newbie-top" data-go="newbie">
         <span class="nt-ico">${LINE_ICON.tutorial}</span>
-        <span class="nt-txt"><b>新手之路 <em>${newbieStep(save)}/4</em></b><small>${newbieStepText(save)}</small></span>
+        <span class="nt-txt"><b>新手之路 <em>${newbieStep(save)}/2</em></b><small>${newbieStepText(save)}</small></span>
         <span class="nt-arrow">继续 ›</span>
       </button>` : ""}
       <div class="menu-in">
@@ -2019,7 +2072,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=574");
+window.__PC = await import("../engine/readable/play-core.js?v=585");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

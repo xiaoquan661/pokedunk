@@ -1,12 +1,12 @@
 /**
  * ui/tutorial.js —— 新手教程（移植 pokedunk 的训练模式，适配 v2 竖屏 UI）
- * 使用引擎 practice + drill：移动 / 上篮 / 跳投 / 传球 / 空接 / 防守 / 抢断。
+ * 使用引擎 practice + drill：移动 / 投篮 / 抢断，约 1 分钟。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=574";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=574";
-import { gameAudio } from "../platform/audio.js?v=574";
-import { createTouchUI } from "../journey/match-screen.js?v=574";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=585";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=585";
+import { gameAudio } from "../platform/audio.js?v=585";
+import { createTouchUI } from "../journey/match-screen.js?v=585";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -19,48 +19,27 @@ const MOVE_SPOTS = [
 
 const DRILLS = [
   {
-    id: "movement", title: "移动", metric: "move", target: 2, time: 32, keys: ["摇杆"],
-    intro: "先熟悉脚步：拖动摇杆，移动到发光点。",
-    tip: "斜向切入更快，别只走直线。",
+    id: "movement", title: "移动", metric: "move", target: 2, time: 12, keys: ["摇杆"],
+    intro: "拖动摇杆，踩亮两个落脚点。",
+    tip: "推满摇杆可以冲刺。",
   },
   {
-    id: "layups", title: "上篮", metric: "reps", target: 2, time: 38, keys: ["投篮"],
-    intro: "靠近篮筐后按投篮键上篮，先做 2 个。",
-    tip: "离篮筐太远会变成跳投，先贴近再出手。",
+    id: "jumpshots", title: "投篮", metric: "reps", target: 1, time: 20, keys: ["投篮"],
+    intro: "按住投篮，白条填满时松开。",
+    tip: "松开时机越准，命中越高。",
   },
   {
-    id: "jumpshots", title: "跳投", metric: "reps", target: 2, time: 42, keys: ["投篮"],
-    intro: "按住投篮键蓄力，按键填满发白的瞬间松开。",
-    tip: "发白瞬间松开必进；过早或过晚都会降低命中。",
-  },
-  {
-    id: "passing", title: "传球", metric: "reps", target: 2, time: 34, keys: ["传球"],
-    intro: "按传球键，把球送到空位队友手里。",
-    tip: "传球会自动寻找空位，也可以配合摇杆指向。",
-  },
-  {
-    id: "alleyoop", title: "空接", metric: "reps", target: 2, time: 38, keys: ["摇杆推满", "传球"],
-    intro: "把左下摇杆推满外圈自动冲刺，再按传球向篮筐抛空接。",
-    tip: "先推满摇杆冲刺再传球，队友会起跳接球扣篮。",
-  },
-  {
-    id: "defense", title: "防守", metric: "defend", target: 12, time: 30, keys: ["摇杆"],
-    intro: "用摇杆跟住对手，保持在对手和篮筐之间 12 秒。",
-    tip: "别轻易起跳，先卡住突破路线。",
-  },
-  {
-    id: "steals", title: "抢断", metric: "reps", target: 2, time: 34, keys: ["抢断"],
-    intro: "靠近持球人，按抢断键完成 2 次抢断。",
-    tip: "离得太远会挥空，贴身再按。",
+    id: "steals", title: "抢断", metric: "reps", target: 1, time: 18, keys: ["抢断"],
+    intro: "贴近持球人，按抢断。",
+    tip: "贴身再按，太远会挥空。",
   },
 ];
 
 const CONTROLS = [
-  ["摇杆", "移动 / 防守跟人 · 推满外圈自动冲刺"],
-  ["投篮", "投篮 / 盖帽 · 按住蓄力"],
-  ["传球", "传球 / 换防 · 空接时抛球"],
+  ["摇杆", "移动 / 防守跟人"],
+  ["投篮", "投篮 / 盖帽"],
+  ["传球", "传球 / 换防"],
   ["抢断", "抢断"],
-  ["必杀", "必杀技（槽满后）"],
 ];
 
 const CSS = `
@@ -83,6 +62,7 @@ const CSS = `
 .screen-match .tut-keys li i{flex:0 0 52px;text-align:center;padding:3px 0;border:1px solid #b8e63c;border-radius:3px;background:rgba(184,230,60,.12);color:#b8e63c;font:700 10px var(--sport);font-style:normal}
 .screen-match .tut-keys li span{font-size:12px;color:#f2f2f2}
 .screen-match .tut-intro .tut-begin{width:100%;padding:11px 12px;border-radius:3px;border:2px solid #b8e63c;background:#b8e63c;color:#101010;font:700 13px var(--sport)}
+.screen-match .tut-intro .tut-skip-all{width:100%;margin-top:7px;padding:9px 12px;border-radius:3px;border:1px solid #3a3a3a;background:#121212;color:#9a9a9a;font:700 11px var(--sport)}
 .screen-match.intro-on .tut-strip{opacity:.5}
 .screen-match.intro-on .tut-strip [data-tut="skip"]{visibility:hidden}
 .screen-match .tut-result .panel,.screen-match .tut-done .panel,.screen-match .tut-intro .panel{width:min(340px,92vw);border-radius:3px;border:2px solid #3a3a3a;border-left:6px solid #b8e63c;background:#0a0a0a;box-shadow:7px 7px 0 rgba(0,0,0,.6);padding:18px 16px;text-align:center;color:#f2f2f2}
@@ -101,9 +81,9 @@ const CSS = `
 .screen-match .tut-gift{position:relative;margin:2px 0 12px;padding:10px 8px 12px;border:1px solid rgba(184,230,60,.5);border-radius:4px;background:radial-gradient(120% 100% at 50% 0%,rgba(184,230,60,.18),rgba(184,230,60,.03) 68%,transparent);overflow:hidden}
 .screen-match .tut-gift::after{content:"";position:absolute;top:-60%;left:-40%;width:40%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:rotate(18deg);animation:tutGiftSweep 1.8s .35s ease-in-out both;pointer-events:none}
 .screen-match .tut-gift-title{display:block;margin-bottom:9px;font:700 13px var(--sport);letter-spacing:.14em;color:#b8e63c;animation:tutGiftTitle .45s ease both}
-.screen-match .tut-gift-row{display:flex;justify-content:center;gap:12px}
-.screen-match .tut-gift-card{position:relative;width:94px;padding:7px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid #b8e63c;border-radius:4px;background:linear-gradient(180deg,#18200c,#0b0e07);opacity:0;transform:translateY(18px) scale(.55);animation:tutGiftIn .6s cubic-bezier(.2,1.5,.35,1) forwards;animation-delay:var(--d);box-shadow:0 0 14px rgba(184,230,60,.22)}
-.screen-match .tut-gift-card img{position:relative;z-index:1;width:56px;height:56px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 9px rgba(255,203,5,.7));animation:tutGiftBob 2s ease-in-out infinite}
+.screen-match .tut-gift-row{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.screen-match .tut-gift-card{position:relative;width:70px;padding:6px 3px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid #b8e63c;border-radius:4px;background:linear-gradient(180deg,#18200c,#0b0e07);opacity:0;transform:translateY(18px) scale(.55);animation:tutGiftIn .6s cubic-bezier(.2,1.5,.35,1) forwards;animation-delay:var(--d);box-shadow:0 0 14px rgba(184,230,60,.22)}
+.screen-match .tut-gift-card img{position:relative;z-index:1;width:44px;height:44px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 9px rgba(255,203,5,.7));animation:tutGiftBob 2s ease-in-out infinite}
 .screen-match .tut-gift-card b{position:relative;z-index:1;font:700 12px var(--sport);color:#f4f1e8;line-height:1.2}
 .screen-match .tut-gift-card small{position:relative;z-index:1;font-size:9.5px;color:#b8e63c;letter-spacing:.06em;line-height:1.2}
 .screen-match .tut-gift-halo{position:absolute;left:50%;top:35px;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;background:radial-gradient(circle,rgba(255,203,5,.46),rgba(255,203,5,0) 70%);animation:tutGiftHalo 1.8s ease-in-out infinite}
@@ -201,6 +181,7 @@ export function startTutorial(root, save, actions = {}) {
   let idx = 0;
   let phase = "keys";
   let phaseT = 0;
+  let begun = false;
   let stats = statsEmpty();
   let dist = 0;
   let lastPos = null;
@@ -237,7 +218,7 @@ export function startTutorial(root, save, actions = {}) {
 
   function startDrill(i) {
     idx = i;
-    phase = "intro";
+    phase = begun ? "active" : "standby";
     phaseT = 0;
     stats = statsEmpty();
     dist = 0;
@@ -245,18 +226,22 @@ export function startTutorial(root, save, actions = {}) {
     lastBallMode = "";
     const d = DRILLS[idx];
     if (engine) {
-      engine.paused = false;
       engine.setDrill(d.id);
+      engine.paused = !begun;
     }
     // 移动训练点亮第一个落脚点，其他训练清掉残留标记
     moveSpotIdx = 0;
     if (d.id === "movement") setMoveSpot(0);
     else clearMoveSpots();
-    page.querySelector(".tut-result")?.setAttribute("hidden", "");
     page.querySelector(".tut-done")?.setAttribute("hidden", "");
     updateStrip(d.intro, 0);
     const skip = strip()?.querySelector('[data-tut="skip"]');
     if (skip) skip.hidden = false;
+  }
+
+  function advanceDrill() {
+    if (idx >= DRILLS.length - 1) { finishMatch(); return; }
+    startDrill(idx + 1);
   }
 
   function feedEvents(events, d) {
@@ -305,6 +290,7 @@ export function startTutorial(root, save, actions = {}) {
   function showDone() {
     if (finished) return;
     finished = true;
+    phase = "done";
     if (engine) engine.paused = true;
     let gift = null;
     if (!rewarded) { rewarded = true; gift = actions.onDone?.() || null; }
@@ -326,16 +312,17 @@ export function startTutorial(root, save, actions = {}) {
           </div>
         </div>`
       : "";
+    const canStart = typeof actions.onStartMatch === "function";
     const done = page.querySelector(".tut-done");
     done.innerHTML = `<div class="panel">
-      <h2>教程完成</h2>
+      <h2>准备开打</h2>
       ${giftHtml}
       <ul class="tut-sum">${summary}</ul>
       ${reward ? `<p class="tut-reward">${reward}</p>` : ""}
-      <p>${giftDex.length ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : reward ? "接下来去商店补 2 名伙伴，把首发凑满 5 人。" : "现在可以去打一场真正的比赛了。"}</p>
+      <p>${giftDex.length ? "首发五人已就位，直接打第一场。" : "现在可以开始第一场比赛了。"}</p>
       <div class="tut-done-acts">
-        <button class="primary" data-done="exit">返回主页</button>
-        <button data-done="again">重新训练</button>
+        <button class="primary" data-done="${canStart ? "match" : "exit"}">${canStart ? "开始第一场比赛" : "返回主页"}</button>
+        ${canStart ? '<button data-done="exit">先回主页</button>' : ""}
       </div>
     </div>`;
     done.removeAttribute("hidden");
@@ -369,22 +356,8 @@ export function startTutorial(root, save, actions = {}) {
       page.classList.add("intro-on");
     }
     if (!engine) engine = e;
-    if (engine.paused && phase !== "keys" && phase !== "done") return;
-    if (phase === "keys") return;
-    const d = DRILLS[idx];
-    if (phase === "intro") {
-      phaseT += dt;
-      if (phaseT >= 2.4) { phase = "countdown"; phaseT = 0; updateStrip("准备… 3", 0); }
-      return;
-    }
-    if (phase === "countdown") {
-      phaseT += dt;
-      const left = Math.max(1, 3 - Math.floor(phaseT));
-      updateStrip(left > 1 ? `准备… ${left}` : "开始！", 0);
-      if (phaseT >= 3) { phase = "active"; phaseT = 0; updateStrip(d.tip, 0); }
-      return;
-    }
     if (phase !== "active") return;
+    const d = DRILLS[idx];
 
     stats.elapsed += dt;
     feedEvents(events, d);
@@ -410,7 +383,7 @@ export function startTutorial(root, save, actions = {}) {
 
     const p = drillProgress(d, stats);
     updateStrip(p >= 1 ? "完成！" : d.tip, p);
-    if (p >= 1 || stats.elapsed >= d.time) showResult(false);
+    if (p >= 1 || stats.elapsed >= d.time) advanceDrill();
   }
 
   handle = startMatchLoop(
@@ -437,28 +410,23 @@ export function startTutorial(root, save, actions = {}) {
       <p class="tut-intro-sub">比赛中随时会用到下面这些操作。</p>
       <ul class="tut-keys">${CONTROLS.map(([k, t]) => `<li><i>${k}</i><span>${t}</span></li>`).join("")}</ul>
       <button class="tut-begin" type="button" data-tut="begin">开始训练</button>
+      <button class="tut-skip-all" type="button" data-tut="skip-all">跳过教程，直接开打</button>
     </div></div><div class="tut-result" hidden></div><div class="tut-done" hidden></div>`);
   page.addEventListener("click", (ev) => {
       const t = ev.target.closest("[data-tut]")?.dataset.tut;
       if (t === "begin") {
+        begun = true;
         page.querySelector(".tut-intro")?.setAttribute("hidden", "");
         page.classList.remove("intro-on");
         if (engine) engine.paused = false;
-        phase = "intro";
+        phase = "active";
         phaseT = 0;
-        updateStrip(DRILLS[idx].intro, 0);
+        updateStrip(DRILLS[idx].tip, 0);
         return;
       }
-      if (t === "skip") { showResult(true); return; }
+      if (t === "skip-all") { finishMatch(); return; }
+      if (t === "skip") { advanceDrill(); return; }
       if (t === "exit") { exitTutorial(); return; }
-      const r = ev.target.closest("[data-res]")?.dataset.res;
-      if (r === "next") {
-        if (idx >= DRILLS.length - 1) { showDone(); return; }
-        startDrill(idx + 1);
-        return;
-      }
-      if (r === "retry") { startDrill(idx); return; }
-      if (r === "exit") { exitTutorial(); return; }
       const d = ev.target.closest("[data-done]")?.dataset.done;
       if (d === "exit") {
         finished = true;
@@ -467,10 +435,11 @@ export function startTutorial(root, save, actions = {}) {
         actions.onExit?.();
         return;
       }
-      if (d === "again") {
-        page.querySelector(".tut-done")?.setAttribute("hidden", "");
-        finished = false;
-        startDrill(0);
+      if (d === "match") {
+        finished = true;
+        handle?.stop();
+        gameAudio.setTrack("menu");
+        actions.onStartMatch?.();
       }
     });
 }

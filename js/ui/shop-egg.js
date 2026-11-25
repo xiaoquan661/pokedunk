@@ -3,15 +3,15 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=574";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=574";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=574";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=574";
-import { watchRewardedAd } from "../platform/ads.js?v=574";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=574";
-import { playHatch, playAcquire } from "./anim.js?v=574";
-import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=574";
-import { ICON, coinInline } from "./icons.js?v=574";
+import { loadSave, writeSave } from "../storage.js?v=585";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=585";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=585";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=585";
+import { watchRewardedAd } from "../platform/ads.js?v=585";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=585";
+import { playHatch, playAcquire } from "./anim.js?v=585";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=585";
+import { ICON, coinInline } from "./icons.js?v=585";
 
 const AD_EGG_INSTANT_MAX = 2;
 const monName = (dex) => {

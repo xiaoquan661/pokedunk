@@ -3,10 +3,10 @@
  * 格子展示持有物品（树果/精灵蛋），点击格子 → 进入物品详情页（大图+描述+数量）。
  * 使用入口不在背包：树果投喂走精灵详情页（detail.js），孵蛋走孵蛋页。
  */
-import { getPokemon, xpToNext } from "../../engine/readable/play-core.js?v=574";
-import { rollGrowth } from "../../engine/growth.js?v=574";
-import { writeSave } from "../storage.js?v=574";
-import { ICON } from "./icons.js?v=574";
+import { getPokemon, xpToNext } from "../../engine/readable/play-core.js?v=585";
+import { rollGrowth } from "../../engine/growth.js?v=585";
+import { writeSave } from "../storage.js?v=585";
+import { ICON } from "./icons.js?v=585";
 
 const BERRY_XP = 50;
 

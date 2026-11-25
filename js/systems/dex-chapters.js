@@ -2,14 +2,14 @@
  * systems/dex-chapters.js —— 图鉴世代篇章
  *
  * 按现有图鉴行数分篇（不按理论全国图鉴数）：
- *   关都 1–151 / 城都 152–251 / 丰缘 252–386（现有部分）
+ *   关都 1–151 / 城都 152–251 / 丰缘 252–386（正在更新）
  * 每篇独立进度、50% 纪念章与 100% 完成勋章（纯展示，不发资源）。
  * 存档：save.dexChapters = { kanto: { half: true, full: true, medal: true } }
  */
 export const DEX_CHAPTERS = [
   { id: "kanto", name: "关都篇", from: 1, to: 151, color: "#ee8130" },
   { id: "johto", name: "城都篇", from: 152, to: 251, color: "#f5c542" },
-  { id: "hoenn", name: "丰缘篇", from: 252, to: 386, color: "#57c785", note: "现有部分" },
+  { id: "hoenn", name: "丰缘篇", from: 252, to: 386, color: "#57c785", note: "正在更新" },
 ];
 
 export const DEX_CHAPTER_REWARDS = {

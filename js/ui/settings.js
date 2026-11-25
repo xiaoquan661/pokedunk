@@ -5,12 +5,12 @@
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=574";
-import { resetSave } from "../storage.js?v=574";
-import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=574";
-import { BONDS } from "../systems/build.js?v=574";
-import { EGG_TIERS } from "../systems/shop.js?v=574";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=574";
+import { gameAudio } from "../platform/audio.js?v=585";
+import { resetSave } from "../storage.js?v=585";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=585";
+import { BONDS } from "../systems/build.js?v=585";
+import { EGG_TIERS } from "../systems/shop.js?v=585";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=585";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -22,10 +22,11 @@ const AUDIO_ROWS = [["音乐", "pokedunk.music", "球场 BGM"], ["音效", "poke
 export function loadSet() {
   try {
     const c = JSON.parse(localStorage.getItem(SET_KEY) || "{}") || {};
-    // v2.6：防守切换默认改为手动；旧档只迁移一次，之后仍可在设置里选回自动
-    if (!c.__switchManual) {
-      c.autoSwitch = false;
-      c.__switchManual = true;
+    // v2.7：自动换防恢复为默认开启；旧档只迁移一次，之后仍可在设置里手动关闭
+    if (!c.__switchAuto) {
+      c.autoSwitch = true;
+      c.__switchAuto = true;
+      delete c.__switchManual;
       try { localStorage.setItem(SET_KEY, JSON.stringify(c)); } catch {}
     }
     return c;
@@ -62,7 +63,7 @@ function seg(name, opts, cur) {
 }
 function tabMatch(c) {
   return field("自动换人", "体力不足时自动轮换替补", seg("autoSubs", ASW, c.autoSubs === false ? "manual" : "auto")) +
-    field("自动换防", "自动切到对位持球人的防守者；已在防他时保持不动", seg("autoSwitch", ASW, c.autoSwitch === true ? "auto" : "manual")) +
+    field("自动换防", "自动切到对位持球人的防守者；已在防他时保持不动", seg("autoSwitch", ASW, c.autoSwitch !== false ? "auto" : "manual")) +
     field("赛前演出", "开局入场与首发阵容展示", seg("introMode", INTRO, c.introMode || "full")) +
     field("必杀动画", "必杀时播放镜头推近与斜切特写；关闭后不打断比赛画面", seg("specialFx", ONOFF, c.specialFx === false ? "0" : "1")) +
     '<p class="pj-mut">难度由赛程决定：越往后的道馆对手越强</p>' +
@@ -341,7 +342,7 @@ export function openSettings() {
         setTimeout(() => { reset.dataset.arm = ""; reset.textContent = "重置本机设置"; }, 2500);
         return;
       }
-      saveSet({ autoSubs: true, autoSwitch: false, introMode: "full" });
+      saveSet({ autoSubs: true, autoSwitch: true, introMode: "full" });
       renderBody(wrap);
       return;
     }

@@ -9,14 +9,14 @@
  *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
  *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
  */
-import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=574";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=574";
-import { loadSet, saveSet } from "../ui/settings.js?v=574";
-import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=574";
-import { currentMatchInfo, matchSeed } from "./season.js?v=574";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=574";
-import { createMatchHype } from "../ui/match-hype.js?v=574";
-import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=574";
+import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=585";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=585";
+import { loadSet, saveSet } from "../ui/settings.js?v=585";
+import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=585";
+import { currentMatchInfo, matchSeed } from "./season.js?v=585";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=585";
+import { createMatchHype } from "../ui/match-hype.js?v=585";
+import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=585";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
@@ -47,7 +47,7 @@ export function diffOfRound(i) {
 export function buildGymMatch(save, mode = "league") {
   const set = loadSet();
   const quarterLen = 180; // 固定每节 3 分钟（设置项已移除）
-  const prefs = { autoSwitch: set.autoSwitch === true, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
+  const prefs = { autoSwitch: set.autoSwitch !== false, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
   const info = currentMatchInfo(save, mode);
   if (!info || info.kind === "bye" || info.kind === "done") return null;
 
@@ -134,7 +134,7 @@ export function quickDraftPool(stage = "gym1", level = "normal") {
  */
 export function buildQuickMatch(save, stage = "gym1", level = "normal", dexes = []) {
   const set = loadSet();
-  const prefs = { autoSwitch: set.autoSwitch === true, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
+  const prefs = { autoSwitch: set.autoSwitch !== false, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
   const gym = gymOfStage(stage);
   const lv = QUICK_LEVELS.find((x) => x.id === level) || QUICK_LEVELS[1];
   const roster = quickRoster(stage, level);
@@ -379,6 +379,7 @@ export function createTouchUI(root) {
   shootBtn?.appendChild(zone);
 
   let sprint = false;
+  let perfectCue = false;
   function frame(engine) {
     if (pad) {
       const m = Math.hypot(pad.touchMove?.x || 0, pad.touchMove?.y || 0);
@@ -398,6 +399,7 @@ export function createTouchUI(root) {
       if (charge) charge.style.height = "0%";
       zone?.classList.remove("on");
       shootBtn?.classList.remove("pd-perfect");
+      perfectCue = false;
       return;
     }
     const gw = engine.greenWindow?.(u) || 0.03;
@@ -412,7 +414,13 @@ export function createTouchUI(root) {
       zone.classList.add("on");
     }
     const perfect = u.meter >= 0.8 - gw && u.meter <= 0.8 + gw;
-    shootBtn?.classList.toggle("pd-perfect", perfect);
+    // 完美白闪/震感是投篮 90+ 的专属反馈；低投篮只能自己盯蓄力条
+    const cue = perfect && (Number(u.r?.sht) || 0) >= 90;
+    if (cue && !perfectCue) {
+      try { navigator.vibrate?.(8); } catch {}
+    }
+    perfectCue = cue;
+    shootBtn?.classList.toggle("pd-perfect", cue);
   }
   return { frame, setStick };
 }
