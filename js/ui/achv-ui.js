@@ -2,8 +2,8 @@
  * ui/achv-ui.js —— 成就面板 UI（pokedunk-v2，移植自旧 achievements-ui.js）
  * 主界面成就入口 → 面板：总进度条 + 生涯/单场两页签 + 卡片流。
  */
-import { ACHV } from "../systems/achv.js?v=557";
-import { ICON } from "./icons.js?v=557";
+import { ACHV } from "../systems/achv.js?v=574";
+import { ICON } from "./icons.js?v=574";
 
 // 成就解锁提示统一走 #pk-toast，外观随主题
 

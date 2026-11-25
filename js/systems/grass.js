@@ -6,9 +6,11 @@
  *   - 上线时自动结算离线收益并弹窗汇报；页面上可随时手动领取
  * 存档：save.grass = { slots: [null | { monId, dex, lastTs, bankXp }], seenAt }
  */
-import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=557";
-import { grantXp } from "./xp.js?v=557";
-import { starterIds, ensureLineupSlots } from "./build.js?v=557";
+import { GRASS_RATE, GRASS_CAP_MS, GRASS_SLOTS } from "./grass-config.js?v=574";
+import { grantXp } from "./xp.js?v=574";
+import { xpToNext } from "../../engine/growth.js?v=574";
+import { EVOLUTIONS } from "../../engine/data/evolutions.js";
+import { starterIds, ensureLineupSlots } from "./build.js?v=574";
 
 export { GRASS_SLOTS };
 
@@ -20,18 +22,17 @@ export function ensureGrass(save) {
   return save.grass;
 }
 
-/** 单格尚未领取的经验 */
+/** 单格尚未领取的经验：不设上限，离线多久都持续累积 */
 export function pendingXp(slot, now = Date.now()) {
   if (!slot) return 0;
   const start = slot.lastTs || now;
-  const end = Math.min(now, start + GRASS_CAP_MS);
-  if (end <= start) return 0;
-  return Math.floor(((end - start) / 60000) * GRASS_RATE);
+  if (now <= start) return 0;
+  return Math.floor(((now - start) / 60000) * GRASS_RATE);
 }
 
-/** 是否已累计到 24 小时上限 */
-export function isFull(slot, now = Date.now()) {
-  return !!slot && now - (slot.lastTs || now) >= GRASS_CAP_MS;
+/** 兼容旧调用；草地当前无累计上限，始终返回 false */
+export function isFull() {
+  return false;
 }
 
 /** 草地总览（UI 用） */
@@ -117,6 +118,72 @@ export function removeFromGrass(save, slot, now = Date.now()) {
   if (mon && gain > 0) events.push(...grantXp(save, s.monId, mon, gain));
   g.slots[slot] = null;
   return { ok: true, gain, events };
+}
+
+/** 草地离线收益的前置预览：不发放经验，只算 pending XP、可升级与可进化数量 */
+export function offlineGrassPending(save, now = Date.now()) {
+  const g = ensureGrass(save);
+  const rows = [];
+  let total = 0;
+  for (let i = 0; i < g.slots.length; i++) {
+    const s = g.slots[i];
+    if (!s) continue;
+    const mon = save.mons?.[s.monId];
+    if (!mon) continue;
+    const gain = pendingXp(s, now);
+    if (gain <= 0) continue;
+    let level = mon.level;
+    let xp = (mon.xp || 0) + gain;
+    while (level < 99 && xp >= xpToNext(level)) {
+      xp -= xpToNext(level);
+      level += 1;
+    }
+    const evo = EVOLUTIONS[mon.dex];
+    const evolveLevel = Number(evo?.level) || 999;
+    const canEvolve = !!evo && mon.level < evolveLevel && level >= evolveLevel;
+    rows.push({
+      slot: i, monId: s.monId, dex: mon.dex, gain,
+      before: mon.level, after: level, levels: level - mon.level,
+      canEvolve, evolveLevel: canEvolve ? evolveLevel : 0,
+    });
+    total += gain;
+  }
+  const lastSeen = g.seenAt || Math.min(...g.slots.filter(Boolean).map((s) => Number(s.lastTs) || now));
+  return {
+    total,
+    rows,
+    count: rows.length,
+    canLevel: rows.filter((r) => r.levels > 0).length,
+    canEvolve: rows.filter((r) => r.canEvolve).length,
+    idleMs: Math.max(0, now - (Number.isFinite(lastSeen) ? lastSeen : now)),
+  };
+}
+
+/** 领取离线草地收益；multiplier=2 用于广告双倍。返回每只精灵的升级事件。 */
+export function claimOfflineGrass(save, multiplier = 1, now = Date.now()) {
+  const g = ensureGrass(save);
+  const out = [];
+  g.seenAt = now;
+  g.slots.forEach((s, i) => {
+    if (!s) return;
+    const mon = save.mons?.[s.monId];
+    if (!mon) { g.slots[i] = null; return; }
+    const gain = pendingXp(s, now);
+    if (gain <= 0) { s.lastTs = now; return; }
+    const totalGain = Math.max(0, Math.round(gain * multiplier));
+    const before = mon.level;
+    const oldDex = mon.dex;
+    const events = grantXp(save, s.monId, mon, totalGain);
+    s.lastTs = now;
+    s.bankXp = 0;
+    s.dex = mon.dex;
+    out.push({
+      slot: i, monId: s.monId, oldDex, dex: mon.dex, gain: totalGain,
+      before, after: mon.level, evolved: mon.dex !== oldDex, events,
+      maxed: mon.level >= 99,
+    });
+  });
+  return out;
 }
 
 /**

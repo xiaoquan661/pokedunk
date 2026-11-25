@@ -11,16 +11,14 @@
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=557";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=557";
-import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=557";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=557";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=557";
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=557";
+} from "../../engine/readable/play-core.js?v=574";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=574";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=574";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=574";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=574";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=574";
 
 const FIRST_WIN_COINS = 100;
-const DAILY_LEGEND_DUPE_COINS = 200;
-const DAILY_RARE_DUPE_COINS = 200;
 
 /** 每日挑战分数奖励：达到即自动发放，0 点随每日状态重置 */
 export const DAILY_SCORE_MILESTONES = [
@@ -264,38 +262,38 @@ export function challengeScore(engine, won, modId) {
   };
 }
 
-/** 90 分稀有奖励：优先未结缘稀有，每周最多 1 只；重复/集齐/满员折算 200 币 */
+/** 90 分稀有奖励：优先未结缘稀有，每周最多 1 只；不折币 */
 function grantDailyRare(save) {
   const week = weekKey();
   if (save.dailyRare?.week === week) {
-    return { ok: false, reason: "weekly", coin: DAILY_RARE_DUPE_COINS };
+    return { ok: false, reason: "weekly" };
   }
   const pool = POKEMON_LIST.filter(
     (p) => !LEGENDARY_DEX.has(p.dex) && rarityOf(p.dex) === "稀有" && !hasDex(save, p.dex)
   );
   if (!pool.length) {
-    return { ok: false, reason: "owned", coin: DAILY_RARE_DUPE_COINS };
+    return { ok: false, reason: "owned" };
   }
   const pick = pool[Math.floor(Math.random() * pool.length)];
   const r = addMon(save, pick.dex, { from: "daily" });
-  if (!r.ok) return { ok: false, reason: "error", coin: DAILY_RARE_DUPE_COINS };
+  if (!r.ok) return { ok: false, reason: "error" };
   save.dailyRare = { week, dex: pick.dex, at: Date.now() };
   return { ok: true, dex: pick.dex, name: dexName(pick.dex) || pick.name, placed: r.movedTo, first: r.isNewDex };
 }
 
-/** 120 分传说奖励：优先未结缘传说，每周最多 1 只；重复/集齐折算 200 币 */
+/** 120 分传说奖励：优先未结缘传说，每周最多 1 只；不折币 */
 function grantDailyLegend(save) {
   const week = weekKey();
   if (save.dailyLegend?.week === week) {
-    return { ok: false, reason: "weekly", coin: DAILY_LEGEND_DUPE_COINS };
+    return { ok: false, reason: "weekly" };
   }
   const pool = LEGEND_ROTATION.filter((dex) => !hasDex(save, dex));
   if (!pool.length) {
-    return { ok: false, reason: "owned", coin: DAILY_LEGEND_DUPE_COINS };
+    return { ok: false, reason: "owned" };
   }
   const dex = pool[Math.floor(Math.random() * pool.length)];
   const r = addMon(save, dex, { from: "daily" });
-  if (!r.ok) return { ok: false, reason: "error", coin: DAILY_LEGEND_DUPE_COINS };
+  if (!r.ok) return { ok: false, reason: "error" };
   save.dailyLegend = { week, dex, at: Date.now() };
   return { ok: true, dex, name: dexName(dex), placed: r.movedTo, first: r.isNewDex };
 }
@@ -336,14 +334,10 @@ export function settleDaily(save, engine, quit = false, simulated = false) {
     const item = { id: m.id, score: m.score, coin: m.coin || 0, legend: null, mon: null };
     if (m.coin) coins += m.coin;
     if (m.mon) {
-      const mon = grantDailyRare(save);
-      item.mon = mon;
-      if (!mon.ok) coins += mon.coin || DAILY_RARE_DUPE_COINS;
+      item.mon = grantDailyRare(save);
     }
     if (m.legend) {
-      const legend = grantDailyLegend(save);
-      item.legend = legend;
-      if (!legend.ok) coins += legend.coin || 0;
+      item.legend = grantDailyLegend(save);
     }
     milestones.push(item);
   }

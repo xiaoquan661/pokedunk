@@ -3,43 +3,45 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=557"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=557";
-import { renderDex } from "./ui/dex.js?v=557";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=557";
-import { openSettings } from "./ui/settings.js?v=557";
-import { renderBag } from "./ui/bag.js?v=557";
-import { renderTeam } from "./ui/team.js?v=557";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=557";
-import { openDetail } from "./ui/detail.js?v=557";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=557";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=557";
-import { watchRewardedAd } from "./platform/ads.js?v=557";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=557";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=557";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=557";
-import { grassState, settleOffline } from "./systems/grass.js?v=557";
-import { showGrassReport } from "./ui/grass-report.js?v=557";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=557";
-import { openDaily } from "./ui/daily.js?v=557";
-import { submitDailyScore } from "./platform/leaderboard.js?v=557";
-import { openAchievements } from "./ui/achv-ui.js?v=557";
-import { startTutorial } from "./ui/tutorial.js?v=557";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=557";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=557";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=557";
-import { ACHV } from "./systems/achv.js?v=557";
-import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=557";
-import { eggList } from "./systems/egg.js?v=557";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=557";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=557";
-import { ICON } from "./ui/icons.js?v=557";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=557";
-import { pendingLegend } from "./journey/legend.js?v=557";
-import { syncAcquireLevel } from "./systems/acquire.js?v=557";
-import { openLegendPicker } from "./ui/legend.js?v=557";
-import { openWild } from "./ui/wild.js?v=557";
-import { wildLeft, wildMax } from "./journey/wild.js?v=557";
+import "./systems/evo-rules.js?v=574"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=574";
+import { renderDex } from "./ui/dex.js?v=574";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=574";
+import { openSettings } from "./ui/settings.js?v=574";
+import { renderBag } from "./ui/bag.js?v=574";
+import { renderTeam } from "./ui/team.js?v=574";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=574";
+import { openDetail } from "./ui/detail.js?v=574";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=574";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=574";
+import { watchRewardedAd } from "./platform/ads.js?v=574";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=574";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, fourKingsInfo, startNextSeason, advanceBye, rankTable, GYM_CN, roundView } from "./journey/season.js?v=574";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=574";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=574";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=574";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=574";
+import { openDaily } from "./ui/daily.js?v=574";
+import { openCoachProfile } from "./ui/coach.js?v=574";
+import { addRep, bumpRepMission, repInfo, repMissionRows, repAdLeft } from "./systems/reputation.js?v=574";
+import { submitDailyScore } from "./platform/leaderboard.js?v=574";
+import { openAchievements } from "./ui/achv-ui.js?v=574";
+import { startTutorial } from "./ui/tutorial.js?v=574";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=574";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=574";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=574";
+import { ACHV } from "./systems/achv.js?v=574";
+import { milestoneRows, monRewardInfo, typeRewardRows } from "./systems/milestones.js?v=574";
+import { eggList } from "./systems/egg.js?v=574";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=574";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=574";
+import { ICON } from "./ui/icons.js?v=574";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=574";
+import { pendingLegend } from "./journey/legend.js?v=574";
+import { syncAcquireLevel } from "./systems/acquire.js?v=574";
+import { openLegendPicker } from "./ui/legend.js?v=574";
+import { openWild } from "./ui/wild.js?v=574";
+import { wildLeft, wildMax } from "./journey/wild.js?v=574";
 import {
   getPokemon,
   calcOVR,
@@ -55,7 +57,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=557";
+} from "../engine/readable/play-core.js?v=574";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -110,6 +112,13 @@ const NOTICE_ITEMS = [
   ["训练草地挂机", "培养页「草地」tab：把拥有的精灵直接拖上草坪挂机，每分钟 2 经验、离线也持续累积，没有上限；拖出草地即收回。"],
   ["树果与赛后奖励", "赛后奖励改为金币 + 树果，胜利金币减半；普通树果 12 币 / +50 XP 不限购；高级树果 60 币 / +800 XP，每日限购 3 个。"],
   ["体验修复", "比分条改为转播式布局；赛前首发取消卡片外框；修复部分手机顶部按钮被状态栏遮挡。"],
+  ["奖励精简", "教练升级改为只解锁称号；世代篇章只发纪念章/勋章；属性收集改为徽章；成就送蛋改为孵蛋加速券；每日挑战 90/120 分本周已领后不再折算金币；野球场重复折算 25 币。"],
+  ["广告收益提升", "金币广告 +100 → +300；训练广告 +5 → +10 自由点；孵蛋加速 2 → 4 小时且每日 2 → 3 次、立即孵出 1 → 2 次；教练应援 +50 → +100 声望；赛后金币翻倍改为 ×3。"],
+  ["成就金币减半", "33 项成就的金币奖励整体下调约一半（总量 5,175 → 2,590），道具奖励保持不变。"],
+  ["删除新手任务", "「获取金币」里的新手任务已删除；该入口现在只剩看广告 +300 币，每日任务仍在主页。"],
+  ["战斗差异拉开", "完美出手的投篮属性差加大：40→99 投篮的完美出手差距从约 12 个百分点提高到约 17 个百分点；篮板随机从 35 降到 24，高篮板优势更明显。"],
+  ["体力与冲刺调整", "耐力池改为由篮板/防守决定，高耐力冲刺更持久、额外耗体更低；冲刺速度改为随速度成长（速度 40→99 时加成约 1.40→1.55），体力耗尽后的惩罚从 18% 提高到 20%。"],
+  ["速度/控球/传球差异", "跑速公式压低低速下限、提高速度斜率；持球速度更吃控球；传球速度更吃传球属性。速度 40→99 的跑速差从约 35% 提高到约 47%，持球跑速差约 68%，传球球速差约 29%。"],
 ];
 
 /** 首发人数：比赛要求 5 人，不足时引导玩家先组队 */
@@ -601,6 +610,8 @@ function showHome(save, justStarted = false) {
   // —— 每日挑战（入口副标题：今日规则 + 最高分）——
   const daily = dailyPreview(save);
   const sign = signInfo(save);
+  const rep = repInfo(save);
+  const coachDot = repMissionRows(save).some((m) => m.canClaim) || repAdLeft(save) > 0;
   const wildN = wildLeft(save);
   const wildTotal = wildMax(save);
   const gslots = grassState(save);
@@ -655,6 +666,10 @@ function showHome(save, justStarted = false) {
         .screen-menu .top-row{gap:6px}
         .screen-menu .top-row .badge-chip{white-space:nowrap;font-size:12px;padding:5px 8px;flex-shrink:0}
         .screen-menu .top-row .coin-chip.plain{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+        .screen-menu .top-row .coach-chip{position:relative;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;cursor:pointer;max-width:96px;min-width:0}
+        .screen-menu .top-row .coach-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+        .screen-menu .top-row .coach-chip em{font-style:normal;flex-shrink:0;font:700 9px var(--sport);color:var(--gold)}
+        .screen-menu .top-row .coach-chip .dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#ff5a5a;border:1px solid #0a0a0a}
         .screen-menu .notice-chip{position:relative;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;padding:5px 8px;border:1px solid var(--line,#b9ad92);border-radius:999px;background:rgba(0,0,0,.35);color:var(--text,#1c241e);font:700 10.5px var(--sport);letter-spacing:.06em;cursor:pointer}
         .screen-menu .notice-chip svg{width:12px;height:12px;display:block}
         .screen-menu .notice-chip .dot{position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#ff5a5a;border:1px solid #0a0a0a}
@@ -668,7 +683,7 @@ function showHome(save, justStarted = false) {
           <span>公告</span>${noticeUnread ? '<i class="dot"></i>' : ""}
         </button>
         <div class="spacer"></div>
-        <div class="coin-chip plain">${save.coach.name}</div>
+        <button class="coin-chip plain coach-chip" id="home-coach" type="button" title="教练档案"><span>${save.coach.name}</span><em>Lv.${rep.level}</em>${coachDot ? '<i class="dot"></i>' : ""}</button>
       </div>
       ${newbieActive(save) ? `<button class="newbie-top" data-go="newbie">
         <span class="nt-ico">${LINE_ICON.tutorial}</span>
@@ -771,6 +786,7 @@ function showHome(save, justStarted = false) {
   sc.querySelector("#home-badges")?.addEventListener("click", () => {
     openBadgeDetail(loadSave() || save, { onElite: () => startElite(save) });
   });
+  sc.querySelector("#home-coach")?.addEventListener("click", () => openCoachProfile(loadSave() || save));
   // 导引：新手指引 + 操作教程合并入口
   sc.querySelector("#home-guide")?.addEventListener("click", () => openGuideMenu(loadSave() || save));
   // 更新公告：打开后记录已读，红点消失
@@ -1639,6 +1655,12 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
   const reviveEligible = !quit && !simulated && !spectate && engine && engine.score[0] <= engine.score[1];
   const reviveSnapshot = reviveEligible ? JSON.stringify(save) : null;
   const r = settleMatchResult(save, engine, quit ? null : (engine?.cfg?.gym ?? gym), quit, simulated, mode);
+  // 教练声望：把比赛接进局外成长；四天王/季后赛有额外加成，模拟减半
+  const repGain = !quit && !spectate && !simulated
+    ? Math.max(0, Math.round((r.won ? 20 : 8) + (mode === "elite" ? 15 : mode === "playoff" ? 10 : 0)))
+    : 0;
+  const repUp = repGain ? addRep(save, repGain, "match") : null;
+  if (repGain) { bumpRepMission(save, "match"); writeSave(save); }
   const adDouble = !simulated && !spectate && !quit && r.coinsGained > 0 && adDoubleLeft() > 0;
   const canRevive = !!reviveSnapshot && !r.won && adLeft("match_revive", 1) > 0;
 
@@ -1653,6 +1675,7 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
       <p class="rs-score">${engine ? `${engine.teams[0].abbr} <b>${r.myScore}</b> : <b>${r.oppScore}</b> ${engine.teams[1].abbr}` : quit ? "未打完，按判负记入战绩" : ""}</p>
       <div class="res-lines rs-lines">
         <p class="res-line"><span class="coin-ico">${COIN_SVG}</span><span>篮球币 +${r.coinsGained}（${r.won ? "胜利奖励" : "安慰奖"}）</span></p>
+        ${repGain ? `<p class="res-line"><span class="res-dot"></span><span>教练声望 +${repGain}${repUp?.levelUps?.length ? ` · 教练等级提升到 Lv.${repUp.level}` : ""}</span></p>` : ""}
         <p class="res-line"><span class="res-dot"></span><span>${r.seasonEnded ? "本赛季结束 · 进入下一赛季" : mode === "elite" ? "四天王挑战结束 · 可回赛季继续" : `下一场：${r.nextLabel}`}</span></p>
         <p class="res-line">${ICON.trophy}<span>战绩 ${save.stats.w} 胜 ${save.stats.l} 负</span></p>
         ${r.badgeGained ? `<p class="res-line res-gold">${BADGE_SVG}<span>获得「${r.badgeName || "道馆"}」徽章！</span></p>` : ""}
@@ -1683,7 +1706,7 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
         ${r.xpEvents.length ? `<div class="res-xp">${r.xpEvents.map((e) => `<p class="res-line">${UP_SVG}<span>${e}</span></p>`).join("")}</div>` : ""}
       </div>
       <div class="rs-actions">
-        ${adDouble ? `<button class="pk-btn-gold rs-ad" id="res-ad">看广告 · 金币 ×2（今日 ${adDoubleLeft()} 次）</button>` : ""}
+        ${adDouble ? `<button class="pk-btn-gold rs-ad" id="res-ad">看广告 · 金币 ×3（今日 ${adDoubleLeft()} 次）</button>` : ""}
         ${canRevive ? `<button class="pk-btn-gold" id="res-revive">看广告 · 撤销本场败局重打</button>` : ""}
         ${r.legendReward ? `<button class="pk-btn-gold rs-legend" id="res-legend">✦ 选择赛季传说 · ${r.legendReward.choices.length} 选 1</button>` : ""}
         ${mode === "elite" && !r.seasonEnded && !r.fourKingsCleared ? `<button class="pk-btn-gold" id="res-fk">再次挑战四天王</button>` : ""}
@@ -1707,10 +1730,10 @@ function showResult(save, engine, quit, gym, simulated = false, mode = "league",
       btn.textContent = "广告暂不可用";
       return;
     }
-    save.coins += r.coinsGained;
+    save.coins += r.coinsGained * 2;
     writeSave(save);
     markAdDouble();
-    btn.textContent = `已领取 +${r.coinsGained} 币`;
+    btn.textContent = `已领取 +${r.coinsGained * 2} 币`;
   });
   page.querySelector("#res-revive")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
@@ -1846,6 +1869,10 @@ function startDaily(save) {
 function showDailyResult(save, engine, quit, page = app.firstElementChild) {
   gameAudio.setTrack("menu");
   const r = settleDaily(save, engine, quit, false);
+  // 教练声望：每日挑战也喂局外成长
+  const repGain = !r.quit ? (r.won ? 18 : 8) : 0;
+  const repUp = repGain ? addRep(save, repGain, "daily") : null;
+  if (repGain) { bumpRepMission(save, "daily"); writeSave(save); }
   // 每日挑战榜：按当天一张榜上报，平台只保留当天最高分
   const rankSubmit = !r.quit && r.score > 0 ? submitDailyScore(r.score) : null;
   const again = `<button class="pk-btn-gold" id="daily-again">再来一局</button>`;
@@ -1880,12 +1907,13 @@ function showDailyResult(save, engine, quit, page = app.firstElementChild) {
           ${r.firstWin ? `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>今日首胜 +100 篮球币</span></p>` : ""}
           ${(r.milestones || []).map((m) => {
             if (m.mon?.ok) return `<p class="res-line res-gold"><span>✦</span><span>${m.score} 分奖励：稀有精灵「${m.mon.name}」加入${m.mon.placed === "box" ? "仓库" : "队伍"}！</span></p>`;
-            if (m.mon) return `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>${m.score} 分奖励：+${m.mon.coin || 200} 篮球币（${m.mon.reason === "weekly" ? "本周稀有已领取" : "稀有已集齐"}）</span></p>`;
+            if (m.mon) return `<p class="res-line res-gold"><span>✦</span><span>${m.score} 分奖励：本周稀有精灵已领取，下周刷新</span></p>`;
             if (m.legend?.ok) return `<p class="res-line res-gold"><span>✦</span><span>${m.score} 分奖励：传说精灵「${m.legend.name}」加入${m.legend.placed === "box" ? "仓库" : "队伍"}！</span></p>`;
-            if (m.legend) return `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>${m.score} 分奖励：+${m.legend.coin || 200} 篮球币（${m.legend.reason === "weekly" ? "本周传说已领取" : "传说已集齐"}）</span></p>`;
+            if (m.legend) return `<p class="res-line res-gold"><span>✦</span><span>${m.score} 分奖励：本周传说精灵已领取，下周刷新</span></p>`;
             return `<p class="res-line res-gold"><span class="coin-ico">${COIN_SVG}</span><span>${m.score} 分奖励：+${m.coin} 篮球币</span></p>`;
           }).join("")}
           <p class="res-line"><span class="res-dot"></span><span>今日最佳 ${r.best} 分 · 已挑战 ${r.plays} 场（${r.wins} 胜）</span></p>
+          ${repGain ? `<p class="res-line"><span class="res-dot"></span><span>教练声望 +${repGain}${repUp?.levelUps?.length ? ` · 教练等级提升到 Lv.${repUp.level}` : ""}</span></p>` : ""}
           <p class="res-line" id="daily-rank-note" style="display:none"></p>
           <p class="res-line" style="color:var(--text-dim);font-size:11.5px"><span class="res-dot" style="background:var(--text-dim)"></span><span>当日任务可在「每日挑战」面板领取</span></p>
         </div>
@@ -1991,7 +2019,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=557");
+window.__PC = await import("../engine/readable/play-core.js?v=574");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
@@ -2027,18 +2055,24 @@ try {
 if (hasCareer) {
   setTimeout(() => {
     const fresh = loadSave() || existing;
-    const offlineGrass = settleOffline(fresh);
-    if (!offlineGrass.length) return;
+    const refreshHint = (f) => {
+      try {
+        const hint = document.querySelector('[data-go="train"] .hm-txt small');
+        if (hint) {
+          const busy = grassState(f).some((g) => !g.empty);
+          hint.textContent = busy ? "挂机中" : "今日未安排";
+        }
+      } catch {}
+    };
+    const pending = offlineGrassPending(fresh);
+    // 离线 ≥30 分钟才先弹「离线收益」；少于 30 分钟静默结算，避免频繁打扰
+    if (pending.total > 0 && pending.idleMs >= 30 * 60 * 1000) {
+      showOfflineGrass(fresh, pending, { onDone: refreshHint });
+      return;
+    }
+    settleOffline(fresh);
     writeSave(fresh);
-    showGrassReport(offlineGrass);
-    // 主页草地提示同步为结算后的状态
-    try {
-      const hint = document.querySelector('[data-go="train"] .hm-txt small');
-      if (hint) {
-        const busy = grassState(fresh).some((g) => !g.empty);
-        hint.textContent = busy ? "挂机中" : "今日未安排";
-      }
-    } catch {}
+    refreshHint(fresh);
   }, 80);
 }
 

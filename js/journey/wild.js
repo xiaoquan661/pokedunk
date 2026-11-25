@@ -4,10 +4,10 @@
  * 核心循环：选路线 → 和野生精灵打一场 1v1 篮球 → 赢了它加入，参赛精灵获得 XP。
  * 不推进赛季、不计生涯战绩、不发合同；每天 3 次，广告 +1 次。
  */
-import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=557";
-import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=557";
-import { addMon, hasDex } from "../storage.js?v=557";
-import { grantXp } from "../systems/xp.js?v=557";
+import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=574";
+import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=574";
+import { addMon, hasDex } from "../storage.js?v=574";
+import { grantXp } from "../systems/xp.js?v=574";
 
 export const WILD_ATTEMPTS = 3;
 export const WILD_AD_ATTEMPTS = 1;
@@ -152,7 +152,7 @@ export function recordWildResult(save, { won, opp, monId, engine }) {
       recruit = { dex: opp.dex, level: save.mons[r.id]?.level || opp.level, placed: r.movedTo };
     } else {
       dup = true;
-      coins = 100;
+      coins = 25;
       save.coins = (save.coins || 0) + coins;
       save.bag ||= {};
       save.bag.berryNormal = (save.bag.berryNormal || 0) + 1;

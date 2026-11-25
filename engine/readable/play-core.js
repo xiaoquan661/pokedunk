@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=557";
+} from "./store-bridge.js?v=574";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -1440,7 +1440,7 @@ function Rt(a) {
   return a.length ? Math.round(a.reduce((e, t) => e + t.ovr, 0) / a.length) + Ot(a) : 0;
 }
 function ln(a) {
-  return clampNum(Math.round(35 + a.r.reb * 0.45 + a.r.def * 0.15), 40, 99);
+  return clampNum(Math.round(32 + a.r.reb * 0.55 + a.r.def * 0.2), 40, 99);
 }
 const cn = {
   PG: ["SG", "SF", "PF", "C"],
@@ -1654,7 +1654,7 @@ class MatchEngine {
     return [...this.players, ...this.bench].filter((t) => t.team === e).sort((t, s) => t.id - s.id);
   }
   effort(e) {
-    return e.energy >= 0.55 ? 1 : 0.82 + 0.18 * (e.energy / 0.55);
+    return e.energy >= 0.6 ? 1 : 0.8 + 0.2 * (e.energy / 0.6);
   }
   opponents(e) {
     return this.players.filter((t) => t.team !== e);
@@ -2192,7 +2192,7 @@ class MatchEngine {
     if (!this.cfg.stamina) return;
     const t = 120 / this.cfg.quarterLen;
     for (const s of this.players) {
-      const n = 0.0044 * (1.6 - s.stamina / 100) + (s.turboOn ? 0.0022 : 0);
+      const n = 0.0044 * (1.6 - s.stamina / 100) + (s.turboOn ? 0.0016 + (100 - s.stamina) / 100 * 0.0026 : 0);
       s.energy = Math.max(0, s.energy - n * t * e);
     }
     for (const s of this.bench) s.energy = Math.min(1, s.energy + 0.005 * t * e);
@@ -2379,7 +2379,7 @@ class MatchEngine {
     switch (n) {
       case "perfect":
         // 完美出手也吃投篮：低投篮完美仍可能打铁，高投篮完美更稳
-        c = clampNum((r ? 0.78 : 0.86) + (e.r.sht - 60) * 0.002, 0.55, 0.97) - (1 - i) * 0.55;
+        c = clampNum((r ? 0.78 : 0.86) + (e.r.sht - 60) * 0.003, 0.55, 0.97) - (1 - i) * 0.55;
         break;
       case "good":
         c = l * i + 0.06;
@@ -2598,7 +2598,7 @@ class MatchEngine {
         to: t,
         oop: n,
         t: 0,
-        speed: n ? 32 : 46 + e.r.pas * 0.16,
+        speed: n ? 32 : 40 + e.r.pas * 0.24,
         tested: new Set(),
         z0: s.z,
         dist0: Math.max(1, dist2d(s.x, s.y, t.x, t.y)),
@@ -2771,18 +2771,18 @@ class MatchEngine {
       l > 1 && ((r /= l), (i /= l));
       const c = e.fx.surge > 0 || e.fire,
         h = o.turbo && l > 0.1 && (e.turbo > 0.02 || c);
-      let d = (11 + e.r.spd * 0.085) * this.effort(e);
-      (h && (d *= 1.42),
+      let d = (9 + e.r.spd * 0.105) * this.effort(e);
+      (h && (d *= 1.3 + e.r.spd * 0.0025),
         e.fx.surge > 0 && (d *= 1.2),
         e.fx.slow > 0 && (d *= 0.55),
-        this.ball.owner === e && (d *= 0.82 + e.r.hnd * 0.0013),
+        this.ball.owner === e && (d *= 0.74 + e.r.hnd * 0.002),
         e.state === "swipe" && (d *= 0.5),
         this.phase === "tip" && (d = 0),
         (s = r * d),
         (n = i * d),
         h && ((e.turboOn = !0), c || (e.turbo = Math.max(0, e.turbo - 0.38 * t))));
     }
-    if ((e.turboOn || (e.turbo = Math.min(1, e.turbo + 0.16 * t)), e.state === "stun")) {
+    if ((e.turboOn || (e.turbo = Math.min(1, e.turbo + (0.1 + e.stamina / 100 * 0.12) * t)), e.state === "stun")) {
       const o = Math.min(1, 3 * t);
       ((e.vx -= e.vx * o), (e.vy -= e.vy * o));
     } else {
@@ -3010,7 +3010,7 @@ class MatchEngine {
         e.z > r.z + r.heightFt + 1.6
       )
         continue;
-      const i = r.r.reb + this.rng() * 35 + (r.z > 0.5 ? 10 : 0);
+      const i = r.r.reb + this.rng() * 24 + (r.z > 0.5 ? 10 : 0);
       i > s && ((s = i), (t = r));
     }
     if (!t) return;
@@ -7174,7 +7174,7 @@ function pi(a, e, t) {
     }));
 }
 const ze = [
-    "Hold shoot, release on green: a perfect release never misses",
+    "Hold shoot, release on green: a perfect release is much more accurate",
     "Shift + shoot near the rim to dunk",
     "Cover all five positions in your starting five for a +2 lineup bonus",
     "Type matchups apply when you shove: Fighting beats Rock, Water beats Fire",

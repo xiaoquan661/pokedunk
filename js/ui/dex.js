@@ -5,19 +5,21 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=557";
-import { gameAudio } from "../platform/audio.js?v=557";
-import { getPokemon } from "../../engine/readable/play-core.js?v=557";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=557";
-import { openDetail } from "./detail.js?v=557";
-import { playAcquire } from "./anim.js?v=557";
+import { loadSave, writeSave } from "../storage.js?v=574";
+import { gameAudio } from "../platform/audio.js?v=574";
+import { getPokemon } from "../../engine/readable/play-core.js?v=574";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=574";
+import { openDetail } from "./detail.js?v=574";
+import { playAcquire } from "./anim.js?v=574";
 import {
   milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
   typeRewardRows, claimTypeReward,
-} from "../systems/milestones.js?v=557";
+} from "../systems/milestones.js?v=574";
+import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=574";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...
+let curChapter = null; // "kanto" | "johto" | "hoenn" | null
 let msOpen = false; // 里程碑档位列表是否展开
 
 let toastTimer = null;
@@ -85,13 +87,15 @@ const TYPE_COLOR_MAP = { Normal: "#a8a878", Fire: "#ee8130", Water: "#6390f0", E
 
 function renderGrid(root, owned, seen) {
   const body = root.querySelector("#dex-grid");
-  let list;
-  if (curFilter === "all") list = ROWS;
-  else if (curFilter === "own") list = ROWS.filter((r) => owned[r[0]]);
+  let list = ROWS;
+  if (curChapter) {
+    const ch = DEX_CHAPTERS.find((x) => x.id === curChapter);
+    if (ch) list = ROWS.filter((r) => Number(r[0]) >= ch.from && Number(r[0]) <= ch.to);
+  } else if (curFilter === "own") list = ROWS.filter((r) => owned[r[0]]);
   else if (curFilter.startsWith("Rarity:")) {
     const rar = curFilter.slice(7);
     list = ROWS.filter((r) => rarityOf(r[0]) === rar);
-  } else {
+  } else if (curFilter.startsWith("Type:")) {
     const t = curFilter.slice(5);
     list = ROWS.filter((r) => typeOf(r[0]) === t);
   }
@@ -154,24 +158,61 @@ function milestoneHtml(save) {
     </div>`;
 }
 
-/** 属性收集奖励：每个属性集齐 8 种，可领 1 只同属性未结缘精灵 */
+/** 属性收集徽章：每个属性集齐 8 种点亮徽章（纯展示，不送精灵） */
 function typeRewardHtml(save) {
   const rows = typeRewardRows(save);
   const ready = rows.filter((r) => r.canClaim);
   const done = rows.filter((r) => r.claimed).length;
   return `
     <div class="ms-box ty-rw-box">
-      <div class="ms-head"><b>属性收集奖励</b><span>已领 ${done} / ${rows.length}</span></div>
-      <div class="ms-next">每个属性集齐 ${rows[0]?.step || 8} 种，可领 1 只同属性未结缘精灵${ready.length ? ` · <b style="color:var(--gold)">${ready.length} 个可领</b>` : ""}</div>
-      ${ready.length ? `<button class="ms-btn" data-ty-claim="${ready[0].type}" style="align-self:flex-start">领取 ${ready[0].cn}</button>` : ""}
+      <div class="ms-head"><b>属性收集徽章</b><span>已点亮 ${done} / ${rows.length}</span></div>
+      <div class="ms-next">每个属性集齐 ${rows[0]?.step || 8} 种，点亮对应属性徽章${ready.length ? ` · <b style="color:var(--gold)">${ready.length} 个可点亮</b>` : ""}</div>
+      ${ready.length ? `<button class="ms-btn" data-ty-claim="${ready[0].type}" style="align-self:flex-start">点亮 ${ready[0].cn}</button>` : ""}
       <div class="ty-grid">
         ${rows.map((r) => `
           <button class="ty-chip ${r.canClaim ? "ready" : ""} ${r.claimed ? "done" : ""}"
             ${r.canClaim ? `data-ty-claim="${r.type}"` : "disabled"}>
-            <b>${r.cn}</b><small>${r.claimed ? "已领" : `${r.have}/${r.step}`}</small>
+            <b>${r.cn}</b><small>${r.claimed ? "已点亮" : `${r.have}/${r.step}`}</small>
           </button>`).join("")}
       </div>
     </div>`;
+}
+
+const MEDAL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8l-2 6h-4L8 3Z"/><circle cx="12" cy="15" r="5"/><path d="m12 12 1.1 2.1 2.3.3-1.7 1.6.4 2.3-2.1-1.1-2.1 1.1.4-2.3-1.7-1.6 2.3-.3L12 12Z"/></svg>';
+
+function chapterCardsHtml(rows) {
+  return `<div class="dex-chapters">
+    ${rows.map((ch) => `<button type="button" class="dex-chapter${curChapter === ch.id ? " on" : ""}${ch.medal ? " medal" : ""}" data-chapter="${ch.id}" style="--cc:${ch.color}">
+      <span class="dc-name">${ch.name}${ch.note ? `<small>${ch.note}</small>` : ""}</span>
+      <span class="dc-count">${ch.got} / ${ch.total}</span>
+      <span class="dc-bar"><i style="width:${ch.pct}%"></i></span>
+      ${ch.medal ? `<span class="dc-medal">${MEDAL_SVG}完成</span>` : `<span class="dc-pct">${ch.pct}%</span>`}
+    </button>`).join("")}
+  </div>
+  <p class="dex-chapter-note">点篇章查看独立进度与纪念章 · 仅展示，不发资源 · 只统计当前图鉴中该地区的条目${(() => {
+    const covered = rows.reduce((s, c) => s + c.total, 0);
+    const extra = ROWS.length - covered;
+    return extra > 0 ? ` · 另有 ${extra} 只后续地区暂未分篇` : "";
+  })()}</p>`;
+}
+
+function chapterPanelHtml(ch) {
+  if (!ch) return "";
+  const half = DEX_CHAPTER_REWARDS.half;
+  const full = DEX_CHAPTER_REWARDS.full;
+  return `<div class="dex-chapter-panel" style="--cc:${ch.color}">
+    <div class="dcp-head"><b>${ch.name}${ch.note ? ` · ${ch.note}` : ""}</b><span>${ch.got} / ${ch.total} · ${ch.pct}%</span></div>
+    <div class="dcp-bar"><i style="width:${ch.pct}%"></i></div>
+    <div class="dcp-rewards">
+      <button type="button" data-chapter-claim="${ch.id}:half" ${ch.canClaimHalf ? "" : "disabled"}>
+        <b>50%</b><span>${ch.halfClaimed ? "已点亮" : half.label}</span>
+      </button>
+      <button type="button" data-chapter-claim="${ch.id}:full" ${ch.canClaimFull ? "" : "disabled"}>
+        <b>100%</b><span>${ch.fullClaimed ? "已领取 · 勋章已获得" : full.label}</span>
+      </button>
+    </div>
+    <p class="dcp-note">${ch.medal ? `${MEDAL_SVG} 完成勋章已获得` : `集齐 ${ch.total} 只可获得 ${ch.name}完成勋章`}${ch.halfReached ? "" : ` · 50% 还差 ${Math.max(0, ch.halfGoal - ch.got)} 只`}</p>
+  </div>`;
 }
 
 /** 渲染图鉴页到 root（全屏页，主界面菜单项进入） */
@@ -180,6 +221,8 @@ export function renderDex(root) {
   const seen = seenSet();
   const got = ROWS.filter((r) => owned[r[0]]).length;
   const save = loadSave() || { dex: {} };
+  const chapters = chapterRows(save);
+  const selectedChapter = chapters.find((c) => c.id === curChapter) || null;
   root.innerHTML = `
     <style>
       .dex-chips.rarity-chips button{border-color:var(--rc);color:var(--rc)}
@@ -194,6 +237,29 @@ export function renderDex(root) {
       .ty-chip.ready{border-color:var(--gold);background:rgba(245,197,66,.14)}
       .ty-chip.ready b,.ty-chip.ready small{color:var(--gold)}
       .ty-chip.done{opacity:.45}
+      .dex-chapters{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:2px 0 3px}
+      .dex-chapter{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0;padding:8px 7px 7px;border-radius:8px;border:1px solid var(--line,rgba(255,255,255,.14));background:rgba(0,0,0,.2);color:var(--text);text-align:left}
+      .dex-chapter.on{border-color:var(--cc);background:color-mix(in srgb,var(--cc) 16%,rgba(0,0,0,.2));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc) 40%,transparent)}
+      .dex-chapter .dc-name{font:700 11px var(--sport);color:var(--cc);display:flex;align-items:baseline;gap:3px;white-space:nowrap;overflow:hidden}
+      .dex-chapter .dc-name small{font:400 8px var(--sport);color:var(--text-dim)}
+      .dex-chapter .dc-count{font:700 10px var(--sport);color:var(--text);font-variant-numeric:tabular-nums}
+      .dex-chapter .dc-bar,.dcp-bar{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
+      .dex-chapter .dc-bar i,.dcp-bar i{display:block;height:100%;border-radius:2px;background:var(--cc)}
+      .dex-chapter .dc-pct{font:700 9px var(--sport);color:var(--text-dim)}
+      .dex-chapter .dc-medal{display:flex;align-items:center;gap:2px;font:700 8.5px var(--sport);color:var(--gold)}
+      .dex-chapter .dc-medal svg{width:11px;height:11px}
+      .dex-chapter-note{margin:0 0 9px;font-size:9.5px;color:var(--text-dim)}
+      .dex-chapter-panel{padding:10px 11px;margin:0 0 10px;border:1px solid color-mix(in srgb,var(--cc) 45%,transparent);border-radius:8px;background:color-mix(in srgb,var(--cc) 9%,rgba(0,0,0,.2))}
+      .dcp-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+      .dcp-head b{font:700 12px var(--sport);color:var(--cc)}
+      .dcp-head span{font:700 10px var(--sport);color:var(--text)}
+      .dcp-rewards{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+      .dcp-rewards button{display:flex;flex-direction:column;gap:1px;padding:6px 7px;border-radius:6px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.2);color:var(--text);text-align:left}
+      .dcp-rewards button b{font:700 10px var(--sport);color:var(--gold)}
+      .dcp-rewards button span{font-size:9px;color:var(--text-dim);line-height:1.35}
+      .dcp-rewards button:disabled{opacity:.45}
+      .dcp-note{display:flex;align-items:center;gap:4px;margin:7px 0 0;font-size:9.5px;color:var(--text-dim)}
+      .dcp-note svg{width:12px;height:12px;color:var(--gold);flex:none}
     </style>
     <div class="page-head">
       <button class="back" data-back>‹</button>
@@ -201,11 +267,13 @@ export function renderDex(root) {
       <span class="count">${got} / ${ROWS.length}</span>
     </div>
     <p class="page-sub">收集你结缘过的精灵 · 剪影代表尚未结缘 · 卡边框=属性色</p>
+    ${chapterCardsHtml(chapters)}
+    ${chapterPanelHtml(selectedChapter)}
     ${milestoneHtml(save)}
     ${monRewardBannerHtml(save)}
     ${typeRewardHtml(save)}
     <div class="dex-chips">
-      <button data-f="all"${curFilter === "all" ? ' class="on"' : ""}>全部</button>
+      <button data-f="all"${curFilter === "all" && !curChapter ? ' class="on"' : ""}>全部</button>
       <button data-f="own"${curFilter === "own" ? ' class="on"' : ""}>已获得</button>
     </div>
     <div class="dex-chips rarity-chips">${rarityChipsHtml(owned)}</div>
@@ -218,6 +286,26 @@ export function renderDex(root) {
   if (root.__dexBound) return;
   root.__dexBound = true;
   root.addEventListener("click", (e) => {
+    const chCard = e.target.closest("[data-chapter]");
+    if (chCard) {
+      const id = chCard.dataset.chapter;
+      curChapter = curChapter === id ? null : id;
+      curFilter = "all";
+      renderDex(root);
+      return;
+    }
+    const chClaim = e.target.closest("[data-chapter-claim]");
+    if (chClaim && !chClaim.disabled) {
+      const [id, tier] = chClaim.dataset.chapterClaim.split(":");
+      const fresh = loadSave() || {};
+      const r = claimChapterReward(fresh, id, tier);
+      if (!r.ok) return toast(r.error);
+      writeSave(fresh);
+      gameAudio.play("special");
+      toast(`${r.chapter}：${r.medal ? "完成勋章已获得" : "50% 纪念章已点亮"}`);
+      renderDex(root);
+      return;
+    }
     if (e.target.closest("[data-ms-toggle]")) {
       msOpen = !msOpen;
       renderDex(root);
@@ -230,17 +318,8 @@ export function renderDex(root) {
       if (!r.ok) return toast(r.error);
       writeSave(fresh);
       gameAudio.play("special");
-      if (r.dex) {
-        playAcquire({
-          dex: r.dex,
-          kicker: "属性收集奖励",
-          title: `获得 ${r.name || ""}`,
-          sub: `${r.type ? `${r.type}系` : ""} · 已加入${r.placed === "box" ? "仓库" : "队伍"}`,
-        }, () => renderDex(root));
-      } else {
-        toast(`${r.name || "精灵"} 加入${r.placed === "box" ? "仓库" : "队伍"}`);
-        renderDex(root);
-      }
+      toast(`${r.cn}属性徽章已点亮`);
+      renderDex(root);
       return;
     }
     if (e.target.closest("[data-mon-claim]")) {
@@ -285,6 +364,7 @@ export function renderDex(root) {
     }
     const cb = e.target.closest(".dex-chips button");
     if (cb) {
+      curChapter = null;
       curFilter = cb.dataset.f;
       root.querySelectorAll(".dex-chips button").forEach((b) => b.classList.toggle("on", b === cb));
       renderGrid(root, ownedSet(), seenSet()); // 每次点击取最新存档，避免闭包持有旧收集状态

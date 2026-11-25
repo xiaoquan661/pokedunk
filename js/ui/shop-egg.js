@@ -3,17 +3,17 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=557";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=557";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=557";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=557";
-import { watchRewardedAd } from "../platform/ads.js?v=557";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=557";
-import { playHatch, playAcquire } from "./anim.js?v=557";
-import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=557";
-import { ICON, coinInline } from "./icons.js?v=557";
+import { loadSave, writeSave } from "../storage.js?v=574";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft } from "../systems/shop.js?v=574";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=574";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=574";
+import { watchRewardedAd } from "../platform/ads.js?v=574";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=574";
+import { playHatch, playAcquire } from "./anim.js?v=574";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=574";
+import { ICON, coinInline } from "./icons.js?v=574";
 
-const AD_EGG_INSTANT_MAX = 1;
+const AD_EGG_INSTANT_MAX = 2;
 const monName = (dex) => {
   const rows = window.__PJ_DEX_ROWS || [];
   const r = rows.find((x) => x[0] === dex);
@@ -215,7 +215,7 @@ function eggSlotHtml(e, i, hatchCount = 0) {
       : `<span class="egg-left">${fmtMs(e.leftMs)}</span>
          <div class="egg-bar"><i style="width:${Math.round((e.progress || 0) * 100)}%"></i></div>
          ${hatchCount > 0 ? `<button class="egg-ad" data-hatchitem="${i}">用加速券 -50%（×${hatchCount}）</button>` : ""}
-         <button class="egg-ad" data-adspeed="${i}">看广告 -2 小时</button>
+         <button class="egg-ad" data-adspeed="${i}">看广告 -4 小时</button>
          <button class="egg-ad" data-adinstant="${i}"${adLeft("egg_instant", AD_EGG_INSTANT_MAX) <= 0 ? " disabled" : ""}>看广告立即孵出（今日 ${adLeft("egg_instant", AD_EGG_INSTANT_MAX)}/${AD_EGG_INSTANT_MAX}）</button>`}
     <span class="egg-slot-no">槽位 ${i + 1}</span>
   </div>`;
@@ -325,13 +325,13 @@ export function renderEgg(root) {
         const ad = await watchRewardedAd("egg_speed");
         if (!ad.ok) {
           sp.disabled = false;
-          sp.textContent = "看广告 -2 小时";
+          sp.textContent = "看广告 -4 小时";
           return toast(ad.message || "广告暂不可用");
         }
         const fresh = loadSave() || save;
         const r = eggSpeedUp(fresh, Number(sp.dataset.adspeed));
         if (!r.ok) return toast(r.error);
-        toast(r.leftMs <= 0 ? "加速完成，可以孵化了！" : "已加速 2 小时");
+        toast(r.leftMs <= 0 ? "加速完成，可以孵化了！" : "已加速 4 小时");
         renderEgg(root);
         return;
       }

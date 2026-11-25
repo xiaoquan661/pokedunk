@@ -1,29 +1,21 @@
 /**
  * ui/earn.js —— 金币获取面板（pokedunk-v2）
- * 入口：主页金币 chip 旁「+」按钮。三个来源：
- *  1. 新手任务：一次性，完成比赛目标领篮球币/高级蛋。
- *  2. 激励视频：window.LampsGame.showRewardedVideo()（Lamps 平台）；本地无桥时走 3 秒模拟兜底。
- *  3. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
- * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）；新手任务状态在 save.rookieTasks。
+ * 入口：主页金币 chip 旁「+」按钮。两个来源：
+ *  1. 激励视频：window.LampsGame.showRewardedVideo()（Lamps 平台）；本地无桥时走 3 秒模拟兜底。
+ *  2. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
+ * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）。
  */
-import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=557";
+import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=574";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { LEGENDARY_DEX } from "../systems/build.js?v=557";
-import { watchRewardedAd } from "../platform/ads.js?v=557";
-import { gameAudio } from "../platform/audio.js?v=557";
-import { rollEggDex, EGG_TIERS } from "../systems/shop.js?v=557";
-import { ICON } from "./icons.js?v=557";
-import { playAcquire } from "./anim.js?v=557";
+import { LEGENDARY_DEX } from "../systems/build.js?v=574";
+import { watchRewardedAd } from "../platform/ads.js?v=574";
+import { gameAudio } from "../platform/audio.js?v=574";
+import { rollEggDex } from "../systems/shop.js?v=574";
+import { ICON } from "./icons.js?v=574";
+import { playAcquire } from "./anim.js?v=574";
 
 const DAILY_KEY = "pokedunk.daily.v1";
-const AD_COINS = 100;     // 每次看广告奖励（S18：不限次数）
-
-/** 一次性新手任务：条件简单，直接领篮球币/高级蛋 */
-const ROOKIE_TASKS = [
-  { id: "rookie1", name: "完成 1 场比赛", goal: 1, coin: 100, check: (s) => matchCount(s) >= 1 },
-  { id: "rookie2", name: "打赢 1 场比赛", goal: 1, coin: 150, check: (s) => (s.stats?.w || 0) >= 1 },
-  { id: "rookie3", name: "完成 3 场比赛", goal: 3, egg: true, coin: 0, check: (s) => matchCount(s) >= 3 },
-];
+const AD_COINS = 300;     // 每次看广告奖励（S35：100→300，仍不限次数）
 const monName = (dex) => {
   const r = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
   return r ? String(r[1]).replace(/#\d+$/, "") : "#" + dex;
@@ -150,14 +142,6 @@ export function bumpDaily(key, n = 1) {
   return d.cnt[key];
 }
 
-function rookieState(save) {
-  save.rookieTasks ||= { claimed: {} };
-  save.rookieTasks.claimed ||= {};
-  return save.rookieTasks;
-}
-function matchCount(save) {
-  return (save.stats?.w || 0) + (save.stats?.l || 0);
-}
 /** 每日活跃任务独立面板（主页入口）：完成进度 + 领币 */
 export function openDailyTasks(save, onCoins) {
   if (!document.getElementById("pj-earn-style")) {
@@ -370,7 +354,7 @@ export function openDailyTasks(save, onCoins) {
   render();
 }
 
-export function openEarn(save, onCoins, onRoster) {
+export function openEarn(save, onCoins) {
   if (!document.getElementById("pj-earn-style")) {
     const st = document.createElement("style");
     st.id = "pj-earn-style";
@@ -402,22 +386,9 @@ export function openEarn(save, onCoins, onRoster) {
   function render() {
     const d = daily();
     const adsLeft = Infinity;
-    const rk = rookieState(save);
-    const matches = matchCount(save);
     const coinEl = wrap.querySelector("#earn-coins");
     if (coinEl) coinEl.textContent = `${save.coins} 币`;
     wrap.querySelector("#pj-earn-body").innerHTML = `
-      <div class="pj-block">
-        <div class="pj-flbl">新手任务</div>
-        <div class="pj-fdesc">完成简单目标领篮球币，完成 3 场领高级精灵蛋（一次性）</div>
-        ${ROOKIE_TASKS.map((t) => {
-          const done = !!rk.claimed[t.id];
-          const reached = t.check(save);
-          const cur = t.id === "rookie2" ? (save.stats?.w || 0) : matches;
-          const reward = t.egg ? "领高级蛋" : `领 +${t.coin} 币`;
-          return `<div class="pj-row"><span>${t.name} <small style="color:rgba(255,255,255,.4)">${done || reached ? "✓" : `(${Math.min(cur, t.goal)}/${t.goal})`}</small></span><button class="pj-btn ${done ? "done" : ""}" data-rookie="${t.id}" ${done || !reached ? "disabled" : ""}>${done ? "已领取" : reached ? reward : "未完成"}</button></div>`;
-        }).join("")}
-      </div>
       <div class="pj-block">
         <div class="pj-flbl">激励视频</div>
         <div class="pj-fdesc">观看一段短广告，立刻获得金币（不限次数）</div>
@@ -455,26 +426,6 @@ export function openEarn(save, onCoins, onRoster) {
         btn.textContent = "广告暂不可用";
         setTimeout(render, 1200);
       }
-      return;
-    }
-    const rb = e.target.closest("[data-rookie]");
-    if (rb && !rb.disabled) {
-      const t = ROOKIE_TASKS.find((x) => x.id === rb.dataset.rookie);
-      const rk = rookieState(save);
-      if (!t || rk.claimed[t.id] || !t.check(save)) return;
-      rk.claimed[t.id] = true;
-      if (t.egg) {
-        save.eggs.stock ||= [];
-        save.eggs.stock.push({ eggTier: "premium", dex: rollEggDex(save, "premium") });
-        earnToast(`高级精灵蛋已放入待孵栏（孵化 ${Math.round(EGG_TIERS.premium.hatchMs / 3600000)} 小时）——去孵蛋页开始孵化`);
-      } else {
-        save.coins += t.coin;
-      }
-      writeSave(save);
-      gameAudio.play("coin");
-      onCoins?.();
-      onRoster?.();
-      render();
       return;
     }
     const cb = e.target.closest("[data-claim]");

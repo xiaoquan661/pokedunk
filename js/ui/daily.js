@@ -3,12 +3,12 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=557";
-import { gameAudio } from "../platform/audio.js?v=557";
+import { loadSave, writeSave } from "../storage.js?v=574";
+import { gameAudio } from "../platform/audio.js?v=574";
 import {
   dailyPreview, dailyMissionRows, dailyScoreRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=557";
-import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=557";
+} from "../journey/daily.js?v=574";
+import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=574";
 
 const DAILY_CSS = `
 .daily-score{display:flex;flex-direction:column;gap:6px}
@@ -224,14 +224,14 @@ export function openDaily(save, actions = {}) {
       <div class="daily-score">
         ${scoreRows.map((m) => {
           const reward = m.legend
-            ? (m.weeklyLocked ? "本周已领 · 折算 200 币" : "随机传说精灵")
+            ? (m.weeklyLocked ? "本周已领 · 下周刷新" : "随机传说精灵")
             : m.mon
-              ? (m.weeklyLocked ? "本周已领 · 折算 200 币" : "随机稀有精灵")
+              ? (m.weeklyLocked ? "本周已领 · 下周刷新" : "随机稀有精灵")
               : `+${m.coin} 币`;
           const sub = m.legend
-            ? "达到即发 · 从尚未结缘的传说中随机 1 只 · 每周限 1"
+            ? "达到即发 · 从尚未结缘的传说中随机 1 只 · 每周限 1 · 不折币"
             : m.mon
-              ? "达到即发 · 从尚未结缘的稀有精灵中随机 1 只 · 每周限 1"
+              ? "达到即发 · 从尚未结缘的稀有精灵中随机 1 只 · 每周限 1 · 不折币"
               : "达到即发 · 直接进账";
           const best = p.best || 0;
           const pct = Math.min(100, Math.round((best / m.score) * 100));

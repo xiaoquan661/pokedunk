@@ -3,8 +3,9 @@
  * 存档：pokedunk.achv.v1（{成就id: 解锁时间戳}）。
  * 判定源：v2 生涯存档（stats/journey/mons/dex）+ 启动全量评估；比赛类成就由 settle 结算后调 evaluateMatch。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=557";
-import { writeSave } from "../storage.js?v=557";
+import { getPokemon } from "../../engine/readable/play-core.js?v=574";
+import { writeSave } from "../storage.js?v=574";
+import { rollEggDex } from "./shop.js?v=574";
 
 const KEY = "pokedunk.achv.v1";
 const SAVE_KEY = "pokedunk.save.v1";
@@ -120,7 +121,7 @@ export function claimReward(id) {
   if (r.egg) {
     save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
     save.eggs.stock ||= [];
-    save.eggs.stock.push({ eggTier: r.egg, dex: null });
+    save.eggs.stock.push({ eggTier: r.egg, dex: rollEggDex(save, r.egg) });
     parts.push(r.egg === "premium" ? "高级精灵蛋 ×1" : "普通精灵蛋 ×1");
   }
   achv.__claimed[id] = Date.now();
@@ -142,34 +143,34 @@ function toast(msg, ms = 3000) {
 
 /* —— 生涯类成就（v2 存档字段） —— */
 const defs = [
-  { id: "stage1",  name: "初出茅庐", desc: "击败道馆馆主，拿下第一枚徽章", check: (s) => s.journey.gymBadges.length >= 1, reward: { coins: 50 } },
-  { id: "badges2", name: "初露锋芒", desc: "集齐 2 枚道馆徽章",            check: (s) => badgeCount(s) >= 2, reward: { coins: 75 } },
-  { id: "badges4", name: "四方来朝", desc: "集齐 4 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 4, reward: { coins: 150 } },
-  { id: "badges8", name: "八方来朝", desc: "集齐 8 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 8, reward: { coins: 250, item: "hatch" } },
-  { id: "champion", name: "联盟之王", desc: "赢得赛季总冠军",              check: (s) => hasChampion(s), reward: { coins: 400, egg: "premium" } },
-  { id: "tour1",   name: "巡回骑士", desc: "进入巡回赛，踏上无尽挑战",      check: (s) => s.journey.stage === "tour" || s.journey.gymBadges.includes("champion"), reward: { coins: 150 } },
-  { id: "evo1",    name: "进化之光", desc: "拥有一只进化后的精灵",          check: (s) => evolvedCount(s) >= 1, reward: { coins: 50 } },
-  { id: "evo5",    name: "养成大师", desc: "进化精灵达到 5 只",            check: (s) => evolvedCount(s) >= 5, reward: { coins: 150, item: "berryPremium" } },
-  { id: "evo10",   name: "进化研究所", desc: "进化精灵达到 10 只",          check: (s) => evolvedCount(s) >= 10, reward: { coins: 250 } },
-  { id: "vet16",   name: "身经百战", desc: "任一精灵等级达到 16 级",        check: (s) => maxLevel(s) >= 16, reward: { coins: 75 } },
-  { id: "lv25",    name: "精兵强将", desc: "任一精灵等级达到 25 级",        check: (s) => maxLevel(s) >= 25, reward: { coins: 125 } },
-  { id: "lv40",    name: "王牌训练家", desc: "任一精灵等级达到 40 级",      check: (s) => maxLevel(s) >= 40, reward: { coins: 250 } },
-  { id: "coll10",  name: "结缘十只", desc: "与 10 种精灵结缘（图鉴点亮）",  check: (s) => Object.keys(s.dex).length >= 10, reward: { coins: 50 } },
-  { id: "coll30",  name: "结缘三十", desc: "与 30 种精灵结缘",             check: (s) => Object.keys(s.dex).length >= 30, reward: { coins: 125 } },
-  { id: "coll50",  name: "图鉴收藏家", desc: "与 50 种精灵结缘",            check: (s) => Object.keys(s.dex).length >= 50, reward: { coins: 200, item: "berryPremium" } },
-  { id: "coll80",  name: "图鉴大师", desc: "与 80 种精灵结缘",              check: (s) => Object.keys(s.dex).length >= 80, reward: { coins: 300 } },
-  { id: "types18", name: "全属性制霸", desc: "图鉴覆盖全部 18 种属性",       check: (s) => typeCoverage(s) >= 18, reward: { coins: 400, egg: "premium" } },
-  { id: "team10",  name: "满编教练", desc: "队伍满员 10 人",               check: (s) => (s.team || []).length >= 10, reward: { coins: 100 } },
-  { id: "grass3",  name: "牧场主", desc: "草地 3 个位置同时挂机",           check: (s) => (s.grass?.slots || []).filter(Boolean).length >= 3, reward: { coins: 100, item: "berryPremium" } },
-  { id: "rich1k",  name: "小康教练", desc: "持有 1000 篮球币",             check: (s) => s.coins >= 1000, reward: { coins: 50 } },
-  { id: "rich5k",  name: "财大气粗", desc: "持有 5000 篮球币",             check: (s) => s.coins >= 5000, reward: { coins: 150 } },
-  { id: "w10",     name: "十胜教头", desc: "生涯取得 10 场胜利",           check: (s) => s.stats.w >= 10, reward: { coins: 75 } },
-  { id: "w30",     name: "三十胜", desc: "生涯取得 30 场胜利",             check: (s) => s.stats.w >= 30, reward: { coins: 200 } },
-  { id: "w50",     name: "五十胜", desc: "生涯取得 50 场胜利",             check: (s) => s.stats.w >= 50, reward: { coins: 300 } },
-  { id: "sign1",   name: "签约达人", desc: "首次签下胜利后的精灵合同",      check: (s) => !!s.flags?.sign1, reward: { coins: 50, item: "hatch" } },
-  { id: "streak7", name: "全勤一周", desc: "连续签到 7 天",                check: (s) => (s.signin?.streak || 0) >= 7, reward: { coins: 150, item: "berryPremium" } },
-  { id: "daily90", name: "每日之星", desc: "每日挑战单日拿到 90 分",        check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 90), reward: { coins: 100 } },
-  { id: "daily120", name: "挑战极限", desc: "每日挑战单日拿到 120 分",      check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 120), reward: { coins: 200, egg: "premium" } },
+  { id: "stage1",  name: "初出茅庐", desc: "击败道馆馆主，拿下第一枚徽章", check: (s) => s.journey.gymBadges.length >= 1, reward: { coins: 25 } },
+  { id: "badges2", name: "初露锋芒", desc: "集齐 2 枚道馆徽章",            check: (s) => badgeCount(s) >= 2, reward: { coins: 40 } },
+  { id: "badges4", name: "四方来朝", desc: "集齐 4 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 4, reward: { coins: 75 } },
+  { id: "badges8", name: "八方来朝", desc: "集齐 8 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 8, reward: { coins: 125, item: "hatch" } },
+  { id: "champion", name: "联盟之王", desc: "赢得赛季总冠军",              check: (s) => hasChampion(s), reward: { coins: 200, item: "hatch", n: 2 } },
+  { id: "tour1",   name: "巡回骑士", desc: "进入巡回赛，踏上无尽挑战",      check: (s) => s.journey.stage === "tour" || s.journey.gymBadges.includes("champion"), reward: { coins: 75 } },
+  { id: "evo1",    name: "进化之光", desc: "拥有一只进化后的精灵",          check: (s) => evolvedCount(s) >= 1, reward: { coins: 25 } },
+  { id: "evo5",    name: "养成大师", desc: "进化精灵达到 5 只",            check: (s) => evolvedCount(s) >= 5, reward: { coins: 75, item: "berryPremium" } },
+  { id: "evo10",   name: "进化研究所", desc: "进化精灵达到 10 只",          check: (s) => evolvedCount(s) >= 10, reward: { coins: 125 } },
+  { id: "vet16",   name: "身经百战", desc: "任一精灵等级达到 16 级",        check: (s) => maxLevel(s) >= 16, reward: { coins: 40 } },
+  { id: "lv25",    name: "精兵强将", desc: "任一精灵等级达到 25 级",        check: (s) => maxLevel(s) >= 25, reward: { coins: 60 } },
+  { id: "lv40",    name: "王牌训练家", desc: "任一精灵等级达到 40 级",      check: (s) => maxLevel(s) >= 40, reward: { coins: 125 } },
+  { id: "coll10",  name: "结缘十只", desc: "与 10 种精灵结缘（图鉴点亮）",  check: (s) => Object.keys(s.dex).length >= 10, reward: { coins: 25 } },
+  { id: "coll30",  name: "结缘三十", desc: "与 30 种精灵结缘",             check: (s) => Object.keys(s.dex).length >= 30, reward: { coins: 60 } },
+  { id: "coll50",  name: "图鉴收藏家", desc: "与 50 种精灵结缘",            check: (s) => Object.keys(s.dex).length >= 50, reward: { coins: 100, item: "berryPremium" } },
+  { id: "coll80",  name: "图鉴大师", desc: "与 80 种精灵结缘",              check: (s) => Object.keys(s.dex).length >= 80, reward: { coins: 150 } },
+  { id: "types18", name: "全属性制霸", desc: "图鉴覆盖全部 18 种属性",       check: (s) => typeCoverage(s) >= 18, reward: { coins: 200, item: "hatch", n: 2 } },
+  { id: "team10",  name: "满编教练", desc: "队伍满员 10 人",               check: (s) => (s.team || []).length >= 10, reward: { coins: 50 } },
+  { id: "grass3",  name: "牧场主", desc: "草地 3 个位置同时挂机",           check: (s) => (s.grass?.slots || []).filter(Boolean).length >= 3, reward: { coins: 50, item: "berryPremium" } },
+  { id: "rich1k",  name: "小康教练", desc: "持有 1000 篮球币",             check: (s) => s.coins >= 1000, reward: { coins: 25 } },
+  { id: "rich5k",  name: "财大气粗", desc: "持有 5000 篮球币",             check: (s) => s.coins >= 5000, reward: { coins: 75 } },
+  { id: "w10",     name: "十胜教头", desc: "生涯取得 10 场胜利",           check: (s) => s.stats.w >= 10, reward: { coins: 40 } },
+  { id: "w30",     name: "三十胜", desc: "生涯取得 30 场胜利",             check: (s) => s.stats.w >= 30, reward: { coins: 100 } },
+  { id: "w50",     name: "五十胜", desc: "生涯取得 50 场胜利",             check: (s) => s.stats.w >= 50, reward: { coins: 150 } },
+  { id: "sign1",   name: "签约达人", desc: "首次签下胜利后的精灵合同",      check: (s) => !!s.flags?.sign1, reward: { coins: 25, item: "hatch" } },
+  { id: "streak7", name: "全勤一周", desc: "连续签到 7 天",                check: (s) => (s.signin?.streak || 0) >= 7, reward: { coins: 75, item: "berryPremium" } },
+  { id: "daily90", name: "每日之星", desc: "每日挑战单日拿到 90 分",        check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 90), reward: { coins: 50 } },
+  { id: "daily120", name: "挑战极限", desc: "每日挑战单日拿到 120 分",      check: (s) => (s.daily?.history || []).some((d) => (d.best || 0) >= 120), reward: { coins: 100, item: "hatch", n: 1 } },
 ];
 
 /** 所有进化后的形态（作为其他形态的进化目标出现） */
@@ -200,11 +201,11 @@ function typeCoverage(s) {
 
 /* —— 比赛类成就（settle 结算后传入单场统计） —— */
 const matchDefs = [
-  { id: "w1",     name: "开门红",   desc: "赢下第一场比赛",         check: (d) => d.won, reward: { coins: 50 } },
-  { id: "close5", name: "关键先生", desc: "以 ≤5 分分差赢下比赛",   check: (d) => d.won && d.margin > 0 && d.margin <= 5, reward: { coins: 100 } },
-  { id: "blow20", name: "碾压全场", desc: "以 ≥20 分分差赢下比赛",  check: (d) => d.won && d.margin >= 20, reward: { coins: 100 } },
-  { id: "score100", name: "百分大战", desc: "单场得到 100 分",      check: (d) => (d.myScore || 0) >= 100, reward: { coins: 150 } },
-  { id: "score120", name: "得分机器", desc: "单场得到 120 分",      check: (d) => (d.myScore || 0) >= 120, reward: { coins: 250, item: "berryPremium" } },
+  { id: "w1",     name: "开门红",   desc: "赢下第一场比赛",         check: (d) => d.won, reward: { coins: 25 } },
+  { id: "close5", name: "关键先生", desc: "以 ≤5 分分差赢下比赛",   check: (d) => d.won && d.margin > 0 && d.margin <= 5, reward: { coins: 50 } },
+  { id: "blow20", name: "碾压全场", desc: "以 ≥20 分分差赢下比赛",  check: (d) => d.won && d.margin >= 20, reward: { coins: 50 } },
+  { id: "score100", name: "百分大战", desc: "单场得到 100 分",      check: (d) => (d.myScore || 0) >= 100, reward: { coins: 75 } },
+  { id: "score120", name: "得分机器", desc: "单场得到 120 分",      check: (d) => (d.myScore || 0) >= 120, reward: { coins: 125, item: "berryPremium" } },
 ];
 
 function evaluateAll(save) {

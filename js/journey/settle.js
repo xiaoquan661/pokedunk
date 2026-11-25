@@ -6,16 +6,16 @@
  *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=557";
-import { rollGrowth } from "../../engine/growth.js?v=557";
-import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=557";
-import { monPrice } from "../systems/shop.js?v=557";
-import { ACHV } from "../systems/achv.js?v=557";
-import { bumpDaily } from "../ui/earn.js?v=557";
-import { currentMatchInfo, recordResult } from "./season.js?v=557";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=557";
-import { offerLegendReward } from "./legend.js?v=557";
-import { syncAcquireLevel } from "../systems/acquire.js?v=557";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=574";
+import { rollGrowth } from "../../engine/growth.js?v=574";
+import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=574";
+import { monPrice } from "../systems/shop.js?v=574";
+import { ACHV } from "../systems/achv.js?v=574";
+import { bumpDaily } from "../ui/earn.js?v=574";
+import { currentMatchInfo, recordResult } from "./season.js?v=574";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=574";
+import { offerLegendReward } from "./legend.js?v=574";
+import { syncAcquireLevel } from "../systems/acquire.js?v=574";
 
 const CONTRACT_DISCOUNT = 1; // 合同按商店原价出售，不再打折
 // S31：每场胜利 35% 概率出现合同；连续 3 胜未出，下一场必出

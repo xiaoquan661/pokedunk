@@ -3,9 +3,9 @@
  * 按「累计结缘数」阶梯发奖，不按首次点亮；每档只能领一次。
  * 存档：save.milestones = { 档位: 领取时间戳 }（不新增存档版本，旧档按空对象处理）。
  */
-import { ITEM_TYPES, rarityOf, LEGENDARY_DEX } from "./build.js?v=557";
-import { addMon, hasDex } from "../storage.js?v=557";
-import { getPokemon } from "../../engine/readable/play-core.js?v=557";
+import { ITEM_TYPES, rarityOf, LEGENDARY_DEX } from "./build.js?v=574";
+import { addMon, hasDex } from "../storage.js?v=574";
+import { getPokemon } from "../../engine/readable/play-core.js?v=574";
 
 /** 档位表（S13 定案）：累计收集数 → 篮球币 + 道具 */
 export const MILESTONES = [
@@ -69,31 +69,15 @@ export function typeRewardRows(save) {
   });
 }
 
-/** 领取某属性的收集奖励：同属性未结缘优先，普通 78% / 稀有 22%；同属性已集齐则退到全池 */
+/** 点亮某属性的收集徽章：只给图鉴展示，不再额外送精灵 */
 export function claimTypeReward(save, type) {
   const row = typeRewardRows(save).find((r) => r.type === type);
   if (!row) return { ok: false, error: "未知属性" };
-  if (row.claimed) return { ok: false, error: "该属性奖励已领取" };
+  if (row.claimed) return { ok: false, error: "该属性徽章已点亮" };
   if (!row.reached) return { ok: false, error: `该属性还差 ${row.remain} 种` };
-  const rows = (window.__PJ_DEX_ROWS || []).filter(
-    (r) => !LEGENDARY_DEX.has(r[0]) && !hasDex(save, r[0])
-  );
-  let pool = rows.filter((r) => typeOfDex(r[0]) === type);
-  if (!pool.length) pool = rows;
-  if (!pool.length) return { ok: false, error: "可结缘的精灵已全部收集" };
-  const wantRare = Math.random() < MON_RARE_ODDS;
-  let pick = pool.filter((r) => (rarityOf(r[0]) === "稀有") === wantRare);
-  if (!pick.length) pick = pool;
-  const dex = pick[Math.floor(Math.random() * pick.length)][0];
-  const r = addMon(save, dex, { from: "dex_type", level: 5 });
-  if (!r.ok) return { ok: false, error: r.error || "领取失败" };
   save.typeRewards ||= {};
   save.typeRewards[type] = Date.now();
-  const row2 = (window.__PJ_DEX_ROWS || []).find((x) => x[0] === dex);
-  return {
-    ok: true, dex, placed: r.movedTo,
-    name: row2 ? String(row2[1]).replace(/#\d+$/, "") : "",
-  };
+  return { ok: true, badge: true, type, cn: row.cn };
 }
 
 export function dexCount(save) {

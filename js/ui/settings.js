@@ -5,12 +5,12 @@
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=557";
-import { resetSave } from "../storage.js?v=557";
-import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=557";
-import { BONDS } from "../systems/build.js?v=557";
-import { EGG_TIERS } from "../systems/shop.js?v=557";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=557";
+import { gameAudio } from "../platform/audio.js?v=574";
+import { resetSave } from "../storage.js?v=574";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=574";
+import { BONDS } from "../systems/build.js?v=574";
+import { EGG_TIERS } from "../systems/shop.js?v=574";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=574";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -152,8 +152,8 @@ function tabGuide() {
       <div class="pj-guide-row"><b>每日商店</b><span>每天 6 只精灵（至少 1 只稀有，已拥有不刷新）+ 普通蛋 + 高级蛋 + 两种树果</span><small>精灵 100~400 币，按种族 OVR 定价；普通蛋 50 币，高级蛋 160 币；普通树果 12 币不限购，高级树果 60 币、每日 3 个。</small></div>
       <div class="pj-guide-row"><b>孵蛋</b><span>普通蛋 1% 传说 / 30% 稀有 / 70% 普通；高级蛋 6% 传说 / 其余必出稀有</span><small>传说为独立判定；普通蛋 20 分钟、到手 Lv.2；高级蛋 2 小时、到手 Lv.5。默认 1 槽，可花 300 币买 1 槽，看广告再送 1 槽，最多 3 槽。</small></div>
       <div class="pj-guide-row"><b>战胜签约</b><span>每场胜利 35% 出现；连续 3 场胜利未出，下一场必出</span><small>出现后 3 只未结缘精灵选 1，按商店原价签约，到手 Lv.5；看广告可免费额外多签 1 只（每日 1 次）。</small></div>
-      <div class="pj-guide-row"><b>野球场1v1</b><span>每天 3 次，半场 1v1 篮球；赢了野生精灵加入</span><small>2 节 × 60 秒；参赛精灵获得 XP；路线按徽章解锁；不推进赛季、不计战绩；同种已拥有折算 100 币 + 普通树果。</small></div>
-      <div class="pj-guide-row"><b>每日挑战</b><span>60 分 +80 币；90 分随机稀有（每周 1 只）；120 分随机传说（每周 1 只）</span><small>重复或已集齐折算 200 币；每日首胜 +100 币；挑战分随当日规则变化，只看当日最高。</small></div>
+      <div class="pj-guide-row"><b>野球场1v1</b><span>每天 3 次，半场 1v1 篮球；赢了野生精灵加入</span><small>2 节 × 60 秒；参赛精灵获得 XP；路线按徽章解锁；不推进赛季、不计战绩；同种已拥有折算 25 币 + 普通树果。</small></div>
+      <div class="pj-guide-row"><b>每日挑战</b><span>60 分 +80 币；90 分随机稀有（每周 1 只）；120 分随机传说（每周 1 只）</span><small>重复或本周已领不再折币；每日首胜 +100 币；挑战分随当日规则变化，只看当日最高。</small></div>
       <div class="pj-guide-row"><b>每日任务</b><span>5 个任务全部完成，额外送高级精灵蛋 ×1</span><small>任务奖励金币；全清奖励每天一次，0 点重置。</small></div>
       <div class="pj-guide-row"><b>七日签到</b><span>第 1 天必得稀有精灵；第 3、7 天必得随机传说</span><small>连续签到累计，断签从第 1 天重新开始；稀有/传说已集齐或队伍/仓库满，改发高级蛋 ×2。</small></div>
       <div class="pj-guide-row"><b>赛季传说</b><span>联赛冠军 / 四天王共享赛季 2 只</span><small>先完成 2 选 1，后完成拿剩下 1 只；重复传说折算 200 币。</small></div>
@@ -162,7 +162,7 @@ function tabGuide() {
       <div class="pj-guide-row"><b>孵蛋</b><span>普通蛋：传说独立 1%，其余普通 70% / 稀有 30%；高级蛋：传说独立 6%，未出传说时 100% 稀有</span><small>购买/入包时确定精灵，优先未拥有；蛋价 50 / 160 币，孵化 20 分钟 / 2 小时。</small></div>
       <div class="pj-guide-row"><b>精灵合同</b><span>每场胜利 35%；连续 3 场胜利未出，下一场必出</span><small>3 只未结缘、非传说精灵选 1；价格按商店原价（OVR 档位 100/150/220/300/400）四舍五入到 5 币。</small></div>
       <div class="pj-guide-row"><b>每日商店</b><span>6 只未拥有精灵；第 2 格 55% 稀有，第 4 格 20%，第 5/6 格各 15%；非新手每日至少 1 只稀有</span><small>低 OVR 出现权重更高（&lt;50:5 / &lt;60:4 / &lt;70:3 / &lt;80:2 / &lt;90:1 / ≥90:0.5）；价格按 OVR 分档。</small></div>
-      <div class="pj-guide-row"><b>野球场</b><span>对手等级在路线区间内均匀随机；70% 优先未拥有，再从 OVR 最接近的 10 只中均匀抽 1</span><small>同种已拥有折算 100 币 + 普通树果 ×1；每天 3 次，广告 +1 次。</small></div>
+      <div class="pj-guide-row"><b>野球场</b><span>对手等级在路线区间内均匀随机；70% 优先未拥有，再从 OVR 最接近的 10 只中均匀抽 1</span><small>同种已拥有折算 25 币 + 普通树果 ×1；每天 3 次，广告 +1 次。</small></div>
       <div class="pj-guide-row"><b>每日挑战分</b><span>挑战分 = 得分 + 三分×w1 + 扣篮×w2 + 抢断×w3 + 盖帽×w4 + 篮板×w5 + 胜利 10</span><small>w1~w5 由当日规则决定，7 套权重每天轮换；只记当日最高分，排行榜同步记录当天最高分。</small></div>
       <div class="pj-guide-row"><b>升级与训练</b><span>升到下一级所需 XP = 15 + 6×(当前等级−1)；每级随机 1 项属性 +1、自由训练点 +1</span><small>满级 99；训练点重置返还 80%，不退币；购买训练点上限 40 点。</small></div>
       <div class="pj-guide-row"><b>签到与传说保底</b><span>七日签到第 1 天必得稀有，第 3/7 天必得传说</span><small>每日挑战 90/120 分、赛季冠军/四天王传说重复时折算 200 币；已集齐或队伍满时按系统兜底。</small></div>
@@ -172,7 +172,7 @@ function tabGuide() {
       <div class="pj-guide-row"><b>等级成长</b><span>每升 1 级：随机属性 +1，自由训练点 +1</span><small>满级共 98 点随机成长 + 98 点自由训练；自由点由你决定加到哪一项。</small></div>
       <div class="pj-guide-row"><b>训练</b><span>自由点升级赠送；购买点最多 40 点</span><small>购买价 10 + 3×已购买点数，买满 40 点共 2,740 币；自由点、返还点优先使用且不扣币；重置返还 80% 训练点，不退币。</small></div>
       <div class="pj-guide-row"><b>树果</b><span>普通 +50 XP / 高级 +800 XP</span><small>普通 12 币不限购；高级 60 币、每日 3 个；可喂队伍或仓库精灵，Lv.99 不可使用。</small></div>
-      <div class="pj-guide-row"><b>广告每日次数</b><span>金币 +100（5 次）· 训练 +5 自由点（3 次）· 孵蛋加速 2 小时（2 次）· 立即孵出（1 次）· 合同免费（1 次）· 败局复活（1 次）· 赛后金币翻倍（2 次）</span><small>高级蛋领取、商店刷新、广告孵蛋槽另计；金币广告实际已不限次数。</small></div>
+      <div class="pj-guide-row"><b>广告每日次数</b><span>金币 +300（不限次数）· 训练 +10 自由点（3 次）· 孵蛋加速 4 小时（3 次）· 立即孵出（2 次）· 合同免费（1 次）· 败局复活（1 次）· 赛后金币 ×3（2 次）</span><small>高级蛋领取、商店刷新、广告孵蛋槽、离线双倍、教练应援、野球场 +1 次另计。</small></div>
       <div class="pj-guide-row"><b>败局复活</b><span>看广告撤销本场失败并重打</span><small>恢复赛前存档，本场不计战绩、不推进赛季；每日 1 次，模拟和中途退出不可用。</small></div>
     </div>
     <div class="pj-block"><div class="pj-flbl">孵蛋概率</div><div class="pj-fdesc">购买时确定精灵；普通蛋 1%、高级蛋 6% 独立概率孵出传说，高级蛋必出稀有。未拥有优先。</div>${eggs}

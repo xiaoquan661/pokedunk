@@ -4,9 +4,9 @@
  * 进化不再自动触发，由玩家在详情页手动进化。
  * 供训练草地等非比赛来源复用，避免第三份实现走样。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=557";
-import { rollGrowth } from "../../engine/growth.js?v=557";
-import { growthZh } from "./build.js?v=557";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=574";
+import { rollGrowth } from "../../engine/growth.js?v=574";
+import { growthZh } from "./build.js?v=574";
 
 /** 把多级成长合并成“速度 +2、投篮 +1” */
 function growthLine(list) {

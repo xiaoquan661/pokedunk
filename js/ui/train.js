@@ -4,21 +4,22 @@
  *   草地：SVG 草坪场景，拥有的精灵可直接拖上草地挂机（2 经验/分钟，无上限）；拖出草地即收回
  *   训练：给精灵分配训练点（自由点 / 返还点 / 购买点）+ 一键推荐 + 广告 +5 + 重置
  */
-import { loadSave, writeSave } from "../storage.js?v=557";
-import { gameAudio } from "../platform/audio.js?v=557";
+import { loadSave, writeSave } from "../storage.js?v=574";
+import { gameAudio } from "../platform/audio.js?v=574";
 import { watchRewardedAd } from "../platform/ads.js";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=557";
-import { getPokemon, POSITION_WEIGHTS } from "../../engine/readable/play-core.js?v=557";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=574";
+import { getPokemon, POSITION_WEIGHTS } from "../../engine/readable/play-core.js?v=574";
 import {
   STAT_KEYS, STAT_ZH, growthStats, mainOVR, trainCaps, trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem,
-} from "../systems/build.js?v=557";
+} from "../systems/build.js?v=574";
 import {
   grassState, grassCandidates, placeOnGrass, collectGrass, removeFromGrass, isStarter,
-} from "../systems/grass.js?v=557";
-import { openDetail } from "./detail.js?v=557";
+} from "../systems/grass.js?v=574";
+import { openDetail } from "./detail.js?v=574";
 
 const AD_TRAIN_MAX = 3;
+const AD_TRAIN_POINTS = 10;
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 
 const CSS = `
@@ -721,7 +722,7 @@ export function renderTrain(page, save) {
       </div>
       <div class="tn-acts">
         <button class="gold" data-recommend ${blocked ? "disabled" : ""}>按推荐分配（${freeLeft} 点可用）</button>
-        <button data-ad ${adLeft("train_point", AD_TRAIN_MAX) <= 0 ? "disabled" : ""}>看广告 +5 点（${adLeft("train_point", AD_TRAIN_MAX)}/${AD_TRAIN_MAX}）</button>
+        <button data-ad ${adLeft("train_point", AD_TRAIN_MAX) <= 0 ? "disabled" : ""}>看广告 +${AD_TRAIN_POINTS} 点（${adLeft("train_point", AD_TRAIN_MAX)}/${AD_TRAIN_MAX}）</button>
         <button data-reset ${tr.points ? "" : "disabled"}>重置训练（返还 80%）</button>
         <button data-open-detail>打开完整详情</button>
       </div>`;
@@ -864,11 +865,11 @@ export function renderTrain(page, save) {
           const mon = fresh.mons[ui.selMon];
           if (!mon) return;
           mon.train ||= { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 };
-          mon.train.free = (mon.train.free || 0) + 5;
-          mon.train.freeEarned = (mon.train.freeEarned || 0) + 5;
+          mon.train.free = (mon.train.free || 0) + AD_TRAIN_POINTS;
+          mon.train.freeEarned = (mon.train.freeEarned || 0) + AD_TRAIN_POINTS;
           writeSave(fresh);
           gameAudio.play("coin");
-          toast("广告奖励：自由训练点 +5");
+          toast(`广告奖励：自由训练点 +${AD_TRAIN_POINTS}`);
           draw();
         });
         return;
