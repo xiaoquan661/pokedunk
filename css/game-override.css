@@ -322,7 +322,9 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 
 /* 开局选择本命时的训练师昵称（S53） */
 .starter-nick{display:flex;align-items:center;gap:8px;width:100%;max-width:360px;margin:0 auto;padding:8px 12px;border:1px solid rgba(255,255,255,.18);border-radius:6px;background:rgba(0,0,0,.5);color:#c9c9c9;font-size:11px;box-sizing:border-box}
-.starter-nick b{flex:1;min-width:0;color:#fff;font:700 15px var(--sport,sans-serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.starter-nick input{flex:1;min-width:0;padding:0;border:0;background:transparent;color:#fff;font:700 15px var(--sport,sans-serif);letter-spacing:.02em;outline:none}
+.starter-nick input::placeholder{color:rgba(255,255,255,.35)}
+.starter-nick input:focus{color:var(--gold,#f5c542)}
 .starter-nick button{flex:0 0 auto;border:1px solid rgba(245,197,66,.6);border-radius:4px;background:rgba(245,197,66,.14);color:var(--gold,#f5c542);font:700 11px var(--sport,sans-serif);padding:5px 12px}
 
 /* ================= 底部 5 Tab 主壳（v3 UI） ================= */

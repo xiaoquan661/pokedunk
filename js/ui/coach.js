@@ -4,14 +4,13 @@
  * 第一刀：把比赛、每日挑战、野球场、今日任务和广告串成一个局外成长层。
  * 不给比赛数值，升级只解锁教练称号。
  */
-import { loadSave, writeSave } from "../storage.js?v=697";
-import { watchRewardedAd } from "../platform/ads.js?v=697";
-import { gameAudio } from "../platform/audio.js?v=697";
-import { rerollNickname } from "../systems/profile.js?v=697";
+import { loadSave, writeSave } from "../storage.js?v=698";
+import { watchRewardedAd } from "../platform/ads.js?v=698";
+import { gameAudio } from "../platform/audio.js?v=698";
 import {
   repInfo, repMissionRows, claimRepMission, claimRepAd, repAdLeft,
   REP_LEVEL_REWARDS, REP_SOURCES, levelRewardText,
-} from "../systems/reputation.js?v=697";
+} from "../systems/reputation.js?v=698";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -19,7 +18,7 @@ const COACH_CSS = `
 .coach-name{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:8px;background:rgba(0,0,0,.16)}
 .coach-name span{font-size:9.5px;color:var(--text-dim)}
 .coach-name b{flex:1;min-width:0;font:700 13px var(--sport);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.coach-name button{flex:none;padding:4px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold,#f5c542) 42%,transparent);background:rgba(245,197,66,.1);color:var(--gold,#f5c542);font:700 9.5px var(--sport)}
+.coach-name small{flex:none;font-size:9px;color:var(--text-dim);opacity:.7}
 .coach-hero{padding:12px 14px;border:1px solid rgba(245,197,66,.32);border-radius:10px;background:linear-gradient(160deg,rgba(245,197,66,.12),rgba(0,0,0,.18));margin-bottom:10px}
 .coach-hero .ch-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
 .coach-hero .ch-top b{font:800 22px var(--sport);color:var(--gold)}
@@ -100,7 +99,7 @@ export function openCoachProfile(save) {
       <div class="coach-name">
         <span>训练师昵称</span>
         <b>${esc(save.coach?.name || "训练师")}</b>
-        <button type="button" data-coach-roll>重新随机</button>
+        <small>开局时确定</small>
       </div>
 
       <div class="coach-hero">
@@ -133,16 +132,6 @@ export function openCoachProfile(save) {
 
   body.addEventListener("click", async (e) => {
     if (e.target.closest("[data-back]")) { close(); return; }
-    if (e.target.closest("[data-coach-roll]")) {
-      save = loadSave() || save;
-      const next = rerollNickname(save);
-      writeSave(save);
-      const home = document.querySelector("#home-coach span");
-      if (home) home.textContent = next;
-      toast(`新昵称：${next}`);
-      render();
-      return;
-    }
     const fold = e.target.closest("[data-coach-fold]");
     if (fold) { sourcesOpen = !sourcesOpen; render(); return; }
     const mb = e.target.closest("[data-coach-mission]");

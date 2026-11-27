@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=697";
-import { regionOf } from "../journey/regions.js?v=697";
-import { wildRoutePool } from "../journey/wild.js?v=697";
-import { buildMyRoster } from "../journey/match-screen.js?v=697";
-import { pickGymRoster } from "../journey/gyms.js?v=697";
-import { teamPower, starterIds } from "../systems/build.js?v=697";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=697";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=697";
-import { ICON } from "./icons.js?v=697";
-import { loadSave } from "../storage.js?v=697";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=698";
+import { regionOf } from "../journey/regions.js?v=698";
+import { wildRoutePool } from "../journey/wild.js?v=698";
+import { buildMyRoster } from "../journey/match-screen.js?v=698";
+import { pickGymRoster } from "../journey/gyms.js?v=698";
+import { teamPower, starterIds } from "../systems/build.js?v=698";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=698";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=698";
+import { ICON } from "./icons.js?v=698";
+import { loadSave } from "../storage.js?v=698";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };
@@ -266,6 +266,13 @@ export function openGymRoute(save, opts = {}) {
     const badgeCount = (f.journey?.season?.badges || []).filter((b) => b !== "champion").length;
     const doneCount = st.steps.filter((s) => s.done).length;
     const gymTotal = reg.gyms?.length || 8;
+    const venueNo = Number(st.info.venue) + 1;
+    const hasArt = reg.id === "kanto" || reg.id === "johto";
+    const gymArt = hasArt ? {
+      gym: `./assets/adventure/gym-${reg.id}-${venueNo}.webp`,
+      leader: `./assets/adventure/leader-${reg.id}-${venueNo}.png`,
+      badges: reg.id === "kanto" ? "./assets/adventure/badge-kanto-1.png" : "",
+    } : null;
 
     body.innerHTML = `
       <style>
@@ -331,6 +338,9 @@ export function openGymRoute(save, opts = {}) {
           radial-gradient(100% 100% at 100% 0%,color-mix(in srgb,var(--gc) 20%,transparent),transparent 70%),
           linear-gradient(135deg,color-mix(in srgb,var(--gc) 12%,var(--panel-2,#12224a)),var(--panel-2,#12224a) 76%)}
         .route-head-card .badge-medal{flex:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.28))}
+        .route-gym-art{position:relative;width:70px;height:50px;flex:none;border:1px solid color-mix(in srgb,var(--gc) 55%,rgba(255,255,255,.16));border-radius:6px;overflow:hidden;background-size:cover;background-position:center;box-shadow:inset 0 0 12px rgba(0,0,0,.4)}
+        .route-gym-leader{position:absolute;right:-2px;bottom:-5px;width:34px;height:34px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.85))}
+        .route-gym-badge{position:absolute;left:3px;top:3px;width:21px;height:21px;border-radius:3px;background-repeat:no-repeat;background-size:800% 100%;background-position:calc(var(--bi,0) * 14.2857%) 0;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
         .route-head-txt{flex:1;min-width:0}
         .route-head-txt b{display:block;font:700 16px var(--sport,sans-serif);color:var(--text,#fff);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .route-head-txt small{display:block;margin-top:1px;font-size:9.5px;color:var(--text-dim,#b9b0a0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -366,8 +376,8 @@ export function openGymRoute(save, opts = {}) {
       ${state.flash ? `<p class="route-note">${esc(state.flash)}</p>` : ""}
       ${opts.compact ? "" : routeMapHtml(f, st)}
       <div class="route-head-card" style="--gc:${gb.color};--gc2:${gb.color2}">
-        ${badgeMedal(gb.badge, 42)}
-        <div class="route-head-txt"><b>${esc(st.gym.name)}</b><small>${esc(reg.name)} · 第 ${Number(st.info.venue) + 1}/${gymTotal} 馆 · 馆主 ${esc(st.gym.leader || "")} · ${esc(st.gym.typeCn || "")}属性</small></div>
+        ${gymArt ? `<span class="route-gym-art" style="background-image:linear-gradient(180deg,rgba(8,6,2,.12),rgba(8,6,2,.55)),url('${gymArt.gym}')"><img class="route-gym-leader" src="${gymArt.leader}" alt="" draggable="false">${gymArt.badges ? `<span class="route-gym-badge" style="--bi:${venueNo - 1};background-image:url('${gymArt.badges}')"></span>` : ""}</span>` : badgeMedal(gb.badge, 42)}
+        <div class="route-head-txt"><b>${esc(st.gym.name)}</b><small>${esc(reg.name)} · 第 ${venueNo}/${gymTotal} 馆 · 馆主 ${esc(st.gym.leader || "")} · ${esc(st.gym.typeCn || "")}属性</small></div>
       </div>
       <section class="route-progress" aria-label="路线进度：第 ${st.step + 1} 关，共 ${st.steps.length} 关">
         <div class="rp-top"><b>路线进度</b><span class="rp-count">第 ${st.step + 1} / ${st.steps.length} 关</span><em>已完成 ${doneCount} 关</em></div>

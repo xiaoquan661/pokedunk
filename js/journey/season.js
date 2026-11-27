@@ -9,10 +9,10 @@
  *   contracts, contractWins, contractDry, playerStats, ovrBase, awards, mvp }
  * 旧档的 schedule / rounds / table / playoffs / byeRound / round 在读取时清理。
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=697";
-import { pickGymRoster } from "./gyms.js?v=697";
-import { teamPower as buildTeamPower } from "../systems/build.js?v=697";
-import { REGIONS, ensureMainline } from "./regions.js?v=697";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=698";
+import { pickGymRoster } from "./gyms.js?v=698";
+import { teamPower as buildTeamPower } from "../systems/build.js?v=698";
+import { REGIONS, ensureMainline } from "./regions.js?v=698";
 
 const MAINLINE_V = 4;
 const LEGACY_KEYS = ["schedule", "scheduleSeason", "rounds", "table", "playoffs", "byeRound", "round"];

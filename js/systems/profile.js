@@ -1,8 +1,7 @@
 /**
- * systems/profile.js —— 玩家昵称（2026-11-25 · S52）
- * 首次进入游戏自动生成一个随机昵称，与初始精灵一起确定。
- * 昵称只用于教练档案/排行榜展示，不替代教练名（coach.name）。
- * 存档位置：save.coach.nick
+ * systems/profile.js —— 玩家昵称（2026-11-25 · S52 / S101）
+ * 昵称即教练名，在开局选择初始精灵时输入或随机生成，确认后不可修改。
+ * 存档位置：save.coach.name（save.coach.nick 仅作旧档回退）
  */
 const PREFIX = ["街头", "闪电", "篮板", "三分", "火锅", "快攻", "王牌", "传奇", "疾风", "铁壁", "灌篮", "妙传", "空接", "抢断", "全场", "压哨"];
 const SUFFIX = ["少年", "教练", "飞人", "队长", "新星", "王者", "高手", "后卫", "中锋", "训练家", "扣将", "控卫"];
@@ -27,14 +26,14 @@ export function ensureNickname(save) {
   return false;
 }
 
-/** 重新随机昵称（返回新昵称） */
-export function rerollNickname(save) {
-  save.coach ||= {};
-  let next = randomNickname();
-  for (let i = 0; i < 4 && next === save.coach.name; i++) next = randomNickname();
-  save.coach.nick = next;
-  save.coach.name = next;
-  return next;
+/** 清理玩家输入的昵称：移除标签字符与控制符、压缩空白、限制长度 */
+export function sanitizeNickname(raw) {
+  return String(raw ?? "")
+    .replace(/[<>&"'`]/g, "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_LEN);
 }
 
 export function nicknameOf(save, fallback = "训练师") {

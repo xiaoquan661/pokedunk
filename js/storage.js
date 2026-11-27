@@ -33,13 +33,13 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { rollGrowth } from "../engine/growth.js?v=697";
-import { ensureSeason } from "./journey/season.js?v=697";
-import { ensureMainline } from "./journey/regions.js?v=697";
-import { ensureBadgeUnlocks } from "./systems/badge-unlocks.js?v=697";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=697";
-import { minAcquireLevel } from "./systems/acquire.js?v=697";
-import { ensureNickname } from "./systems/profile.js?v=697";
+import { rollGrowth } from "../engine/growth.js?v=698";
+import { ensureSeason } from "./journey/season.js?v=698";
+import { ensureMainline } from "./journey/regions.js?v=698";
+import { ensureBadgeUnlocks } from "./systems/badge-unlocks.js?v=698";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=698";
+import { minAcquireLevel } from "./systems/acquire.js?v=698";
+import { ensureNickname } from "./systems/profile.js?v=698";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -92,7 +92,7 @@ export function loadSave() {
     try { ensureSeen(s); } catch {}
     // 新手之路状态自愈：已标记完成但教程/补给标记缺失时补齐标记（旧版中途退教程会留下这种卡死状态）
     try { ensureNewbieFlags(s); } catch {}
-    // 昵称：首次进入游戏自动生成
+    // 昵称：旧档缺少昵称时补齐；新档在开局选择初始精灵时确定
     try { if (ensureNickname(s)) writeSave(s); } catch {}
     return s;
   } catch {

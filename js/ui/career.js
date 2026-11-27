@@ -2,9 +2,9 @@
  * ui/career.js —— 生涯统计页
  * 球队战绩 / 本赛季走势 / 球员场均 / 宝可梦与图鉴收集
  */
-import { careerSummary } from "../systems/career.js?v=697";
-import { loadSave } from "../storage.js?v=697";
-import { TYPE_COLORS } from "../../engine/readable/play-core.js?v=697";
+import { careerSummary } from "../systems/career.js?v=698";
+import { loadSave } from "../storage.js?v=698";
+import { TYPE_COLORS } from "../../engine/readable/play-core.js?v=698";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 
