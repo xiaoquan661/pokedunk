@@ -3,52 +3,52 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=684"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=684";
-import { renderDex } from "./ui/dex.js?v=684";
-import { renderCareer } from "./ui/career.js?v=684";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=684";
-import { openSettings } from "./ui/settings.js?v=684";
-import { renderBag } from "./ui/bag.js?v=684";
-import { renderTeam } from "./ui/team.js?v=684";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=684";
-import { openDetail } from "./ui/detail.js?v=684";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=684";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=684";
-import { watchRewardedAd } from "./platform/ads.js?v=684";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=684";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, startNextSeason, FOUR_KINGS_REWARD } from "./journey/season.js?v=684";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=684";
-import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=684";
-import { showOfflineGrass } from "./ui/offline-grass.js?v=684";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=684";
-import { openDaily } from "./ui/daily.js?v=684";
-import { openCoachProfile } from "./ui/coach.js?v=684";
-import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=684";
-import { submitDailyScore } from "./platform/leaderboard.js?v=684";
-import { openAchievements } from "./ui/achv-ui.js?v=684";
-import { startTutorial } from "./ui/tutorial.js?v=684";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=684";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=684";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=684";
-import { ACHV } from "./systems/achv.js?v=684";
-import { eggList } from "./systems/egg.js?v=684";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=684";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=684";
-import { ICON } from "./ui/icons.js?v=684";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=684";
-import { pendingLegend } from "./journey/legend.js?v=684";
-import { syncAcquireLevel } from "./systems/acquire.js?v=684";
-import { openLegendPicker } from "./ui/legend.js?v=684";
-import { openChampionCeremony } from "./ui/champion.js?v=684";
-import { openMainQuest } from "./ui/main-quest.js?v=684";
-import { openLeaguePage } from "./ui/league.js?v=684";
-import { buildLeagueMatch, recordLeagueResult, hasLeagueUnlocked } from "./journey/league.js?v=684";
-import { openGymRoute } from "./ui/gym-route.js?v=684";
-import { ROUTE_STEPS, routeState, buildRouteWild, buildRouteMinor, recordRouteWild, recordRouteMinor, claimRouteRest } from "./journey/gym-route.js?v=684";
-import { regionOf } from "./journey/regions.js?v=684";
-import { randomNickname } from "./systems/profile.js?v=684";
-import { openWild } from "./ui/wild.js?v=684";
+import "./systems/evo-rules.js?v=688"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=688";
+import { renderDex } from "./ui/dex.js?v=688";
+import { renderCareer } from "./ui/career.js?v=688";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=688";
+import { openSettings } from "./ui/settings.js?v=688";
+import { renderBag } from "./ui/bag.js?v=688";
+import { renderTeam } from "./ui/team.js?v=688";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=688";
+import { openDetail } from "./ui/detail.js?v=688";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=688";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=688";
+import { watchRewardedAd } from "./platform/ads.js?v=688";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=688";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, startNextSeason, FOUR_KINGS_REWARD } from "./journey/season.js?v=688";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=688";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=688";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=688";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=688";
+import { openDaily } from "./ui/daily.js?v=688";
+import { openCoachProfile } from "./ui/coach.js?v=688";
+import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=688";
+import { submitDailyScore } from "./platform/leaderboard.js?v=688";
+import { openAchievements } from "./ui/achv-ui.js?v=688";
+import { startTutorial } from "./ui/tutorial.js?v=688";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=688";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=688";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=688";
+import { ACHV } from "./systems/achv.js?v=688";
+import { eggList } from "./systems/egg.js?v=688";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=688";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=688";
+import { ICON } from "./ui/icons.js?v=688";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=688";
+import { pendingLegend } from "./journey/legend.js?v=688";
+import { syncAcquireLevel } from "./systems/acquire.js?v=688";
+import { openLegendPicker } from "./ui/legend.js?v=688";
+import { openChampionCeremony } from "./ui/champion.js?v=688";
+import { openMainQuest } from "./ui/main-quest.js?v=688";
+import { openLeaguePage } from "./ui/league.js?v=688";
+import { buildLeagueMatch, recordLeagueResult, hasLeagueUnlocked } from "./journey/league.js?v=688";
+import { openGymRoute } from "./ui/gym-route.js?v=688";
+import { ROUTE_STEPS, routeState, buildRouteWild, buildRouteMinor, recordRouteWild, recordRouteMinor, claimRouteRest } from "./journey/gym-route.js?v=688";
+import { regionOf, REGIONS, badgeCountOf } from "./journey/regions.js?v=688";
+import { randomNickname } from "./systems/profile.js?v=688";
+import { openWild } from "./ui/wild.js?v=688";
 import {
   getPokemon,
   calcOVR,
@@ -64,7 +64,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=684";
+} from "../engine/readable/play-core.js?v=688";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -423,7 +423,7 @@ function startElite(save) {
 /** 道馆路线页：野生 → 小人物球队 → 馆主 */
 function leaguePageOpts(f) {
   return {
-    onBack: () => showHome(loadSave() || f),
+    onBack: () => switchTab("adventure"),
     onPlay: () => startLeagueBattle(loadSave() || f, false),
     onWatch: () => startLeagueBattle(loadSave() || f, true),
   };
@@ -431,10 +431,10 @@ function leaguePageOpts(f) {
 
 function startLeagueBattle(save, spectate = false) {
   const f = loadSave() || save;
-  if (!hasLeagueUnlocked(f)) { openLeaguePage(f, leaguePageOpts(f)); return; }
+  if (!hasLeagueUnlocked(f)) { openTournamentTab(); return; }
   if (!hasFullLineup(f)) { openLineupGate(f); return; }
   const cfg = buildLeagueMatch(f);
-  if (!cfg) { openLeaguePage(f, { ...leaguePageOpts(f), notice: "当前没有可进行的联赛比赛" }); return; }
+  if (!cfg) { openTournamentTab("当前没有可进行的联赛比赛"); return; }
   const info = cfg.info;
   const mountCfg = spectate
     ? { ...cfg, home: { ...cfg.home, human: false }, away: { ...cfg.away, human: false } }
@@ -448,7 +448,8 @@ function startLeagueBattle(save, spectate = false) {
     const g = loadSave() || f;
     gameAudio.setTrack("menu");
     if (quit) {
-      openLeaguePage(g, { ...leaguePageOpts(g), notice: "中途退出，本轮未计入联赛战绩" });
+      showHome(g);
+      openTournamentTab("中途退出，本轮未计入联赛战绩");
       return;
     }
     const my = Number(engine?.score?.[0]) || 0;
@@ -481,7 +482,8 @@ function showLeagueResult(save, { my, opp, won, spectate, info, ended, reward, m
     </div>`;
   page.querySelector("#lg-back").addEventListener("click", () => {
     const g = loadSave() || save;
-    openLeaguePage(g, leaguePageOpts(g));
+    showHome(g);
+    openTournamentTab();
   });
   page.querySelector("#lg-home").addEventListener("click", () => showHome(loadSave() || save));
 }
@@ -490,7 +492,8 @@ function openGymRoutePage(save, notice = "") {
   const f = loadSave() || save;
   if (!tabState.root || !tabState.root.isConnected) showHome(f);
   tabState.seasonNotice = notice || "";
-  switchTab("season", { notice });
+  tabState.tab = "adventure";
+  renderAdventureRoute(f, notice);
 }
 
 function startGymRouteStage(save, step, options = {}) {
@@ -582,7 +585,7 @@ function openMainQuestPage(save, notice = "") {
       else if (kind === "dex") showDex(g);
     },
     onDex: (dex) => openDetail(dex, null, () => openMainQuestPage(loadSave() || f)),
-    onLeague: () => openLeaguePage(loadSave() || f, leaguePageOpts(f)),
+    onLeague: () => openTournamentTab(),
     onElite: () => { const g = loadSave() || f; if (!hasFullLineup(g)) { openLineupGate(g); return; } startElite(g); },
     onBadges: () => openBadgeDetail(loadSave() || f, {
       onElite: () => startElite(loadSave() || f),
@@ -1168,16 +1171,18 @@ function showLegacyHome(save, justStarted = false) {
 
 /* ================= 底部 5 Tab 主壳 ================= */
 const TAB_ITEMS = [
-  ["home", "主场", "ball"],
+  ["adventure", "冒险", "map"],
   ["team", "球队", "team"],
-  ["season", "赛程", "map"],
   ["dex", "图鉴", "book"],
   ["shop", "商店", "shop"],
+  ["tournament", "锦标赛", "trophy"],
 ];
-const TAB_HOME_SUBS = [["home", "概览"], ["tasks", "任务"], ["achv", "成就"]];
+const TAB_DEX_SUBS = [["dex", "图鉴"], ["achv", "成就"]];
 const TAB_TEAM_SUBS = [["team", "首发"], ["train", "训练"], ["bag", "背包"], ["career", "生涯"]];
 const TAB_SHOP_SUBS = [["shop", "商店"], ["egg", "孵蛋"]];
-const tabState = { tab: "home", sub: "home", root: null, save: null, seasonNotice: "" };
+const tabState = { tab: "adventure", sub: "map", root: null, save: null, seasonNotice: "", viewRegionNo: 1, tournamentNotice: "" };
+const ADV_STEP_ZH = { wild: "野生", minor: "训练家", rest: "补给", leader: "馆主" };
+const ADV_REGION_LIMIT = 2;
 
 function tabIcon(name) { return LINE_ICON[name] || ""; }
 function isNoticeUnread() {
@@ -1230,8 +1235,9 @@ function bindTabShell(root, save) {
   root.addEventListener("click", (e) => {
     const sub = e.target.closest("[data-nav-sub]");
     if (!sub) return;
-    if (tabState.tab === "home") openHomeSub(sub.dataset.navSub);
+    if (tabState.tab === "adventure") openAdventureSub(sub.dataset.navSub);
     else if (tabState.tab === "team") openTeamSub(sub.dataset.navSub);
+    else if (tabState.tab === "dex") openDexSub(sub.dataset.navSub);
     else if (tabState.tab === "shop") openShopSub(sub.dataset.navSub);
   });
   ensureTabSaveRefresh();
@@ -1392,6 +1398,195 @@ function renderHomeTab(sub = "home") {
   });
 }
 
+const ADV_LOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>`;
+const ADV_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>`;
+
+function tabToast(msg, ms = 1800) {
+  let t = document.getElementById("pk-toast");
+  if (!t) { t = document.createElement("div"); t.id = "pk-toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(tabToast.timer);
+  tabToast.timer = setTimeout(() => t.classList.remove("show"), ms);
+}
+
+function adventureNodeHtml(g, i, { done, current, locked, steps, step }) {
+  const cls = done ? "done" : current ? "current" : "locked";
+  const stateText = done ? "已通关" : current ? "当前" : "未解锁";
+  const icon = done ? ADV_CHECK : locked ? ADV_LOCK : String(i + 1);
+  const stepHtml = current && steps?.length
+    ? `<div class="adv-substeps">${steps.map((s, idx) => {
+        const sc = idx < step ? "done" : idx === step ? "cur" : "lock";
+        return `<span class="adv-step ${sc}"><i>${idx + 1}</i><small>${ADV_STEP_ZH[s.kind] || "关卡"}</small></span>`;
+      }).join("")}</div>
+      <button class="adv-node-cta" type="button" data-adv="route">查看当前关卡 ${LINE_ICON.arrow || ""}</button>`
+    : "";
+  return `<div class="adv-node ${cls}" data-gym="${i}">
+    <div class="adv-node-main">
+      <span class="adv-node-icon">${icon}</span>
+      <span class="adv-node-copy"><b>${g.name}</b><small>${g.leader} · ${g.type}属性</small></span>
+      <span class="adv-node-tag">${stateText}</span>
+    </div>
+    ${stepHtml}
+  </div>`;
+}
+
+function adventureMapHtml(f) {
+  const currentRegNo = Math.max(1, Number(f.journey?.regionNo) || 1);
+  const viewNo = Math.max(1, Math.min(ADV_REGION_LIMIT, Number(tabState.viewRegionNo) || currentRegNo));
+  const reg = REGIONS[viewNo - 1];
+  const season = ensureSeason(f);
+  const badges = badgeCountOf(f);
+  const champion = !!season.champion;
+  let st = null;
+  try { st = routeState(f); } catch {}
+  const venue = st ? Math.max(0, Number(st.info?.venue) || 0) : Math.min(8, badges);
+  const step = st ? Math.max(0, Number(st.step) || 0) : 0;
+  const steps = st?.steps || [];
+  const sameRegion = viewNo === currentRegNo;
+  const playable = sameRegion && !!reg.available;
+  const gyms = reg.gyms || [];
+  const gymNodes = gyms.map((g, i) => {
+    const done = champion || i < badges || (sameRegion && i < venue);
+    const current = playable && !champion && i === venue && venue < 8;
+    return adventureNodeHtml(g, i, { done, current, locked: !done && !current, steps, step });
+  }).join("");
+  const daily = dailyPreview(f);
+  const newbie = newbieActive(f);
+  return `<div class="page-head adv-head"><h2>冒险</h2><span class="count">${reg.name} · ${badges}/8</span></div>
+    ${newbie ? `<button class="newbie-top" data-adv="newbie" type="button">
+      <span class="nt-ico">${LINE_ICON.tutorial}</span>
+      <span class="nt-txt"><b>新手之路 <em>${newbieStep(f)}/4</em></b><small>${newbieStepText(f)}</small></span>
+      <span class="nt-arrow">继续 ›</span>
+    </button>` : ""}
+    <div class="adv-regionbar">
+      <button type="button" data-region="prev" ${viewNo <= 1 ? "disabled" : ""} aria-label="上一地区">‹</button>
+      <div class="adv-region-copy"><b>${reg.name}地区</b><small>第 ${viewNo} 地区 · ${badges}/8 徽章${champion ? " · 地区冠军" : ""}</small></div>
+      <button type="button" data-region="next" ${viewNo >= ADV_REGION_LIMIT ? "disabled" : ""} aria-label="下一地区">›</button>
+    </div>
+    <div class="adv-entry-row">
+      <button class="adv-entry" type="button" data-adv="daily">${LINE_ICON.daily}<span><b>每日挑战</b><small>${daily.mod.name} · 最高 ${daily.best || "未挑战"}</small></span></button>
+      <button class="adv-entry" type="button" data-adv="tasks">${LINE_ICON.daily}<span><b>任务</b><small>签到与每日活跃</small></span></button>
+    </div>
+    ${playable ? "" : `<div class="adv-region-lock">${ADV_LOCK}<b>${reg.name}地区</b><small>${sameRegion ? "内容接入中，敬请期待" : "完成关都 8 枚徽章后开放"}</small></div>`}
+    <div class="adv-map">${gymNodes}</div>
+    ${playable && badges >= 8 ? `<button class="adv-final" type="button" data-adv="mainquest">${LINE_ICON.trophy}<span><b>${champion ? "地区冠军已达成" : "挑战四天王"}</b><small>${champion ? "可前往下一地区" : "8 枚徽章已集齐"}</small></span>${LINE_ICON.arrow || ""}</button>` : ""}`;
+}
+
+function bindAdventureEvents(page, f) {
+  page.querySelectorAll("[data-region]").forEach((b) => b.addEventListener("click", () => {
+    const dir = b.dataset.region === "next" ? 1 : -1;
+    tabState.viewRegionNo = Math.max(1, Math.min(ADV_REGION_LIMIT, (tabState.viewRegionNo || 1) + dir));
+    renderAdventureTab("map");
+  }));
+  page.querySelectorAll("[data-adv]").forEach((b) => b.addEventListener("click", () => {
+    const go = b.dataset.adv;
+    if (go === "daily") {
+      openDaily(f, { onStart: () => { const g = loadSave() || f; if (!hasFullLineup(g)) { openLineupGate(g); return; } startDaily(g); } });
+    } else if (go === "tasks") openAdventureSub("tasks");
+    else if (go === "route") openAdventureSub("route");
+    else if (go === "mainquest") openMainQuestPage(f);
+    else if (go === "newbie") openNewbieQuest(f);
+  }));
+  page.querySelectorAll("[data-gym]").forEach((n) => n.addEventListener("click", (e) => {
+    if (e.target.closest("[data-adv]")) return;
+    if (n.classList.contains("current")) { openAdventureSub("route"); return; }
+    if (n.classList.contains("done")) tabToast("该道馆已通关");
+    else tabToast("先完成上一道馆，迷雾才会散开");
+  }));
+}
+
+function renderAdventureTab(sub = "map") {
+  tabState.tab = "adventure";
+  tabState.sub = sub;
+  const f = loadSave() || tabState.save;
+  if (!tabState.viewRegionNo) tabState.viewRegionNo = Math.max(1, Math.min(ADV_REGION_LIMIT, Number(f.journey?.regionNo) || 1));
+  if (sub === "tasks") {
+    renderTabFrame("", (wrap) => {
+      const page = createTabPage(wrap);
+      openDailyTasks(f, () => refreshTabHeader(), { host: page });
+      bindEmbedBack(page);
+    });
+    return;
+  }
+  if (sub === "route") { renderAdventureRoute(f, tabState.seasonNotice); return; }
+  renderTabFrame("", (wrap) => {
+    const page = createTabPage(wrap);
+    page.innerHTML = adventureMapHtml(f);
+    bindAdventureEvents(page, f);
+  });
+}
+
+function renderAdventureRoute(save, notice = "") {
+  tabState.tab = "adventure";
+  tabState.sub = "route";
+  const f = loadSave() || save;
+  renderTabFrame("", (wrap) => {
+    const page = createTabPage(wrap);
+    page.classList.add("route-embed");
+    openGymRoute(f, {
+      host: page,
+      notice,
+      compact: true,
+      onBack: () => renderAdventureTab("map"),
+      onProgress: () => renderAdventureTab("map"),
+      onStage: (step, options) => {
+        const g = loadSave() || f;
+        if (!hasFullLineup(g)) { openLineupGate(g); return; }
+        startGymRouteStage(g, step, options);
+      },
+      onDex: (dex) => openDetail(dex, null, () => renderAdventureRoute(loadSave() || f)),
+      onRest: () => {
+        const g = loadSave() || f;
+        const r = claimRouteRest(g);
+        if (!r) { renderAdventureRoute(g, "当前不是补给点"); return; }
+        writeSave(g);
+        renderAdventureRoute(g, `补给领取：普通树果 ×${r.berry} · 篮球币 +${r.coins}`);
+      },
+      onLeader: () => {
+        const g = loadSave() || f;
+        if (!hasFullLineup(g)) { openLineupGate(g); return; }
+        showMatch(g, "league");
+      },
+    });
+  });
+}
+
+function openAdventureSub(sub) {
+  tabState.tab = "adventure";
+  renderAdventureTab(sub);
+}
+
+function renderTournamentTab() {
+  tabState.tab = "tournament";
+  tabState.sub = "tournament";
+  const f = loadSave() || tabState.save;
+  const badges = badgeCountOf(f);
+  renderTabFrame("", (wrap) => {
+    const page = createTabPage(wrap);
+    if (badges < 8) {
+      page.innerHTML = `<div class="adv-tour-lock"><span>${LINE_ICON.trophy}</span><b>锦标赛</b><small>集齐 8 枚徽章后解锁</small><div class="adv-tour-bar"><i style="width:${Math.round((badges / 8) * 100)}%"></i></div><em>${badges} / 8 徽章</em><button class="pk-btn-gold" type="button" data-adv="map">前往冒险</button></div>`;
+      page.querySelector('[data-adv="map"]')?.addEventListener("click", () => switchTab("adventure"));
+      return;
+    }
+    page.classList.add("league-embed");
+    openLeaguePage(f, {
+      host: page,
+      title: "锦标赛",
+      notice: tabState.tournamentNotice,
+      onBack: () => switchTab("adventure"),
+      onPlay: () => startLeagueBattle(f, false),
+      onWatch: () => startLeagueBattle(f, true),
+    });
+  });
+}
+
+function openTournamentTab(notice = "") {
+  if (!tabState.root || !tabState.root.isConnected) showHome(loadSave());
+  tabState.tournamentNotice = notice || "";
+  switchTab("tournament");
+}
+
 function renderTeamTab(sub = "team") {
   tabState.tab = "team";
   tabState.sub = sub;
@@ -1428,64 +1623,46 @@ function openShopSub(sub) {
   renderShopTab(sub);
 }
 
-function renderDexTab() {
+function renderDexTab(sub = "dex") {
   tabState.tab = "dex";
-  tabState.sub = "dex";
+  tabState.sub = sub;
   const f = loadSave() || tabState.save;
-  renderTabFrame("", (wrap) => mountTabPage(wrap, (page) => renderDex(page), f));
-}
-
-function renderSeasonTab() {
-  tabState.tab = "season";
-  tabState.sub = "season";
-  const f = loadSave() || tabState.save;
-  renderTabFrame("", (wrap) => {
-    const page = createTabPage(wrap);
-    page.classList.add("route-embed");
-    openGymRoute(f, {
-      host: page,
-      notice: tabState.seasonNotice,
-      onBack: () => switchTab("home"),
-      onProgress: () => openMainQuestPage(loadSave() || f),
-      onStage: (step, options) => {
-        const g = loadSave() || f;
-        if (!hasFullLineup(g)) { openLineupGate(g); return; }
-        startGymRouteStage(g, step, options);
-      },
-      onDex: (dex) => openDetail(dex, null, () => switchTab("season")),
-      onRest: () => {
-        const g = loadSave() || f;
-        const r = claimRouteRest(g);
-        if (!r) { tabState.seasonNotice = "当前不是补给点"; renderSeasonTab(); return; }
-        writeSave(g);
-        tabState.seasonNotice = `补给领取：普通树果 ×${r.berry} · 篮球币 +${r.coins}`;
-        renderSeasonTab();
-      },
-      onLeader: () => {
-        const g = loadSave() || f;
-        if (!hasFullLineup(g)) { openLineupGate(g); return; }
-        showMatch(g, "league");
-      },
-    });
+  renderTabFrame(tabSubnav(TAB_DEX_SUBS, sub), (wrap) => {
+    if (sub === "achv") {
+      const page = createTabPage(wrap);
+      openAchievements({ host: page, onCoins: () => refreshTabHeader() });
+      bindEmbedBack(page);
+      return;
+    }
+    mountTabPage(wrap, (page) => renderDex(page), f);
   });
 }
 
-function switchTab(tab, opts = {}) {
+function openDexSub(sub) {
+  tabState.tab = "dex";
+  renderDexTab(sub);
+}
+
+function switchTab(tab) {
   if (!tabState.root) return;
-  if (opts.notice !== undefined) tabState.seasonNotice = opts.notice;
   if (tab === "team") renderTeamTab("team");
-  else if (tab === "season") renderSeasonTab();
-  else if (tab === "dex") renderDexTab();
+  else if (tab === "dex") renderDexTab("dex");
   else if (tab === "shop") renderShopTab("shop");
-  else renderHomeTab();
+  else if (tab === "tournament") renderTournamentTab();
+  else {
+    const f = loadSave() || tabState.save;
+    tabState.viewRegionNo = Math.max(1, Math.min(ADV_REGION_LIMIT, Number(f?.journey?.regionNo) || 1));
+    renderAdventureTab("map");
+  }
   refreshTabHeader();
 }
 
 function goBackTab() {
-  if (tabState.tab === "home" && tabState.sub !== "home") { renderHomeTab("home"); return; }
+  if (tabState.tab === "adventure" && tabState.sub !== "map") { renderAdventureTab("map"); return; }
+  if (tabState.tab === "dex" && tabState.sub !== "dex") { renderDexTab("dex"); return; }
   if (tabState.tab === "team" && tabState.sub !== "team") { renderTeamTab("team"); return; }
   if (tabState.tab === "shop" && tabState.sub !== "shop") { renderShopTab("shop"); return; }
-  switchTab("home");
+  switchTab("adventure");
 }
 
 function showHome(save, justStarted = false) {
@@ -1499,11 +1676,13 @@ function showHome(save, justStarted = false) {
   app.replaceChildren(root);
   tabState.root = root;
   tabState.save = save;
-  tabState.tab = "home";
-  tabState.sub = "home";
+  tabState.tab = "adventure";
+  tabState.sub = "map";
   tabState.seasonNotice = "";
+  tabState.tournamentNotice = "";
+  tabState.viewRegionNo = Math.max(1, Math.min(ADV_REGION_LIMIT, Number(save.journey?.regionNo) || 1));
   bindTabShell(root, save);
-  switchTab("home");
+  switchTab("adventure");
   const gs = loadSave() || save;
   if (!justStarted && (!gs.newbie || gs.newbie.done)) {
     setTimeout(() => { if (root.isConnected) startOnboarding(root, gs); }, 420);
@@ -2522,7 +2701,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=684");
+window.__PC = await import("../engine/readable/play-core.js?v=688");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();

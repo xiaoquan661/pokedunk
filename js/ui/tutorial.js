@@ -3,10 +3,10 @@
  * 使用引擎 practice + drill：移动 / 传球 / 上篮 / 扣篮 / 空接 / 投篮 / 抢断 / 盖帽，约 2 分钟。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=684";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=684";
-import { gameAudio } from "../platform/audio.js?v=684";
-import { createTouchUI } from "../journey/match-screen.js?v=684";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=688";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=688";
+import { gameAudio } from "../platform/audio.js?v=688";
+import { createTouchUI } from "../journey/match-screen.js?v=688";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];

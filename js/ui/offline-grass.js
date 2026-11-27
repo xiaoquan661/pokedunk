@@ -6,12 +6,12 @@
  *   - 看广告双倍（每日 1 次）
  * 收取后写回存档，并用 existing grass report 展示升级/进化汇总。
  */
-import { loadSave, writeSave } from "../storage.js?v=684";
-import { watchRewardedAd } from "../platform/ads.js?v=684";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=684";
-import { gameAudio } from "../platform/audio.js?v=684";
-import { claimOfflineGrass } from "../systems/grass.js?v=684";
-import { showGrassReport } from "./grass-report.js?v=684";
+import { loadSave, writeSave } from "../storage.js?v=688";
+import { watchRewardedAd } from "../platform/ads.js?v=688";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=688";
+import { gameAudio } from "../platform/audio.js?v=688";
+import { claimOfflineGrass } from "../systems/grass.js?v=688";
+import { showGrassReport } from "./grass-report.js?v=688";
 
 const OFFLINE_CSS = `
 .offline-card .off-lead{margin:0 0 10px;font-size:10.5px;line-height:1.5;color:var(--text-dim)}

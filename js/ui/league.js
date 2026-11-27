@@ -5,30 +5,39 @@
 import {
   ensureLeague, startLeague, startNextLeague, leagueInfo, rankTable, teamRow,
   roundView, simulateLeagueRound, LEAGUE_ROUNDS,
-} from "../journey/league.js?v=684";
-import { regionOf } from "../journey/regions.js?v=684";
-import { loadSave, writeSave } from "../storage.js?v=684";
-import { ICON } from "./icons.js?v=684";
+} from "../journey/league.js?v=688";
+import { regionOf } from "../journey/regions.js?v=688";
+import { loadSave, writeSave } from "../storage.js?v=688";
+import { ICON } from "./icons.js?v=688";
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 export function openLeaguePage(save, opts = {}) {
-  const wrap = document.createElement("div");
-  wrap.className = "pj-scrim page-modal league-modal";
-  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
-  wrap.innerHTML = `<div class="pj-page-card lg-card"><div class="lg-shell">
-    <div class="sub-page pj-page-body lg-body"></div>
-    <div class="lg-foot"></div>
-  </div></div>`;
+  const embed = !!opts.host;
+  const wrap = embed ? opts.host : document.createElement("div");
+  if (!embed) {
+    wrap.className = "pj-scrim page-modal league-modal";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  }
+  wrap.innerHTML = embed
+    ? `<div class="lg-shell lg-embed-shell">
+        <div class="sub-page lg-body"></div>
+        <div class="lg-foot"></div>
+      </div>`
+    : `<div class="pj-page-card lg-card"><div class="lg-shell">
+        <div class="sub-page pj-page-body lg-body"></div>
+        <div class="lg-foot"></div>
+      </div></div>`;
   const body = wrap.querySelector(".lg-body");
   const foot = wrap.querySelector(".lg-foot");
-  (document.getElementById("stage") || document.body).appendChild(wrap);
+  if (!embed) (document.getElementById("stage") || document.body).appendChild(wrap);
 
   let notice = opts.notice || "";
   let busy = false;
-  const close = () => { wrap.remove(); opts.onBack?.(); };
+  const pageTitle = opts.title || "联盟邀请赛";
+  const close = () => { if (!embed) wrap.remove(); opts.onBack?.(); };
 
   const render = () => {
     const f = loadSave() || save;
@@ -42,7 +51,7 @@ export function openLeaguePage(save, opts = {}) {
     const info = s.started ? leagueInfo(f) : null;
 
     const head = `<div class="page-head"><button class="back" data-back>‹</button>
-      <h2>联盟邀请赛</h2><span class="count">${s.trophy ? `<i class="lg-trophy">${ICON.trophy}</i>` : ""}第 ${s.no} 届</span></div>`;
+      <h2>${esc(pageTitle)}</h2><span class="count">${s.trophy ? `<i class="lg-trophy">${ICON.trophy}</i>` : ""}第 ${s.no} 届</span></div>`;
 
     if (!s.started) {
       const rows = (s.table || []).map((r) => `<div class="lg-intro-row ${r.isMe ? "me" : ""}">
@@ -52,7 +61,7 @@ export function openLeaguePage(save, opts = {}) {
         ${head}
         <div class="lg-intro-hero">
           <span>${ICON.trophy}</span>
-          <b>${esc(reg.name)}联盟邀请赛</b>
+          <b>${esc(reg.name)}${esc(pageTitle)}</b>
           <small>向 8 位馆主发出邀请 · 9 队单循环 · 前 4 进四强</small>
         </div>
         <div class="lg-sec"><b>参赛球队</b><small>你 + 8 位馆主</small></div>
@@ -174,19 +183,19 @@ export function openLeaguePage(save, opts = {}) {
     }
     if (e.target.closest("[data-bye]")) {
       const f = loadSave() || save;
-      const { advanceBye } = await import("../journey/league.js?v=684");
+      const { advanceBye } = await import("../journey/league.js?v=688");
       advanceBye(f);
       writeSave(f);
       render();
       return;
     }
     if (e.target.closest("[data-play]")) {
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onPlay?.();
       return;
     }
     if (e.target.closest("[data-watch]")) {
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onWatch?.();
       return;
     }
@@ -215,6 +224,8 @@ export function openLeaguePage(save, opts = {}) {
 const CSS = `
 .lg-card{height:auto;max-height:min(88%,760px)}
 .lg-shell{display:flex;flex-direction:column;flex:1;min-height:0}
+.lg-embed-shell{height:100%}
+.lg-embed .lg-body{flex:1;min-height:0;overflow-y:auto;padding:0 0 8px!important;background:transparent}
 .lg-body{flex:1;min-height:0;overflow-y:auto;padding:0 14px 12px!important}
 .lg-foot{flex:none;display:flex;gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,#12224a);box-shadow:0 -8px 20px rgba(0,0,0,.18)}
 .lg-foot .pk-btn-gold{flex:1;min-width:0;padding:10px 4px;font-size:12px}

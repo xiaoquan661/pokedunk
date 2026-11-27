@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=684";
-import { regionOf } from "../journey/regions.js?v=684";
-import { wildRoutePool } from "../journey/wild.js?v=684";
-import { buildMyRoster } from "../journey/match-screen.js?v=684";
-import { pickGymRoster } from "../journey/gyms.js?v=684";
-import { teamPower, starterIds } from "../systems/build.js?v=684";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=684";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=684";
-import { ICON } from "./icons.js?v=684";
-import { loadSave } from "../storage.js?v=684";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=688";
+import { regionOf } from "../journey/regions.js?v=688";
+import { wildRoutePool } from "../journey/wild.js?v=688";
+import { buildMyRoster } from "../journey/match-screen.js?v=688";
+import { pickGymRoster } from "../journey/gyms.js?v=688";
+import { teamPower, starterIds } from "../systems/build.js?v=688";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=688";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=688";
+import { ICON } from "./icons.js?v=688";
+import { loadSave } from "../storage.js?v=688";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };
@@ -345,7 +345,7 @@ export function openGymRoute(save, opts = {}) {
       </div>
       ${state.notice ? `<p class="route-note">${esc(state.notice)}</p>` : ""}
       ${state.flash ? `<p class="route-note">${esc(state.flash)}</p>` : ""}
-      ${routeMapHtml(f, st)}
+      ${opts.compact ? "" : routeMapHtml(f, st)}
       <div class="route-head-card" style="--gc:${gb.color};--gc2:${gb.color2}">
         ${badgeMedal(gb.badge, 42)}
         <div class="route-head-txt"><b>${esc(st.gym.name)}</b><small>${esc(reg.name)} · 第 ${Number(st.info.venue) + 1} 馆 · 馆主 ${esc(st.gym.leader || "")} · ${esc(st.gym.typeCn || "")}属性</small></div>

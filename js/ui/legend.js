@@ -3,9 +3,9 @@
  * 四天王通关解锁本地区传说池；领取后立即写入存档。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { loadSave, writeSave } from "../storage.js?v=684";
-import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=684";
-import { ICON } from "./icons.js?v=684";
+import { loadSave, writeSave } from "../storage.js?v=688";
+import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=688";
+import { ICON } from "./icons.js?v=688";
 
 const TYPE_ZH = {
   Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰",

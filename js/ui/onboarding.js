@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=684";
+import { loadSave, writeSave } from "../storage.js?v=688";
 
 const STEPS = [
   {
@@ -44,23 +44,23 @@ const STEPS = [
   },
   {
     screen: "home",
-    target: '[data-go="career"]',
+    target: '[data-nav-tab="team"]',
     title: "生涯统计",
-    text: "生涯统计汇总执教战绩、场均得失分、连胜、总冠军，以及球员场均数据和图鉴/队伍收集；想回看自己的成长曲线就点这里。",
+    text: "生涯统计在「球队」Tab 的二级导航里，汇总执教战绩、场均得失分、连胜、总冠军，以及球员场均数据和图鉴/队伍收集。",
     action: "下一步",
   },
   {
     screen: "home",
-    target: '[data-go="daily"]',
+    target: '[data-adv="daily"]',
     title: "每日挑战",
-    text: "每日挑战每天换一套阵容和规则，只记录当日最高分；首次胜利给 100 篮球币，完成每日任务还能再领金币。",
+    text: "每日挑战是冒险页上的独立小玩法，每天换一套阵容和规则，只记录当日最高分；首次胜利给 100 篮球币，完成每日任务还能再领金币。",
     action: "下一步",
   },
   {
     screen: "home",
-    target: '[data-go="match"]',
+    target: '[data-adv="route"]',
     title: "开始比赛",
-    text: "「开始游戏」会按当前路线进入道馆路线；路线页右上角「进度」可回到冒险进度。赛前对阵、结算和四天王规则写在「设置 → 说明」里。",
+    text: "冒险页会高亮当前道馆；点「查看当前关卡」进入对手阵容与首发选择，再开始比赛。赛前对阵、结算和四天王规则写在「设置 → 说明」里。",
     action: "完成引导",
   },
 ];
@@ -68,7 +68,7 @@ const STEPS = [
 /** 新手之路进行中：开局导引只讲顶部常驻入口 */
 const NEWBIE_STEP = {
   screen: "home",
-  target: '[data-go="newbie"]',
+  target: '[data-adv="newbie"]',
   title: "新手之路",
   text: "顶部这条「新手之路」会一直显示。先完成约 2 分钟教程，再去商店买两只新伙伴、把他们拖进首发，最后开始第一场比赛。",
   action: "知道了",
