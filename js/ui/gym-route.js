@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=682";
-import { regionOf } from "../journey/regions.js?v=682";
-import { wildRoutePool } from "../journey/wild.js?v=682";
-import { buildMyRoster } from "../journey/match-screen.js?v=682";
-import { pickGymRoster } from "../journey/gyms.js?v=682";
-import { teamPower, starterIds } from "../systems/build.js?v=682";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=682";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=682";
-import { ICON } from "./icons.js?v=682";
-import { loadSave } from "../storage.js?v=682";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=684";
+import { regionOf } from "../journey/regions.js?v=684";
+import { wildRoutePool } from "../journey/wild.js?v=684";
+import { buildMyRoster } from "../journey/match-screen.js?v=684";
+import { pickGymRoster } from "../journey/gyms.js?v=684";
+import { teamPower, starterIds } from "../systems/build.js?v=684";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=684";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=684";
+import { ICON } from "./icons.js?v=684";
+import { loadSave } from "../storage.js?v=684";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };
@@ -225,21 +225,29 @@ function matchupHtml(save, st, leadId = null) {
 }
 
 export function openGymRoute(save, opts = {}) {
-  const wrap = document.createElement("div");
-  wrap.className = "pj-scrim page-modal route-modal";
-  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
-  wrap.innerHTML = `<div class="pj-page-card"><div class="route-shell">
-    <div class="sub-page pj-page-body route-body"></div>
-    <div class="route-foot"></div>
-  </div></div>`;
+  const embed = !!opts.host;
+  const wrap = embed ? opts.host : document.createElement("div");
+  if (!embed) {
+    wrap.className = "pj-scrim page-modal route-modal";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  }
+  wrap.innerHTML = embed
+    ? `<div class="route-shell route-embed-shell">
+        <div class="sub-page route-body"></div>
+        <div class="route-foot"></div>
+      </div>`
+    : `<div class="pj-page-card"><div class="route-shell">
+        <div class="sub-page pj-page-body route-body"></div>
+        <div class="route-foot"></div>
+      </div></div>`;
   const shell = wrap.querySelector(".route-shell");
   const body = wrap.querySelector(".route-body");
   const foot = wrap.querySelector(".route-foot");
-  (document.getElementById("stage") || document.body).appendChild(wrap);
+  if (!embed) (document.getElementById("stage") || document.body).appendChild(wrap);
 
   let state = { notice: opts.notice || "", flash: "" };
   let leadId = null;
-  const close = () => { wrap.remove(); opts.onBack?.(); };
+  const close = () => { if (!embed) wrap.remove(); opts.onBack?.(); };
 
   const render = () => {
     const f = loadSave() || save;
@@ -260,6 +268,8 @@ export function openGymRoute(save, opts = {}) {
       <style>
         .route-modal .pj-page-card{height:auto;max-height:min(84%,720px)}
         .route-shell{display:flex;flex-direction:column;flex:1;min-height:0}
+        .route-embed-shell{height:100%}
+        .route-embed .route-body{flex:1;min-height:0;overflow-y:auto;padding:0 0 8px!important;background:transparent}
         .route-body{flex:1;min-height:0;overflow-y:auto;padding:0 14px 12px!important}
         .route-foot{flex:none;display:flex;gap:7px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,#12224a);box-shadow:0 -8px 20px rgba(0,0,0,.18)}
         .route-foot .pk-btn-gold{flex:1;min-width:0;padding:10px 6px}
@@ -355,7 +365,7 @@ export function openGymRoute(save, opts = {}) {
   wrap.addEventListener("click", (e) => {
     if (e.target.closest("[data-back]")) { close(); return; }
     if (e.target.closest("[data-progress]")) {
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onProgress?.();
       return;
     }
@@ -370,7 +380,7 @@ export function openGymRoute(save, opts = {}) {
     const dexBtn = e.target.closest("[data-dex]");
     if (dexBtn) {
       const dex = Number(dexBtn.dataset.dex);
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onDex?.(dex);
       return;
     }
@@ -378,24 +388,24 @@ export function openGymRoute(save, opts = {}) {
     if (e.target.closest("[data-stage]")) {
       const st = routeState(f);
       if (!st) return;
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onStage?.(st.steps[st.step], { monId: leadId, spectate: false });
       return;
     }
     if (e.target.closest("[data-spectate]")) {
       const st = routeState(f);
       if (!st) return;
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onStage?.(st.steps[st.step], { monId: leadId, spectate: true });
       return;
     }
     if (e.target.closest("[data-rest]")) {
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onRest?.();
       return;
     }
     if (e.target.closest("[data-leader]")) {
-      wrap.remove();
+      if (!embed) wrap.remove();
       opts.onLeader?.();
     }
   });

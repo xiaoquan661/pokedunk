@@ -4,7 +4,7 @@
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=682";
+import { loadSave, writeSave } from "../storage.js?v=684";
 
 const STEPS = [
   {
@@ -23,21 +23,21 @@ const STEPS = [
   },
   {
     screen: "home",
-    target: '[data-go="team"]',
+    target: '[data-nav-tab="team"]',
     title: "队伍与位置",
     text: "队伍最多 10 只，前 5 只首发。每只精灵有速度、投篮、终结、传球、防守、盖帽、篮板、控球八项能力；卡片上的推荐位置由这八项算出。把精灵放到不合适的位置会降低有效属性，优先拖到推荐槽位。",
     action: "下一步",
   },
   {
     screen: "home",
-    target: '[data-go="shop"]',
+    target: '[data-nav-tab="shop"]',
     title: "每日商店",
     text: "每日商店每天刷新精灵、宝可蛋和树果，记得每天来看。购买后用「孵蛋」入口孵化；普通蛋 20 分钟、高级蛋 2 小时，高级蛋必出稀有且传说率更高。",
     action: "下一步",
   },
   {
     screen: "home",
-    target: '[data-go="egg"]',
+    target: '[data-nav-tab="shop"]',
     title: "孵蛋与成长",
     text: "商店买的蛋在「孵蛋」页放入槽位后开始计时；默认 1 个槽位，可购买 1 个、看广告再送 1 个，最多 3 个。背包里的树果可以给精灵加经验，训练点则用来补八项能力。",
     action: "下一步",

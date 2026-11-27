@@ -33,13 +33,13 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { rollGrowth } from "../engine/growth.js?v=682";
-import { ensureSeason } from "./journey/season.js?v=682";
-import { ensureMainline } from "./journey/regions.js?v=682";
-import { ensureBadgeUnlocks } from "./systems/badge-unlocks.js?v=682";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=682";
-import { minAcquireLevel } from "./systems/acquire.js?v=682";
-import { ensureNickname } from "./systems/profile.js?v=682";
+import { rollGrowth } from "../engine/growth.js?v=684";
+import { ensureSeason } from "./journey/season.js?v=684";
+import { ensureMainline } from "./journey/regions.js?v=684";
+import { ensureBadgeUnlocks } from "./systems/badge-unlocks.js?v=684";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=684";
+import { minAcquireLevel } from "./systems/acquire.js?v=684";
+import { ensureNickname } from "./systems/profile.js?v=684";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -181,6 +181,7 @@ export function writeSave(save) {
     const prev = localStorage.getItem(SAVE_KEY);
     if (prev) localStorage.setItem(BACKUP_KEY, prev);
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    try { window.dispatchEvent(new CustomEvent("pokedunk-save", { detail: { save } })); } catch {}
     return true;
   } catch {
     return false;

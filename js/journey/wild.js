@@ -4,13 +4,13 @@
  * 核心循环：选路线 → 和野生精灵打一场 1v1 篮球 → 赢了它加入，参赛精灵获得 XP。
  * 不推进主线、不计生涯战绩、不发合同；每天 3 次，广告 +1 次。
  */
-import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=682";
-import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=682";
-import { addMon, hasDex } from "../storage.js?v=682";
-import { grantXp } from "../systems/xp.js?v=682";
-import { bumpDaily } from "../ui/earn.js?v=682";
-import { ACHV } from "../systems/achv.js?v=682";
-import { facilityState } from "../systems/badge-unlocks.js?v=682";
+import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=684";
+import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=684";
+import { addMon, hasDex } from "../storage.js?v=684";
+import { grantXp } from "../systems/xp.js?v=684";
+import { bumpDaily } from "../ui/earn.js?v=684";
+import { ACHV } from "../systems/achv.js?v=684";
+import { facilityState } from "../systems/badge-unlocks.js?v=684";
 
 export const WILD_ATTEMPTS = 3;
 export const WILD_AD_ATTEMPTS = 1;

@@ -5,10 +5,10 @@
 import {
   ensureLeague, startLeague, startNextLeague, leagueInfo, rankTable, teamRow,
   roundView, simulateLeagueRound, LEAGUE_ROUNDS,
-} from "../journey/league.js?v=682";
-import { regionOf } from "../journey/regions.js?v=682";
-import { loadSave, writeSave } from "../storage.js?v=682";
-import { ICON } from "./icons.js?v=682";
+} from "../journey/league.js?v=684";
+import { regionOf } from "../journey/regions.js?v=684";
+import { loadSave, writeSave } from "../storage.js?v=684";
+import { ICON } from "./icons.js?v=684";
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -174,7 +174,7 @@ export function openLeaguePage(save, opts = {}) {
     }
     if (e.target.closest("[data-bye]")) {
       const f = loadSave() || save;
-      const { advanceBye } = await import("../journey/league.js?v=682");
+      const { advanceBye } = await import("../journey/league.js?v=684");
       advanceBye(f);
       writeSave(f);
       render();

@@ -5,14 +5,14 @@
  *  2. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）。
  */
-import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=682";
+import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=684";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { LEGENDARY_DEX } from "../systems/build.js?v=682";
-import { watchRewardedAd } from "../platform/ads.js?v=682";
-import { gameAudio } from "../platform/audio.js?v=682";
-import { rollEggDex } from "../systems/shop.js?v=682";
-import { ICON } from "./icons.js?v=682";
-import { playAcquire } from "./anim.js?v=682";
+import { LEGENDARY_DEX } from "../systems/build.js?v=684";
+import { watchRewardedAd } from "../platform/ads.js?v=684";
+import { gameAudio } from "../platform/audio.js?v=684";
+import { rollEggDex } from "../systems/shop.js?v=684";
+import { ICON } from "./icons.js?v=684";
+import { playAcquire } from "./anim.js?v=684";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 200;     // 每次看广告奖励（S46：300→200，并加每日上限）
@@ -144,7 +144,7 @@ export function bumpDaily(key, n = 1) {
 }
 
 /** 每日活跃任务独立面板（主页入口）：完成进度 + 领币 */
-export function openDailyTasks(save, onCoins) {
+export function openDailyTasks(save, onCoins, opts = {}) {
   if (!document.getElementById("pj-earn-style")) {
     const st = document.createElement("style");
     st.id = "pj-earn-style";
@@ -207,14 +207,18 @@ export function openDailyTasks(save, onCoins) {
       'html[data-ui-theme="retro"] .earn-body .signin-today{background:rgba(255,248,232,.8);border-color:#c9a35a}';
     document.head.appendChild(st);
   }
-  const wrap = document.createElement("div");
-  wrap.className = "pj-scrim page-modal";
-  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
-  wrap.innerHTML = `
-    <div class="pj-page-card"><div class="sub-page pj-page-body earn-body">
+  const embed = !!opts.host;
+  const wrap = embed ? opts.host : document.createElement("div");
+  if (!embed) {
+    wrap.className = "pj-scrim page-modal";
+    wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  }
+  const inner = `
       <div class="page-head"><button class="back" data-back>‹</button><h2>每日活跃任务</h2><span class="count" id="task-done">0/5</span></div>
-      <div id="pj-task-body"></div>
-    </div></div>`;
+      <div id="pj-task-body"></div>`;
+  wrap.innerHTML = embed
+    ? `<div class="earn-body">${inner}</div>`
+    : `<div class="pj-page-card"><div class="sub-page pj-page-body earn-body">${inner}</div></div>`;
   const body = wrap.querySelector("#pj-task-body");
   const render = () => {
     const d = daily();
@@ -276,7 +280,8 @@ export function openDailyTasks(save, onCoins) {
       <p class="pj-note">打比赛、投喂树果、签下胜利后的精灵合同为主要来源</p>`;
   };
   wrap.addEventListener("click", (e) => {
-    if (e.target === wrap || e.target.closest("[data-back]")) { wrap.remove(); return; }
+    if (e.target.closest("[data-back]")) { if (!embed) wrap.remove(); return; }
+    if (e.target === wrap && !embed) { wrap.remove(); return; }
     const sb = e.target.closest("[data-signin]");
     if (sb && !sb.disabled) {
       const sign = signInfo(save);
@@ -353,7 +358,7 @@ export function openDailyTasks(save, onCoins) {
     onCoins?.();
     render();
   });
-  (document.getElementById("stage")||document.body).appendChild(wrap);
+  if (!embed) (document.getElementById("stage")||document.body).appendChild(wrap);
   render();
 }
 

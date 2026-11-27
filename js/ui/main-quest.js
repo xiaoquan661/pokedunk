@@ -3,16 +3,16 @@
  * 视觉结构：当前目标大卡 → 8 馆节点轴 → 接下来 → 底部固定操作栏。
  * 目标：玩家不滚动也能回答「我在哪 / 下一步做什么 / 奖励是什么」。
  */
-import { ensureSeason, leagueInfo, fourKingsInfo, fourKingsRewardPending, startNextSeason } from "../journey/season.js?v=682";
-import { regionOf, capInfo, badgeUnlockText, nextRegionOf } from "../journey/regions.js?v=682";
-import { routeState, routeForGym } from "../journey/gym-route.js?v=682";
-import { wildRoutePool } from "../journey/wild.js?v=682";
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=682";
-import { loadSave, writeSave } from "../storage.js?v=682";
-import { teamPower } from "../systems/build.js?v=682";
-import { leagueSummary } from "../journey/league.js?v=682";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=682";
-import { ICON } from "./icons.js?v=682";
+import { ensureSeason, leagueInfo, fourKingsInfo, fourKingsRewardPending, startNextSeason } from "../journey/season.js?v=684";
+import { regionOf, capInfo, badgeUnlockText, nextRegionOf } from "../journey/regions.js?v=684";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=684";
+import { wildRoutePool } from "../journey/wild.js?v=684";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=684";
+import { loadSave, writeSave } from "../storage.js?v=684";
+import { teamPower } from "../systems/build.js?v=684";
+import { leagueSummary } from "../journey/league.js?v=684";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=684";
+import { ICON } from "./icons.js?v=684";
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
