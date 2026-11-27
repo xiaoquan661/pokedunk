@@ -5,17 +5,17 @@
  * 前四关不推进主线，馆主战给徽章并解锁下一个道馆。
  * 存档：save.journey.route = { key, step }
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=693";
-import { buildMyRoster, buildWildMatch } from "./match-screen.js?v=693";
-import { pickGymRoster } from "./gyms.js?v=693";
-import { WILD_ROUTES, pickWildOpponent, recordWildResult } from "./wild.js?v=693";
-import { leagueInfo } from "./season.js?v=693";
-import { regionOf } from "./regions.js?v=693";
-import { starterIds } from "../systems/build.js?v=693";
-import { loadSet } from "../ui/settings.js?v=693";
-import { grantXp } from "../systems/xp.js?v=693";
-import { bumpDaily } from "../ui/earn.js?v=693";
-import { ACHV } from "../systems/achv.js?v=693";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=694";
+import { buildMyRoster, buildWildMatch } from "./match-screen.js?v=694";
+import { pickGymRoster } from "./gyms.js?v=694";
+import { WILD_ROUTES, pickWildOpponent, recordWildResult } from "./wild.js?v=694";
+import { leagueInfo } from "./season.js?v=694";
+import { regionOf } from "./regions.js?v=694";
+import { starterIds } from "../systems/build.js?v=694";
+import { loadSet } from "../ui/settings.js?v=694";
+import { grantXp } from "../systems/xp.js?v=694";
+import { bumpDaily } from "../ui/earn.js?v=694";
+import { ACHV } from "../systems/achv.js?v=694";
 
 export const ROUTE_STEPS = [
   { id: "wild1", kind: "wild", name: "野生宝可梦", desc: "1v1 · 打赢可收服" },

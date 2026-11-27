@@ -474,3 +474,7 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 .tab-shell .adv-node{position:relative}
 .tab-shell .adv-node-scene{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.55;pointer-events:none}
 .tab-shell .adv-node-main,.tab-shell .adv-substeps,.tab-shell .adv-node-cta{position:relative;z-index:1}
+
+/* Tab 根页面不显示返回键：根页面用底部 Tab 导航，只有二级页保留返回 */
+.tab-shell .tab-page-root .page-head [data-back]{display:none!important}
+.tab-shell .tab-page-root .lg-foot [data-back]{display:none!important}

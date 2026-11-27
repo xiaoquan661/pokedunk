@@ -3,7 +3,7 @@
  * 监听引擎事件，只在 kind === "special" 时触发（双方都播）。
  * 设计：斜切能量带 + 大立绘 + 必杀大字 + 招式名 + 效果说明，不暂停比赛。
  */
-import { SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=693";
+import { SPECIAL_EFFECTS } from "../../engine/readable/play-core.js?v=694";
 
 const MOVE_CN = {
   "VOLT TACKLE": "伏特攻击",
