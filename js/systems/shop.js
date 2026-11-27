@@ -7,9 +7,9 @@
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex, writeSave } from "../storage.js?v=698";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=698";
-import { facilityState } from "./badge-unlocks.js?v=698";
+import { addMon, hasDex, writeSave } from "../storage.js?v=699";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=699";
+import { facilityState } from "./badge-unlocks.js?v=699";
 
 const MIN20 = 20 * 60 * 1000;
 const HOUR2 = 2 * 60 * 60 * 1000;

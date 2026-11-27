@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=698";
-import { regionOf } from "../journey/regions.js?v=698";
-import { wildRoutePool } from "../journey/wild.js?v=698";
-import { buildMyRoster } from "../journey/match-screen.js?v=698";
-import { pickGymRoster } from "../journey/gyms.js?v=698";
-import { teamPower, starterIds } from "../systems/build.js?v=698";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=698";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=698";
-import { ICON } from "./icons.js?v=698";
-import { loadSave } from "../storage.js?v=698";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=699";
+import { regionOf } from "../journey/regions.js?v=699";
+import { wildRoutePool } from "../journey/wild.js?v=699";
+import { buildMyRoster } from "../journey/match-screen.js?v=699";
+import { pickGymRoster } from "../journey/gyms.js?v=699";
+import { teamPower, starterIds } from "../systems/build.js?v=699";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=699";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=699";
+import { ICON } from "./icons.js?v=699";
+import { loadSave } from "../storage.js?v=699";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };
@@ -284,30 +284,30 @@ export function openGymRoute(save, opts = {}) {
         .route-foot{flex:none;display:flex;gap:7px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,#12224a);box-shadow:0 -8px 20px rgba(0,0,0,.18)}
         .route-foot .pk-btn-gold{flex:1;min-width:0;padding:10px 6px}
         .route-foot .pk-btn-gold.pm-ghost{background:var(--panel-2,#12224a)!important;color:var(--text,#fff)!important;border:1px solid var(--line,rgba(255,255,255,.18))!important;box-shadow:none!important}
-        .route-foot .pm-ghost[data-spectate]{flex:1;border-color:color-mix(in srgb,var(--gold,#f5c542) 42%,var(--line,rgba(255,255,255,.18)))!important}
+        .route-foot .pm-ghost[data-spectate]{flex:1;border-color:color-mix(in srgb,var(--r-green,#b8e63c) 42%,var(--line,rgba(255,255,255,.18)))!important}
         .route-foot .pm-ghost[data-back]{flex:0 0 88px}
         .route-body .page-sub{margin-bottom:8px}
         .route-head-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
-        .route-head-right .count{margin-left:0}
-        .route-map{margin:0 0 8px;padding:9px 10px 8px;border:1px solid rgba(245,197,66,.24);border-radius:10px;background:linear-gradient(180deg,rgba(245,197,66,.06),rgba(0,0,0,.18))}
+        .route-head-right .count{margin-left:0;color:var(--r-green,#b8e63c)}
+        .route-map{margin:0 0 8px;padding:9px 10px 8px;border:1px solid rgba(184,230,60,.24);border-radius:10px;background:linear-gradient(180deg,rgba(184,230,60,.06),rgba(0,0,0,.18))}
         .rm-head{display:flex;align-items:center;gap:7px;margin-bottom:7px;min-width:0}
-        .rm-head b{font:700 12px var(--sport,sans-serif);color:var(--gold,#f5c542);flex:none}
+        .rm-head b{font:700 12px var(--sport,sans-serif);color:var(--r-green,#b8e63c);flex:none}
         .rm-head span{font-size:8.5px;color:var(--text-dim,#b9b0a0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .rm-more{margin-left:auto;flex:none;padding:3px 7px;border-radius:999px;border:1px solid rgba(245,197,66,.4);background:rgba(245,197,66,.08);color:var(--gold,#f5c542);font:700 8.5px var(--sport,sans-serif);white-space:nowrap}
+        .rm-more{margin-left:auto;flex:none;padding:3px 7px;border-radius:999px;border:1px solid rgba(184,230,60,.4);background:rgba(184,230,60,.08);color:var(--r-green,#b8e63c);font:700 8.5px var(--sport,sans-serif);white-space:nowrap}
         .rm-gyms{position:relative;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding-top:1px}
         .rm-gyms::before{content:"";position:absolute;left:6%;right:6%;top:15px;height:2px;background:rgba(255,255,255,.12);z-index:0}
         .rm-gym{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:1px 0 2px;border-radius:5px;border:1px solid transparent;opacity:.42}
         .rm-gym.done{opacity:1}
-        .rm-gym.cur{opacity:1;border-color:rgba(245,197,66,.75);background:rgba(245,197,66,.1)}
+        .rm-gym.cur{opacity:1;border-color:rgba(184,230,60,.75);background:rgba(184,230,60,.1)}
         .rm-gym .rm-no{font:700 7px var(--sport,sans-serif);color:var(--text-dim,#b9b0a0);line-height:1}
         .rm-gym .badge-medal{filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
         .rm-gym small{font:700 7.5px var(--sport,sans-serif);color:var(--text-dim,#b9b0a0);white-space:nowrap}
-        .rm-gym.cur small{color:var(--gold,#f5c542)}
+        .rm-gym.cur small{color:var(--r-green,#b8e63c)}
         .rm-goals{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}
         .rm-goal{display:flex;flex-direction:column;gap:1px;padding:4px 5px;border-radius:5px;border:1px solid var(--line,rgba(255,255,255,.1));background:rgba(0,0,0,.14);min-width:0}
         .rm-goal b{font:700 8.5px var(--sport,sans-serif);color:var(--text,#fff);white-space:nowrap}
         .rm-goal small{font-size:7.5px;color:var(--text-dim,#b9b0a0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .rm-goal.cur{border-color:rgba(245,197,66,.5);background:rgba(245,197,66,.08)}
+        .rm-goal.cur{border-color:rgba(184,230,60,.5);background:rgba(184,230,60,.08)}
         .rm-goal.done{opacity:.72}
         .rm-goal.lock{opacity:.4}
         .rm-route{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:6px}
@@ -315,12 +315,12 @@ export function openGymRoute(save, opts = {}) {
         .rm-step i{font:700 8px var(--sport,sans-serif);font-style:normal;color:var(--text-dim,#b9b0a0)}
         .rm-step small{font:700 7.5px var(--sport,sans-serif);color:var(--text-dim,#b9b0a0)}
         .rm-step.done{opacity:.62}
-        .rm-step.cur{border-color:rgba(245,197,66,.65);background:rgba(245,197,66,.12)}
-        .rm-step.cur i,.rm-step.cur small{color:var(--gold,#f5c542)}
+        .rm-step.cur{border-color:rgba(184,230,60,.65);background:rgba(184,230,60,.12)}
+        .rm-step.cur i,.rm-step.cur small{color:var(--r-green,#b8e63c)}
         .rm-step.lock{opacity:.38}
-        .route-progress{margin:0 0 8px;padding:8px 10px 9px;border:1px solid rgba(245,197,66,.22);border-radius:9px;background:linear-gradient(180deg,rgba(245,197,66,.05),rgba(0,0,0,.16))}
+        .route-progress{margin:0 0 8px;padding:8px 10px 9px;border:1px solid rgba(184,230,60,.22);border-radius:9px;background:linear-gradient(180deg,rgba(184,230,60,.05),rgba(0,0,0,.16))}
         .rp-top{display:flex;align-items:baseline;gap:7px;margin-bottom:9px;min-width:0}
-        .rp-top b{flex:none;font:700 11px var(--sport,sans-serif);color:var(--gold,#f5c542)}
+        .rp-top b{flex:none;font:700 11px var(--sport,sans-serif);color:var(--r-green,#b8e63c)}
         .rp-count{flex:none;font:700 12px var(--sport,sans-serif);color:var(--text,#fff);font-variant-numeric:tabular-nums}
         .rp-top em{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;font-size:8.5px;color:var(--text-dim,#b9b0a0)}
         .rp-steps{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
@@ -330,15 +330,15 @@ export function openGymRoute(save, opts = {}) {
         .rp-step.cur{opacity:1}
         .rp-dot{width:18px;height:18px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22);border-radius:50%;background:#0b0c11;color:rgba(255,255,255,.6);font:700 8px var(--sport,sans-serif);font-variant-numeric:tabular-nums}
         .rp-step.done .rp-dot{border-color:#57c785;background:rgba(87,199,133,.14);color:#57c785}
-        .rp-step.cur .rp-dot{border-color:var(--gold,#f5c542);background:var(--gold,#f5c542);color:#0b0c11;box-shadow:0 0 10px color-mix(in srgb,var(--gold,#f5c542) 55%,transparent)}
+        .rp-step.cur .rp-dot{border-color:var(--r-green,#b8e63c);background:var(--r-green,#b8e63c);color:#0b0c11;box-shadow:0 0 10px color-mix(in srgb,var(--r-green,#b8e63c) 55%,transparent)}
         .rp-step small{font:700 8.5px var(--sport,sans-serif);color:var(--text-dim,#b9b0a0);white-space:nowrap}
         .rp-step.done small{color:rgba(255,255,255,.66)}
-        .rp-step.cur small{color:var(--gold,#f5c542)}
-        .route-head-card{display:flex;align-items:center;gap:9px;margin:0 0 7px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--gc) 55%,transparent);border-radius:9px;background:
-          radial-gradient(100% 100% at 100% 0%,color-mix(in srgb,var(--gc) 20%,transparent),transparent 70%),
-          linear-gradient(135deg,color-mix(in srgb,var(--gc) 12%,var(--panel-2,#12224a)),var(--panel-2,#12224a) 76%)}
+        .rp-step.cur small{color:var(--r-green,#b8e63c)}
+        .route-head-card{display:flex;align-items:center;gap:9px;margin:0 0 7px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--r-green,#b8e63c) 45%,transparent);border-radius:9px;background:
+          radial-gradient(100% 100% at 100% 0%,color-mix(in srgb,var(--r-green,#b8e63c) 11%,transparent),transparent 70%),
+          linear-gradient(135deg,color-mix(in srgb,var(--r-green,#b8e63c) 7%,var(--panel-2,#12224a)),var(--panel-2,#12224a) 76%)}
         .route-head-card .badge-medal{flex:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.28))}
-        .route-gym-art{position:relative;width:70px;height:50px;flex:none;border:1px solid color-mix(in srgb,var(--gc) 55%,rgba(255,255,255,.16));border-radius:6px;overflow:hidden;background-size:cover;background-position:center;box-shadow:inset 0 0 12px rgba(0,0,0,.4)}
+        .route-gym-art{position:relative;width:70px;height:50px;flex:none;border:1px solid color-mix(in srgb,var(--r-green,#b8e63c) 45%,rgba(255,255,255,.16));border-radius:6px;overflow:hidden;background-size:cover;background-position:center;box-shadow:inset 0 0 12px rgba(0,0,0,.4)}
         .route-gym-leader{position:absolute;right:-2px;bottom:-5px;width:34px;height:34px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.85))}
         .route-gym-badge{position:absolute;left:3px;top:3px;width:21px;height:21px;border-radius:3px;background-repeat:no-repeat;background-size:800% 100%;background-position:calc(var(--bi,0) * 14.2857%) 0;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
         .route-head-txt{flex:1;min-width:0}
@@ -346,11 +346,13 @@ export function openGymRoute(save, opts = {}) {
         .route-head-txt small{display:block;margin-top:1px;font-size:9.5px;color:var(--text-dim,#b9b0a0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .route-pms{position:relative;margin:0 0 8px;padding:1px 0 0;text-align:center}
         .route-pms h2{margin:6px 0 9px;font:700 18px var(--sport,sans-serif);color:var(--text,#fff);letter-spacing:.02em}
+        .route-pms .brief-stage{color:var(--r-green,#b8e63c);background:rgba(184,230,60,.12);border-color:rgba(184,230,60,.38)}
+        .route-pms .brief-vs-txt{color:var(--r-green,#b8e63c)}
         .route-pms .pms-mon,.route-pms .pms-opp-card{border-color:transparent;background:none}
         .route-pms .pms-opp-card{transition:transform .12s ease,background .12s ease}
         .route-pms .pms-opp-card:active{background:rgba(255,255,255,.06);transform:translateY(-1px)}
         .route-pms .pms-lead-card{cursor:pointer;border:1px solid transparent;border-radius:8px;transition:background .12s,border-color .12s}
-        .route-pms .pms-lead-card.on{border-color:var(--gold,#f5c542);background:color-mix(in srgb,var(--gold,#f5c542) 10%,transparent)}
+        .route-pms .pms-lead-card.on{border-color:var(--r-green,#b8e63c);background:color-mix(in srgb,var(--r-green,#b8e63c) 10%,transparent)}
         .route-pms .pms-lead-card:active{background:rgba(255,255,255,.06)}
         .route-one{display:flex;justify-content:center;padding:0 2px}
         .route-one .pms-mon{width:78px;flex:none}
@@ -362,7 +364,7 @@ export function openGymRoute(save, opts = {}) {
         .route-rest-item i svg{width:20px;height:20px}
         .route-rest-item b{font:700 10px var(--sport,sans-serif);color:var(--text,#fff);white-space:nowrap}
         .route-acts{display:flex;flex-direction:column;gap:7px;margin-top:2px}
-        .route-note{margin:0 0 8px;padding:7px 9px;border:1px solid rgba(245,197,66,.5);border-radius:5px;background:rgba(245,197,66,.1);color:var(--gold,#f5c542);font-size:11px;line-height:1.5}
+        .route-note{margin:0 0 8px;padding:7px 9px;border:1px solid rgba(184,230,60,.5);border-radius:5px;background:rgba(184,230,60,.1);color:var(--r-green,#b8e63c);font-size:11px;line-height:1.5}
         @media (max-width:360px){
           .route-pms .pms-mon{height:88px}
           .route-pms .pms-mon img{width:36px;height:36px}

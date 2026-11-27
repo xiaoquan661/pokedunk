@@ -5,13 +5,13 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=698";
-import { gameAudio } from "../platform/audio.js?v=698";
-import { getPokemon } from "../../engine/readable/play-core.js?v=698";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=698";
-import { openDetail } from "./detail.js?v=698";
-import { typeRewardRows, claimTypeReward } from "../systems/milestones.js?v=698";
-import { claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=698";
+import { loadSave, writeSave } from "../storage.js?v=699";
+import { gameAudio } from "../platform/audio.js?v=699";
+import { getPokemon } from "../../engine/readable/play-core.js?v=699";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=699";
+import { openDetail } from "./detail.js?v=699";
+import { typeRewardRows, claimTypeReward } from "../systems/milestones.js?v=699";
+import { claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=699";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...

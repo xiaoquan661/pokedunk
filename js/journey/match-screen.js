@@ -8,14 +8,14 @@
  *   - 四天王：8 徽章解锁，独立 1 场，可重试
  *   - 冠军后进入下一地区（馆主全属性 +2）
  */
-import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=698";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=698";
-import { loadSet, saveSet, audioOn, setAudio } from "../ui/settings.js?v=698";
-import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=698";
-import { currentMatchInfo, matchSeed } from "./season.js?v=698";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=698";
-import { createMatchHype } from "../ui/match-hype.js?v=698";
-import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=698";
+import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=699";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=699";
+import { loadSet, saveSet, audioOn, setAudio } from "../ui/settings.js?v=699";
+import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=699";
+import { currentMatchInfo, matchSeed } from "./season.js?v=699";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=699";
+import { createMatchHype } from "../ui/match-hype.js?v=699";
+import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=699";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
