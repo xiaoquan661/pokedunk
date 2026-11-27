@@ -1,27 +1,31 @@
 /**
- * settle.js —— 比赛结算（pokedunk-v2 · 赛季 v2.4）
+ * settle.js —— 比赛结算（pokedunk-v2 · 主线）
  * 奖励口径（docs/09 §6.3/§7，S13 定案）：
- *   - 篮球币：base = 20 + 0.5×对手OVR；常规赛×0.7 / 半决赛×1.5 / 总决赛×2.0 / 四天王×3.0
+ *   - 篮球币：base = 20 + 0.5×对手OVR；道馆战×0.7 / 四天王×3.0
  *   - 模拟胜利：奖励 ×0.8；失败：每天前 3 次给胜利奖励 20%，之后 0；退出 0 币 0 XP
- *   - 四天王胜利：额外 +400 币；联赛总冠军额外 +400 币
+ *   - 四天王胜利：额外 +400 币；地区冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { rollGrowth } from "../../engine/growth.js?v=598";
-import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=598";
-import { monPrice } from "../systems/shop.js?v=598";
-import { ACHV } from "../systems/achv.js?v=598";
-import { bumpDaily } from "../ui/earn.js?v=598";
-import { currentMatchInfo, recordResult } from "./season.js?v=598";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=598";
-import { offerLegendReward } from "./legend.js?v=598";
-import { syncAcquireLevel } from "../systems/acquire.js?v=598";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { rollGrowth } from "../../engine/growth.js?v=682";
+import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=682";
+import { monPrice } from "../systems/shop.js?v=682";
+import { ACHV } from "../systems/achv.js?v=682";
+import { bumpDaily } from "../ui/earn.js?v=682";
+import { currentMatchInfo, recordResult, grantFourKingsReward } from "./season.js?v=682";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=682";
+import { offerLegendReward } from "./legend.js?v=682";
+import { syncAcquireLevel } from "../systems/acquire.js?v=682";
+import { recordSeasonStats, ensureOvrBase, computeSeasonAwards } from "../systems/awards.js?v=682";
+import { ensureCareerStats } from "../systems/career.js?v=682";
+import { levelCapOf } from "./regions.js?v=682";
+import { ensureBadgeUnlocks } from "../systems/badge-unlocks.js?v=682";
 
 const CONTRACT_DISCOUNT = 1; // 合同按商店原价出售，不再打折
 // S31：每场胜利 35% 概率出现合同；连续 3 胜未出，下一场必出
 const CONTRACT_CHANCE = 0.35;
 const CONTRACT_PITY = 3;
-// S13：常规赛收益上调，避免“打一场不如看一条广告”；季后赛/总决赛同步提高
+// S13：道馆战收益上调，避免“打一场不如看一条广告”；四天王同步提高
 const KIND_COIN = { league: 0.7, playoff: 1.5, final: 2.0, elite: 3.0 };
 const KIND_XP = { league: 10.0, playoff: 13.0, final: 15.0, elite: 15.0 };
 
@@ -104,10 +108,14 @@ function grantXp(save, monId, mon, amount, anims) {
   if (!amount) return events;
   const fromLevel = mon.level;
   const growthAll = [];
+  const cap = levelCapOf(save);
   mon.xp += amount;
   while (mon.xp >= xpToNext(mon.level)) {
+    if (mon.level >= cap) {
+      mon.xp = Math.min(mon.xp, Math.max(0, xpToNext(mon.level) - 1));
+      break;
+    }
     mon.xp -= xpToNext(mon.level);
-    if (mon.level >= 99) { mon.xp = 0; break; }
     mon.level++;
     growthAll.push(...rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random).map(growthZh));
     mon.train ||= { points: 0, stats: {}, bank: 0, free: 0, freeEarned: 0, paid: 0 };
@@ -142,13 +150,29 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   const info = currentMatchInfo(save, mode) || {
     kind: mode === "elite" ? "elite" : "league",
     season: save.journey?.season?.no || 1,
-    smallName: mode === "elite" ? "四天王挑战" : "常规赛",
+    smallName: mode === "elite" ? "四天王挑战" : "道馆战",
     targetPower: 60,
     gym,
   };
 
-  // 1. 战绩
-  if (won) save.stats.w++; else save.stats.l++;
+  // 0. 地区统计（颁奖用）：先补地区 OVR 基线，再累加本场我方数据
+  try {
+    ensureOvrBase(save);
+    recordSeasonStats(save, engine);
+  } catch {}
+
+  // 1. 战绩（生涯累计）
+  const cs = ensureCareerStats(save);
+  if (won) {
+    cs.w++;
+    cs.streak = (cs.streak || 0) + 1;
+    cs.bestStreak = Math.max(cs.bestStreak || 0, cs.streak);
+  } else {
+    cs.l++;
+    cs.streak = 0;
+  }
+  cs.pf = (cs.pf || 0) + myScore;
+  cs.pa = (cs.pa || 0) + oppScore;
 
   // 2. 奖励
   const oppOvr = engine
@@ -165,7 +189,7 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
   let coins = 0;
   let xp = 0;
   if (!quit && won) {
-    // 金币底座抬高（S46）：一场常规赛约 70–100 币，配合涨价后的商店
+    // 金币底座抬高（S46）：一场道馆战约 70–100 币，配合涨价后的商店
     coins = baseCoins * coinMult;
     xp = (12 + margin) * xpMult;
     if (simulated) {
@@ -193,14 +217,31 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     if (mon) xpEvents.push(...grantXp(save, id, mon, xp, anims));
   });
 
-  // 4. 赛程推进（联赛/季后赛/四天王），再发传说/道具
+  // 4. 主线推进（道馆/四天王），再发传说/道具
   const seasonNo = info.season || save.journey?.season?.no || 1;
   const advance = recordResult(save, info, { won, myScore, oppScore, sim: simulated });
+  // 徽章设施永久解锁（2/3/4/5/6/7/8 枚）
+  try { ensureBadgeUnlocks(save); } catch {}
   if (advance.champion) {
     coins += 400;
-    save.coins += 400; // 联赛总冠军奖励
+    save.coins += 400; // 地区冠军奖励
   }
   const legendReward = advance.legendTrack ? offerLegendReward(save, seasonNo, advance.legendTrack) : null;
+  // 四天王首通奖励（每地区一次）：金币 + 高级树果 + 孵蛋加速券
+  const fourKingsReward = advance.fourKingsJustCleared ? grantFourKingsReward(save) : null;
+  // 地区颁奖（移植原版 __pjCrown）：冠军结算时评选 MVP / 得分王 / 最佳防守 / 第六人 / 最快进步
+  let awards = null;
+  if (advance.champion) {
+    try {
+      const res = computeSeasonAwards(save);
+      awards = res.awards.length ? res.awards : null;
+      const se = save.journey.season;
+      se.awards = awards || [];
+      se.mvp = res.mvp?.dex ?? null;
+      const last = (se.history || [])[se.history.length - 1];
+      if (last && last.no === se.no && awards) last.mvp = res.mvp?.name || "—";
+    } catch {}
+  }
   // 5. 精灵合同：胜利后概率出现
   const contract = won && !quit ? rollContract(save) : null;
 
@@ -267,9 +308,13 @@ export function settleMatchResult(save, engine, gym, quit = false, simulated = f
     badgeName: info.gym?.name,
     champion: advance.champion,
     fourKings: !!advance.fourKings,
+    fourKingsJustCleared: !!advance.fourKingsJustCleared,
+    fourKingsReward,
+    awards,
+    mvp: awards?.find((a) => a.key === "mvp") || null,
     seasonEnded: advance.seasonEnded,
     legendReward,
-    nextLabel: after ? after.label : (mode === "elite" ? "四天王已通关" : "赛季结束"),
+    nextLabel: after ? after.label : (mode === "elite" ? "四天王已通关" : "主线完成"),
     contract,
     simulated,
     levelKind: info.kind,

@@ -2,14 +2,15 @@
  * journey/wild.js —— 野球场1v1（V1）
  *
  * 核心循环：选路线 → 和野生精灵打一场 1v1 篮球 → 赢了它加入，参赛精灵获得 XP。
- * 不推进赛季、不计生涯战绩、不发合同；每天 3 次，广告 +1 次。
+ * 不推进主线、不计生涯战绩、不发合同；每天 3 次，广告 +1 次。
  */
-import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=598";
-import { addMon, hasDex } from "../storage.js?v=598";
-import { grantXp } from "../systems/xp.js?v=598";
-import { bumpDaily } from "../ui/earn.js?v=598";
-import { ACHV } from "../systems/achv.js?v=598";
+import { POKEMON_LIST, getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { STAT_KEYS, LEGENDARY_DEX, isOnGrass } from "../systems/build.js?v=682";
+import { addMon, hasDex } from "../storage.js?v=682";
+import { grantXp } from "../systems/xp.js?v=682";
+import { bumpDaily } from "../ui/earn.js?v=682";
+import { ACHV } from "../systems/achv.js?v=682";
+import { facilityState } from "../systems/badge-unlocks.js?v=682";
 
 export const WILD_ATTEMPTS = 3;
 export const WILD_AD_ATTEMPTS = 1;
@@ -51,7 +52,7 @@ export function wildEnsure(save) {
 
 export function wildMax(save) {
   const w = wildEnsure(save);
-  return WILD_ATTEMPTS + (w.adUsed ? WILD_AD_ATTEMPTS : 0);
+  return WILD_ATTEMPTS + (facilityState(save).wildBonus || 0) + (w.adUsed ? WILD_AD_ATTEMPTS : 0);
 }
 
 export function wildLeft(save) {
@@ -100,6 +101,23 @@ function routeCandidates(route) {
   });
 }
 
+/** 进度页用：该路线可能出现的野生精灵池（含传说过滤） */
+export function wildRoutePool(route) {
+  return routeCandidates(route);
+}
+
+function wildOpponent(pick, level, route) {
+  return {
+    dex: pick.dex,
+    level,
+    bonus: levelBonus(level),
+    name: getPokemon(pick.dex)?.name || pick.name || "",
+    types: getPokemon(pick.dex)?.types || pick.types || [],
+    ovr: getPokemon(pick.dex)?.ovr || pick.ovr || 60,
+    routeId: route.id,
+  };
+}
+
 /** 按路线等级抽一只野生对手，未拥有优先 */
 export function pickWildOpponent(save, route, rng = Math.random) {
   const min = route.minLevel, max = route.maxLevel;
@@ -114,15 +132,7 @@ export function pickWildOpponent(save, route, rng = Math.random) {
     .sort((a, b) => a.d - b.d)
     .slice(0, 10);
   const pick = ranked[Math.floor(rng() * ranked.length)]?.p || pool[0];
-  return {
-    dex: pick.dex,
-    level,
-    bonus: levelBonus(level),
-    name: getPokemon(pick.dex)?.name || pick.name || "",
-    types: getPokemon(pick.dex)?.types || pick.types || [],
-    ovr: getPokemon(pick.dex)?.ovr || pick.ovr || 60,
-    routeId: route.id,
-  };
+  return wildOpponent(pick, level, route);
 }
 
 /**

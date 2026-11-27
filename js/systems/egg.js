@@ -5,23 +5,23 @@
  *   撞车（同种唯一）折币 DUPE_REFUND；出蛋走 addMon 统一落库。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, writeSave } from "../storage.js?v=598";
-import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS, rollEggDex } from "./shop.js?v=598";
-import { LEGENDARY_DEX } from "./build.js?v=598";
-import { syncAcquireLevel } from "./acquire.js?v=598";
+import { addMon, writeSave } from "../storage.js?v=682";
+import { HATCH_MS, EGG_SLOTS, DUPE_REFUND, DUPE_REFUND_PREMIUM, DUPE_REFUND_LEGEND, EGG_TIERS, rollEggDex } from "./shop.js?v=682";
+import { LEGENDARY_DEX } from "./build.js?v=682";
+import { syncAcquireLevel } from "./acquire.js?v=682";
 
 const hatchMsOf = (tier) => (EGG_TIERS[tier] || EGG_TIERS.normal).hatchMs;
 /** 孵蛋加速券：背包道具 id（战斗掉落） */
 export const HATCH_ITEM = "hatch";
 export const EGG_AD_REDUCE_MS = 4 * 60 * 60 * 1000;
-export const EGG_SLOT_MAX = 3;
+export const EGG_SLOT_MAX = 4;
 export const EGG_SLOT_PRICE = 800;
 
 /** 购买 1 个孵蛋槽位（上限 3，只能购买一次） */
 export function eggBuySlot(save) {
   save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
   if (save.eggs.paidSlot) return { ok: false, error: "已购买过槽位" };
-  if (save.eggs.unlockedSlots >= EGG_SLOT_MAX) return { ok: false, error: "孵蛋槽位已全部解锁" };
+  if (save.eggs.unlockedSlots >= 3) return { ok: false, error: "已解锁 3 个槽位（第 4 个需 8 枚徽章）" };
   if (save.coins < EGG_SLOT_PRICE) return { ok: false, error: `篮球币不足（需 ${EGG_SLOT_PRICE}）` };
   save.coins -= EGG_SLOT_PRICE;
   save.eggs.paidSlot = true;
@@ -34,7 +34,7 @@ export function eggBuySlot(save) {
 export function eggAdSlot(save) {
   save.eggs ||= { unlockedSlots: 1, slots: [], stock: [] };
   if (save.eggs.adSlot) return { ok: false, error: "已领取过广告槽位" };
-  if (save.eggs.unlockedSlots >= EGG_SLOT_MAX) return { ok: false, error: "孵蛋槽位已全部解锁" };
+  if (save.eggs.unlockedSlots >= 3) return { ok: false, error: "已解锁 3 个槽位（第 4 个需 8 枚徽章）" };
   save.eggs.adSlot = true;
   save.eggs.unlockedSlots = Math.min(EGG_SLOT_MAX, (save.eggs.unlockedSlots || 1) + 1);
   writeSave(save);

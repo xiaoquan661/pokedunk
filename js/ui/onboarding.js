@@ -1,17 +1,24 @@
 /**
  * ui/onboarding.js —— 新玩家局外流程指引（v3）
- * 只覆盖局外：主页入口 → 赛季页 → 赛前对阵 → 赛后结算。
+ * 只覆盖局外：主页入口 → 主线 → 赛前对阵 → 赛后结算。
  * 比赛内操作仍使用原有 rookie-guide，不在这里重复。
  * 状态：save.guide = { v: 1, step: 0, done: false }
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
 
 const STEPS = [
   {
     screen: "home",
     target: ".top-row",
     title: "资源与目标",
-    text: "篮球币来自比赛、每日挑战、每日活跃任务和看广告，用于商店、孵蛋、树果和训练。徽章来自击败馆主：常规赛每赢一个馆主得 1 枚，8 枚解锁四天王；赛季结束重置。",
+    text: "篮球币来自比赛、每日挑战、每日活跃任务和看广告，用于商店、孵蛋、树果和训练。徽章来自击败馆主：每赢一个馆主得 1 枚，8 枚解锁四天王；进入下一地区时重置。",
+    action: "下一步",
+  },
+  {
+    screen: "home",
+    target: '[data-go="settings"]',
+    title: "设置入口",
+    text: "右上角齿轮打开设置：自动换人、自动换防、赛前演出、必杀动画、画面与摇杆大小、音乐/音效/解说都在这里。比赛内暂停菜单也能直接修改这些选项。",
     action: "下一步",
   },
   {
@@ -37,6 +44,13 @@ const STEPS = [
   },
   {
     screen: "home",
+    target: '[data-go="career"]',
+    title: "生涯统计",
+    text: "生涯统计汇总执教战绩、场均得失分、连胜、总冠军，以及球员场均数据和图鉴/队伍收集；想回看自己的成长曲线就点这里。",
+    action: "下一步",
+  },
+  {
+    screen: "home",
     target: '[data-go="daily"]',
     title: "每日挑战",
     text: "每日挑战每天换一套阵容和规则，只记录当日最高分；首次胜利给 100 篮球币，完成每日任务还能再领金币。",
@@ -46,7 +60,7 @@ const STEPS = [
     screen: "home",
     target: '[data-go="match"]',
     title: "开始比赛",
-    text: "准备好就从「开始比赛」进入赛季。赛季赛制、赛前对阵、赛后结算和四天王规则都写在「设置 → 说明」里。",
+    text: "「开始游戏」会按当前路线进入道馆路线；路线页右上角「进度」可回到冒险进度。赛前对阵、结算和四天王规则写在「设置 → 说明」里。",
     action: "完成引导",
   },
 ];
@@ -56,7 +70,7 @@ const NEWBIE_STEP = {
   screen: "home",
   target: '[data-go="newbie"]',
   title: "新手之路",
-  text: "顶部这条「新手之路」会一直显示。先完成约 2 分钟教程，再去商店买一只新伙伴、把他拖进首发，最后开始第一场比赛。",
+  text: "顶部这条「新手之路」会一直显示。先完成约 2 分钟教程，再去商店买两只新伙伴、把他们拖进首发，最后开始第一场比赛。",
   action: "知道了",
 };
 const stepsFor = (save) => (save?.newbie && !save.newbie.done ? [NEWBIE_STEP] : STEPS);
@@ -167,7 +181,7 @@ function build(screen, idx, save, g, opts) {
   const card = layer.querySelector(".nb-card");
   card.querySelector("h3").textContent = opts.resume ? "继续新手指引" : step.title;
   card.querySelector("p").textContent = opts.resume
-    ? "点「开始比赛」打开赛季页，接着了解联赛和比赛流程。"
+    ? "点「开始比赛」打开道馆路线，接着了解主线和比赛流程；需要总览时点路线页右上角「进度」。"
     : (opts.text || step.text);
 
   let target = null;

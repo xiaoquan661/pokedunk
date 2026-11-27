@@ -4,15 +4,22 @@
  * 第一刀：把比赛、每日挑战、野球场、今日任务和广告串成一个局外成长层。
  * 不给比赛数值，升级只解锁教练称号。
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { watchRewardedAd } from "../platform/ads.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { watchRewardedAd } from "../platform/ads.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
+import { rerollNickname } from "../systems/profile.js?v=682";
 import {
   repInfo, repMissionRows, claimRepMission, claimRepAd, repAdLeft,
   REP_LEVEL_REWARDS, REP_SOURCES, levelRewardText,
-} from "../systems/reputation.js?v=598";
+} from "../systems/reputation.js?v=682";
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const COACH_CSS = `
+.coach-name{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:8px;background:rgba(0,0,0,.16)}
+.coach-name span{font-size:9.5px;color:var(--text-dim)}
+.coach-name b{flex:1;min-width:0;font:700 13px var(--sport);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coach-name button{flex:none;padding:4px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold,#f5c542) 42%,transparent);background:rgba(245,197,66,.1);color:var(--gold,#f5c542);font:700 9.5px var(--sport)}
 .coach-hero{padding:12px 14px;border:1px solid rgba(245,197,66,.32);border-radius:10px;background:linear-gradient(160deg,rgba(245,197,66,.12),rgba(0,0,0,.18));margin-bottom:10px}
 .coach-hero .ch-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
 .coach-hero .ch-top b{font:800 22px var(--sport);color:var(--gold)}
@@ -90,6 +97,12 @@ export function openCoachProfile(save) {
       <div class="page-head"><button class="back" data-back>‹</button><h2>教练档案</h2><span class="count">Lv.${info.level}</span></div>
       <p class="page-sub">比赛、每日挑战、野球场都累积教练声望 · 升级只解锁教练称号</p>
 
+      <div class="coach-name">
+        <span>训练师昵称</span>
+        <b>${esc(save.coach?.name || "训练师")}</b>
+        <button type="button" data-coach-roll>重新随机</button>
+      </div>
+
       <div class="coach-hero">
         <div class="ch-top"><b>Lv.${info.level}</b><span>${save.coach?.title || "见习教练"} · 累计 ${info.total} 声望</span></div>
         <div class="coach-bar"><i style="width:${info.pct}%"></i></div>
@@ -115,11 +128,21 @@ export function openCoachProfile(save) {
         const rw = REP_LEVEL_REWARDS[lv];
         return `<div class="coach-reward ${info.level >= lv ? "done" : ""}"><span>Lv.${lv}</span><b>${levelRewardText(rw)}</b></div>`;
       }).join("")}
-      <p class="coach-note">教练等级是账号层成长：重开赛季不清空，和精灵等级、训练点互不影响。</p>`;
+      <p class="coach-note">教练等级是账号层成长：进入下一地区不清空，和精灵等级、训练点互不影响。</p>`;
   }
 
   body.addEventListener("click", async (e) => {
     if (e.target.closest("[data-back]")) { close(); return; }
+    if (e.target.closest("[data-coach-roll]")) {
+      save = loadSave() || save;
+      const next = rerollNickname(save);
+      writeSave(save);
+      const home = document.querySelector("#home-coach span");
+      if (home) home.textContent = next;
+      toast(`新昵称：${next}`);
+      render();
+      return;
+    }
     const fold = e.target.closest("[data-coach-fold]");
     if (fold) { sourcesOpen = !sourcesOpen; render(); return; }
     const mb = e.target.closest("[data-coach-mission]");

@@ -4,9 +4,10 @@
  * 进化不再自动触发，由玩家在详情页手动进化。
  * 供训练草地等非比赛来源复用，避免第三份实现走样。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { rollGrowth } from "../../engine/growth.js?v=598";
-import { growthZh } from "./build.js?v=598";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { rollGrowth } from "../../engine/growth.js?v=682";
+import { growthZh } from "./build.js?v=682";
+import { levelCapOf } from "../journey/regions.js?v=682";
 
 /** 把多级成长合并成“速度 +2、投篮 +1” */
 function growthLine(list) {
@@ -25,9 +26,14 @@ export function grantXp(save, monId, mon, amount) {
   if (!mon || amount <= 0) return events;
   const fromLevel = mon.level;
   const growthAll = [];
+  const cap = levelCapOf(save);
   mon.xp = (mon.xp || 0) + amount;
   while (mon.xp >= xpToNext(mon.level)) {
-    if (mon.level >= 99) { mon.xp = 0; break; }
+    if (mon.level >= cap) {
+      // 满级后经验最多存到下一级所需 −1；拿到徽章后下一次获得经验自动补升
+      mon.xp = Math.min(mon.xp, Math.max(0, xpToNext(mon.level) - 1));
+      break;
+    }
     mon.xp -= xpToNext(mon.level);
     mon.level++;
     growthAll.push(...rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random));

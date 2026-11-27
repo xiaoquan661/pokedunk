@@ -33,10 +33,13 @@
  */
 import { getPokemon } from "../engine/data/pokemon.js";
 import { EVOLUTIONS } from "../engine/data/evolutions.js";
-import { rollGrowth } from "../engine/growth.js?v=598";
-import { ensureSeason } from "./journey/season.js?v=598";
-import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=598";
-import { minAcquireLevel } from "./systems/acquire.js?v=598";
+import { rollGrowth } from "../engine/growth.js?v=682";
+import { ensureSeason } from "./journey/season.js?v=682";
+import { ensureMainline } from "./journey/regions.js?v=682";
+import { ensureBadgeUnlocks } from "./systems/badge-unlocks.js?v=682";
+import { ensureMonBuild, ensureLineupSlots } from "./systems/build.js?v=682";
+import { minAcquireLevel } from "./systems/acquire.js?v=682";
+import { ensureNickname } from "./systems/profile.js?v=682";
 
 export const SAVE_KEY = "pokedunk.save.v1";
 export const BACKUP_KEY = "pokedunk.save.bak";
@@ -72,18 +75,25 @@ export function loadSave() {
     // 归一化：压缩蛋槽空洞（历史 bug 可能把蛋写进 unlockedSlots 之外的索引，孵蛋页看不到）
     if (s.eggs && Array.isArray(s.eggs.slots)) s.eggs.slots = s.eggs.slots.filter(Boolean);
     if (s.eggs) s.eggs.stock ||= [];
-    // 旧档迁移：补赛季结构 / 首发实际位置
+    // 旧档迁移：补主线结构 / 首发实际位置
     s.assign ||= {};
     s.bag.items ||= {};
     for (const m of Object.values(s.mons || {})) { try { ensureMonBuild(m); } catch {} }
     try { ensureLineupSlots(s); } catch {}
     try { ensureSeason(s); } catch {}
+    // 主线地区 / 等级上限 / 徽章永久设施
+    try { ensureMainline(s); } catch {}
+    try { ensureBadgeUnlocks(s); } catch {}
     // 老档迁移：补「新手之路」状态（老档没有 newbie 字段，顶部入口和缺人引导都不会出现）
     try { ensureNewbieBackfill(s); } catch {}
     // 旧版把「新手之路」期间的单条提示当成整段界面导引完成，通关后不再出现首次主页导引
     try { ensureHomeGuideV2(s); } catch {}
     // 图鉴「遇见」记录：已拥有的精灵至少算遇见过
     try { ensureSeen(s); } catch {}
+    // 新手之路状态自愈：已标记完成但教程/补给标记缺失时补齐标记（旧版中途退教程会留下这种卡死状态）
+    try { ensureNewbieFlags(s); } catch {}
+    // 昵称：首次进入游戏自动生成
+    try { if (ensureNickname(s)) writeSave(s); } catch {}
     return s;
   } catch {
     return null;
@@ -128,6 +138,21 @@ function ensureHomeGuideV2(s) {
   s.guideV2 = 1;
   if (s.newbie?.done && s.guide?.done) s.guide = { v: 1, step: 0, done: false };
   writeSave(s);
+}
+
+/**
+ * 新手之路标记自愈（S51）：
+ * 已 done 的档如果 tutorialDone/giftDone 为 false，补成 true，避免「新手之路」入口/进度判断出现「已完成但教程未完成」的卡死状态。
+ * 只补标记，不重复发资源。
+ */
+function ensureNewbieFlags(s) {
+  const nb = s?.newbie;
+  if (!nb || !nb.done) return;
+  if (!nb.tutorialDone || !nb.giftDone) {
+    nb.tutorialDone = true;
+    nb.giftDone = true;
+    writeSave(s);
+  }
 }
 
 /** 图鉴遇见记录：own dex 与已拥有个体都算遇见过 */
@@ -269,7 +294,7 @@ export function startJourney(save, starterDex, coachName = "小智", starterPos 
   save.journey.starterDex = starterDex;
   save.journey.starterPos = pos;
   save.journey.stage = "gym1"; // 选完初始伙伴即进入第一道馆阶段
-  // 新手之路：教程 → 自动补齐首发 → 商店买 1 只 → 拖进首发 → 第一场比赛
+  // 新手之路：教程 → 固定送两只 → 商店买 2 只 → 拖进首发 → 第一场比赛
   save.newbie = { v: 1, tutorialDone: false, giftDone: false, shopBuys: 0, shopPrompted: false, done: false };
   return { ok: true, id: r.id };
 }
@@ -290,11 +315,22 @@ export function createSave() {
     shop: { date: "", slots: [], soldFlags: {} },
     eggs: { unlockedSlots: 1, slots: [], stock: [] },
     journey: {
-      stage: "starter", // starter=未选初始伙伴 → gym1..8 → elite（旧字段，由 season 同步）
+      stage: "starter", // starter=未选初始伙伴 → gym（由 season 同步）
       difficulty: "",
       gymBadges: [],
-      season: { no: 1, phase: "venue", venue: 0, small: 0, results: [], badges: [], champion: false, history: [] },
+      season: {
+        v: 4, no: 1, phase: "regular", badges: [], results: [],
+        fourKings: { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false, rewardGiven: false },
+        contracts: 0, contractWins: 0, contractDry: 0,
+        champion: false, playerStats: {}, ovrBase: {}, awards: [], mvp: null, history: [],
+      },
       seasonNo: 1,
+      regionNo: 1,
+      capV: 1,
+      capExempt: false,
+      legacyCap: 0,
+      mainQuest: { seen: {}, claimed: {} },
+      unlocks: {},
       startedAt: 0,
       starterDex: 0,
       starterPos: "",

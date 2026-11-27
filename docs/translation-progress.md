@@ -1,5 +1,8 @@
 # 翻译进度记录（pokedunk-v2 引擎）
 
+> 归档（S76）：代码翻译已完成并进入运行时，play 包不再被页面引用。对照表见 `docs/20-play包翻译对照.md`。
+> 注意：`parity-data.mjs` 仍有针对旧 XP 曲线/旧加点规则的过期断言，会显示假失败；S14/S18 是主动改版。
+
 ## 已完成（数据层，engine/ 8 文件）
 - type-chart.js / difficulty.js / positions.js / pokemon.js / evolutions.js / specials-data.js / growth.js / rng.js
 - 由 tools/translate-data.mjs（切取）+ tools/assemble-engine.mjs（组装）生成

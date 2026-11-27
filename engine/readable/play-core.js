@@ -8,7 +8,7 @@ import {
   DRILL_TABLE,
   drillScore,
   drillSpawn,
-} from "./store-bridge.js?v=598";
+} from "./store-bridge.js?v=606";
 const BASE_ROSTER = [
     [1, "Bulbasaur", ["Grass", "Poison"], "SG", 52, 63, 58, 59, 61, 48, 49, 56],
     [2, "Ivysaur", ["Grass", "Poison"], "SG", 60, 69, 65, 65, 67, 58, 58, 63],
@@ -642,6 +642,9 @@ const BASE_ROSTER = [
     quake: { label: "震击", desc: "震倒 14 英尺内的所有对手，属性克制生效。" },
     freeze: { label: "冰冻", desc: "敌方全队减速 5 秒。" },
   },
+  SPECIAL_CD_MULT = 1.3,
+  STEAL_CD = 1.2,
+  STEAL_LAG = 0.4,
   SPECIAL_MOVES = {
     Electric: ["surge", "伏特攻击"],
     Normal: ["surge", "神速"],
@@ -1522,6 +1525,7 @@ function Es(a, e, t, s, n, o) {
     fireMakes: 0,
     streak: 0,
     stealCd: 0,
+    stealCdMax: STEAL_CD,
     meter: 0,
     releaseAt: rt,
     dunk: null,
@@ -2297,7 +2301,7 @@ class MatchEngine {
       n = this.ball,
       o = n.owner === e && n.mode === "held";
     if (
-      (s.special && e.special >= 1 && e.state !== "stun" && this.useSpecial(e),
+      (s.special && e.special >= 1 && e.state !== "stun" && e.state !== "swipe" && this.useSpecial(e),
       !(e.state === "stun" || e.state === "dunk" || e.state === "hang") &&
         !(
           this.clock <= 0 &&
@@ -2575,7 +2579,7 @@ class MatchEngine {
       (s.lastTouch = e.team),
       (s.noPickup = 0.2),
       e.stats.blk++,
-      (e.special = Math.min(1, e.special + 0.35)),
+      (e.special = Math.min(1, e.special + 0.35 / SPECIAL_CD_MULT)),
       this.events.push({ kind: "block", player: e, victim: t }),
       this.sfx.push("block"));
   }
@@ -2631,8 +2635,8 @@ class MatchEngine {
       this.sfx.push("pass"));
   }
   trySteal(e) {
-    if (e.stealCd > 0 || e.z > 0.5) return;
-    ((e.stealCd = 0.6), (e.state = "swipe"), (e.stateT = 0.25));
+    if (e.stealCd > 0 || e.z > 0.5 || e.state === "swipe") return;
+    ((e.stealCd = STEAL_CD), (e.state = "swipe"), (e.stateT = STEAL_LAG));
     const t = this.ball.mode === "held" ? this.ball.owner : null;
     const drill = this.drillId ? Ts[this.drillId] : null;
     if (!(drill && drill.noShove) && e.intent.turbo && (e.turbo > 0.25 || e.fx.surge > 0 || e.fire)) {
@@ -2669,7 +2673,7 @@ class MatchEngine {
         (t.meter = 0),
         this.giveBall(e),
         e.stats.stl++,
-        (e.special = Math.min(1, e.special + 0.3)),
+        (e.special = Math.min(1, e.special + 0.3 / SPECIAL_CD_MULT)),
         this.events.push({ kind: "steal", player: e, victim: t }),
         this.sfx.push("steal")));
   }
@@ -2746,9 +2750,9 @@ class MatchEngine {
     (n &&
       n.team === e.team &&
       this.time - e.lastCatch < 4 &&
-      (n.stats.ast++, (n.special = Math.min(1, n.special + 0.12))),
+      (n.stats.ast++, (n.special = Math.min(1, n.special + 0.12 / SPECIAL_CD_MULT))),
       (e.lastPasser = null),
-      (e.special = Math.min(1, e.special + 0.3)));
+      (e.special = Math.min(1, e.special + 0.3 / SPECIAL_CD_MULT)));
     for (const o of this.opponents(e.team))
       ((o.streak = 0), o.fire && ((o.fire = !1), this.events.push({ kind: "fire", player: o, on: !1 })));
     (e.streak++,
@@ -2801,7 +2805,7 @@ class MatchEngine {
         e.fx.surge > 0 && (d *= 1.2),
         e.fx.slow > 0 && (d *= 0.55),
         this.ball.owner === e && (d *= 0.74 + e.r.hnd * 0.002),
-        e.state === "swipe" && (d *= 0.5),
+        e.state === "swipe" && (d = 0), // 抢断后摇：动作期间不能移动
         this.phase === "tip" && (d = 0),
         (s = r * d),
         (n = i * d),
@@ -2913,7 +2917,7 @@ class MatchEngine {
       if ((s.oop && u.z < 1 && (m *= 0.2), this.rng() < m)) {
         (this.giveBall(u),
           u.stats.stl++,
-          (u.special = Math.min(1, u.special + 0.3)),
+          (u.special = Math.min(1, u.special + 0.3 / SPECIAL_CD_MULT)),
           this.events.push({ kind: "steal", player: u, victim: s.from }),
           this.sfx.push("steal"));
         return;
@@ -3040,7 +3044,7 @@ class MatchEngine {
     }
     if (!t) return;
     const n = e.fromShot;
-    (n !== -1 && (t.stats.reb++, (t.special = Math.min(1, t.special + 0.1))), (e.fromShot = -1));
+    (n !== -1 && (t.stats.reb++, (t.special = Math.min(1, t.special + 0.1 / SPECIAL_CD_MULT))), (e.fromShot = -1));
     const o = n !== -1 && t.team === n;
     (this.giveBall(t), o ? (this.shotClock = Math.max(this.shotClock, 14)) : n !== -1 && (this.shotClock = 24));
   }

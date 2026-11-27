@@ -1,22 +1,21 @@
 /**
  * match-screen.js —— 比赛屏组装层（pokedunk-v2）
  * 复用引擎 startMatchLoop(wi)：自带比赛模板/记分板/触屏输入/暂停/解说/回放。
- * 我们只提供：比赛配置（赛季对手/我方阵容）、音频适配器（静音占位）、结算回调。
+ * 我们只提供：比赛配置（道馆/四天王对手、我方阵容）、音频适配器（静音占位）、结算回调。
  *
- * 赛季结构（docs/09 v3.1）：9 队单循环 9 轮 + 季后赛 + 四天王，见 journey/season.js。
- *   - 常规赛：9 轮，每轮 4 场 + 1 队轮空；玩家 8 场 + 1 轮轮空
- *   - 季后赛：前 4，半决赛 1v4 / 2v3 → 总决赛
- *   - 四天王：8-0 解锁，独立 1 场，不参与总冠军
- *   - 四天王：联队，胜利后进入下一赛季（全馆 +2）
+ * 主线结构（docs/09）：8 馆顺序推进 + 四天王 + 地区冠军，见 journey/season.js。
+ *   - 道馆：徽章数决定当前馆；馆主阵容按馆序由弱到强
+ *   - 四天王：8 徽章解锁，独立 1 场，可重试
+ *   - 冠军后进入下一地区（馆主全属性 +2）
  */
-import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=598";
-import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=598";
-import { loadSet, saveSet } from "../ui/settings.js?v=598";
-import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=598";
-import { currentMatchInfo, matchSeed } from "./season.js?v=598";
-import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=598";
-import { createMatchHype } from "../ui/match-hype.js?v=598";
-import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=598";
+import { calcOVR, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=682";
+import { startMatchLoop, simulateFullMatch } from "../../engine/readable/play-core.js?v=682";
+import { loadSet, saveSet, audioOn, setAudio } from "../ui/settings.js?v=682";
+import { STAT_KEYS, pickGymRoster, gymOfStage } from "./gyms.js?v=682";
+import { currentMatchInfo, matchSeed } from "./season.js?v=682";
+import { buildMatchPlayer, bondMultipliers, starterIds } from "../systems/build.js?v=682";
+import { createMatchHype } from "../ui/match-hype.js?v=682";
+import { createDailyScoreHud } from "../ui/daily-score-hud.js?v=682";
 
 /** 由存档构建我方阵容：只取队伍内实际精灵；不足 5 人按实际人数开赛
  *  mult：小决赛 3-0 常规赛的百分比加成（1.00/1.01/1.02/1.03） */
@@ -43,10 +42,10 @@ export function diffOfRound(i) {
   return "allstar";
 }
 
-/** 组一场赛季比赛配置（节长/换人/防守偏好取自设置页） */
+/** 组一场主线比赛配置（节长/换人/防守偏好取自设置页） */
 export function buildGymMatch(save, mode = "league") {
   const set = loadSet();
-  const quarterLen = 180; // 固定每节 3 分钟（设置项已移除）
+  const quarterLen = 120; // 固定每节 2 分钟（S91）
   const prefs = { autoSwitch: set.autoSwitch !== false, userAutoSubs: set.autoSubs !== false, specialFx: set.specialFx !== false };
   const info = currentMatchInfo(save, mode);
   if (!info || info.kind === "bye" || info.kind === "done") return null;
@@ -130,7 +129,7 @@ export function quickDraftPool(stage = "gym1", level = "normal") {
 
 /**
  * 快速比赛配置：我方用临时选秀阵容（dexes），对手用原版道馆阵容。
- * 与外部存档完全隔离，不改战绩/赛季/金币/XP。
+ * 与外部存档完全隔离，不改战绩/主线/金币/XP。
  * stage: "gym1".."gym8" | "elite"
  */
 export function buildQuickMatch(save, stage = "gym1", level = "normal", dexes = []) {
@@ -167,7 +166,7 @@ export function buildQuickMatch(save, stage = "gym1", level = "normal", dexes = 
   };
 }
 
-/* ---------------- 野球场1v1（无赛季结算） ---------------- */
+/* ---------------- 野球场1v1（无主线结算） ---------------- */
 const cnDexName = (dex, fallback = "") => {
   const row = (window.__PJ_DEX_ROWS || []).find((r) => Number(r[0]) === Number(dex));
   return row ? String(row[1]).replace(/#\d+$/, "") : fallback;
@@ -230,7 +229,7 @@ export async function simulateHeadless(cfg) {
   return capSimMargin(await simulateFullMatch(makeSimCfg(cfg)));
 }
 
-/** 直接无头模拟当前比赛（赛季页「一键模拟」用），返回 { engine, cfg } */
+/** 直接无头模拟当前比赛（主线「一键模拟」用），返回 { engine, cfg } */
 export async function simulateCurrentMatch(save, mode = "league") {
   const cfg = buildGymMatch(save, mode);
   if (!cfg) return { engine: null, cfg: null };
@@ -356,7 +355,12 @@ export function createTouchUI(root) {
     return btn;
   };
   put("pass", TOUCH_ICONS.pass);
-  put("steal", TOUCH_ICONS.steal);
+  const stealBtn = put("steal", TOUCH_ICONS.steal);
+  if (stealBtn && !stealBtn.querySelector(".pd-steal-cd")) {
+    const stealCd = document.createElement("i");
+    stealCd.className = "pd-steal-cd";
+    stealBtn.appendChild(stealCd);
+  }
   put("special", TOUCH_ICONS.special);
   const shootBtn = put("shoot", `<span class="pd-ico pd-atk">${TOUCH_ICONS.ball}</span><span class="pd-ico pd-def">${TOUCH_ICONS.block}</span>`);
   const shootSpan = shootBtn?.querySelector("span:not(.pd-ico)");
@@ -396,6 +400,13 @@ export function createTouchUI(root) {
       if (pad.touchBtn.turbo !== sprint) pad.touchBtn.turbo = sprint;
     }
     const u = engine?.user;
+    if (stealBtn) {
+      const left = Math.max(0, Number(u?.stealCd) || 0);
+      const max = Number(u?.stealCdMax) || 1.2;
+      const pct = Math.max(0, Math.min(1, left / max));
+      stealBtn.style.setProperty("--steal-cd", pct.toFixed(3));
+      stealBtn.classList.toggle("pd-cooling", pct > 0.01);
+    }
     const charging = !!(u && u.state === "shoot" && u.meter > 0);
     if (!charging) {
       if (charge) charge.style.height = "0%";
@@ -427,22 +438,34 @@ export function createTouchUI(root) {
   return { frame, setStick };
 }
 
-/** 比赛内暂停菜单：画面大小 + 摇杆调整（实时生效） */
-function installPauseTuning(root, camera, touchUI) {
+/** 比赛内暂停菜单：比赛 / 操作 / 声音（与局外设置共用存储） */
+function installPauseTuning(root, camera, touchUI, getEngine) {
   const panel = root.querySelector(".pause-menu .panel");
   if (!panel || panel.querySelector(".pause-tune")) return;
   const c = loadSet();
   const view = Math.round(Math.max(0.8, Math.min(1.2, Number(c.viewScale) || 1)) * 100);
   const stick = Math.round(Math.max(0.9, Math.min(1.4, Number(c.stickScale) || 1)) * 100);
+  const seg = (key, opts, cur) => `<div class="pt-seg">${opts.map(([v, label]) =>
+    `<button type="button" data-pt-set="${key}" data-v="${v}" class="${String(cur) === String(v) ? "on" : ""}">${label}</button>`).join("")}</div>`;
   const tune = document.createElement("div");
   tune.className = "pause-tune";
   tune.innerHTML = `
     <div class="pt-title">比赛设置 <button type="button" data-pt-reset>恢复默认</button></div>
+    <div class="pt-sub">比赛</div>
+    <div class="pt-row"><span>自动换防</span>${seg("autoSwitch", [["1", "开"], ["0", "关"]], c.autoSwitch === false ? "0" : "1")}</div>
+    <div class="pt-sub">操作</div>
     <div class="pt-row"><span>画面大小</span><output data-pt-out="viewScale">${view}%</output></div>
     <input type="range" data-pt="viewScale" min="80" max="120" step="5" value="${view}">
     <div class="pt-row"><span>摇杆大小</span><output data-pt-out="stickScale">${stick}%</output></div>
-    <input type="range" data-pt="stickScale" min="90" max="140" step="5" value="${stick}">`;
+    <input type="range" data-pt="stickScale" min="90" max="140" step="5" value="${stick}">
+    <div class="pt-sub">声音</div>
+    <div class="pt-row"><span>音乐</span>${seg("pokedunk.music", [["1", "开"], ["0", "关"]], audioOn("pokedunk.music") ? "1" : "0")}</div>
+    <div class="pt-row"><span>音效</span>${seg("pokedunk.muted", [["1", "开"], ["0", "关"]], audioOn("pokedunk.muted") ? "1" : "0")}</div>
+    <div class="pt-row"><span>解说</span>${seg("pokedunk.announcer", [["1", "开"], ["0", "关"]], audioOn("pokedunk.announcer") ? "1" : "0")}</div>
+    <p class="pt-note">画面、摇杆、声音即时生效；自动换防下一次轮换生效。</p>`;
   const actions = panel.querySelector(".pause-actions");
+  panel.style.maxHeight = "86dvh";
+  panel.style.overflowY = "auto";
   panel.insertBefore(tune, actions || panel.querySelector(".subs-panel") || null);
 
   const apply = (key, raw) => {
@@ -459,21 +482,36 @@ function installPauseTuning(root, camera, touchUI) {
     apply(input.dataset.pt, Number(input.value) || 0);
   });
   tune.addEventListener("click", (e) => {
-    if (!e.target.closest("[data-pt-reset]")) return;
-    saveSet({ viewScale: 1, stickScale: 1 });
-    camera?.setViewScale?.(1);
-    touchUI?.setStick?.({ stickScale: 1 });
-    installPauseTuningReset(tune);
+    if (e.target.closest("[data-pt-reset]")) {
+      saveSet({ viewScale: 1, stickScale: 1, autoSwitch: true });
+      camera?.setViewScale?.(1);
+      touchUI?.setStick?.({ stickScale: 1 });
+      tune.remove();
+      installPauseTuning(root, camera, touchUI, getEngine);
+      return;
+    }
+    const btn = e.target.closest("[data-pt-set]");
+    if (!btn) return;
+    const key = btn.dataset.ptSet;
+    const v = btn.dataset.v;
+    if (key === "pokedunk.music" || key === "pokedunk.muted" || key === "pokedunk.announcer") {
+      setAudio(key, v === "1");
+    } else {
+      const patch = {};
+      if (key === "autoSubs") patch[key] = v !== "manual";
+      else if (key === "autoSwitch") patch[key] = v === "1";
+      else if (key === "specialFx") patch[key] = v === "1";
+      else patch[key] = v;
+      saveSet(patch);
+      const eng = getEngine?.();
+      if (eng?.cfg) {
+        if (key === "autoSubs") eng.cfg.userAutoSubs = patch[key];
+        else if (key === "autoSwitch") eng.cfg.autoSwitch = patch[key];
+        else if (key === "specialFx") eng.cfg.specialFx = patch[key];
+      }
+    }
+    btn.parentNode.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === btn));
   });
-}
-function installPauseTuningReset(tune) {
-  const vals = { viewScale: 100, stickScale: 100 };
-  for (const [k, v] of Object.entries(vals)) {
-    const range = tune.querySelector(`input[data-pt="${k}"]`);
-    if (range) range.value = String(v);
-    const out = tune.querySelector(`[data-pt-out="${k}"]`);
-    if (out) out.textContent = `${v}%`;
-  }
 }
 
 export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
@@ -482,6 +520,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
   let dailyHud = null;
   let camera = null;
   let touchUI = null;
+  let liveEngine = null;
   const handle = startMatchLoop(
     root,
     cfg,
@@ -492,6 +531,7 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
       startingFive: opts.startingFive !== undefined ? !!opts.startingFive : loadSet().introMode !== "off",
       spectator,
       onFrame: (engine, events, input, dt) => {
+        liveEngine = engine;
         hype?.onFrame(engine, events);
         dailyHud?.onFrame(engine, events);
         camera?.frame(engine, dt);
@@ -534,9 +574,12 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
 
   // 暂停菜单：新增「重新开始」（同一对阵重开一局，不计负）
   if (!spectator) {
-    installPauseTuning(root, camera, touchUI);
+    installPauseTuning(root, camera, touchUI, () => liveEngine);
     const actions = root.querySelector(".pause-menu .pause-actions");
     if (actions) {
+      // 声音/解说已并入暂停设置，移除旧的重复按钮
+      actions.querySelector('[data-a="mute"]')?.remove();
+      actions.querySelector('[data-a="announcer"]')?.remove();
       const restart = document.createElement("button");
       restart.type = "button";
       restart.className = "btn";
@@ -571,9 +614,16 @@ export function mountMatch(root, cfg, audio, onFinal, opts = {}) {
     btn.disabled = true;
     btn.textContent = "模拟中…";
     handle.stop();
-    // 双方 AI 无头模拟，带难度补正与 30 分差上限
-    const done = await simulateHeadless(cfg);
-    onFinal(done, cfg, false, true);
+    try {
+      // 双方 AI 无头模拟，带难度补正与 30 分差上限
+      const done = await simulateHeadless(cfg);
+      if (!done) throw new Error("模拟未返回结果");
+      onFinal(done, cfg, false, true);
+    } catch (e) {
+      console.error("一键模拟失败", e);
+      btn.disabled = false;
+      btn.textContent = "模拟失败，重试";
+    }
   });
   root.querySelector(".game")?.appendChild(btn);
   // 四天王只允许手打，不提供一键模拟

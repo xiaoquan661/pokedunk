@@ -172,7 +172,7 @@
   border-bottom: 3px solid var(--r-ink);
 }
 .screen-menu .title::before {
-  content: "STREET BASKETBALL WEEKLY · 第 01 赛季";
+  content: "pokedunk";
   display: block;
   margin-bottom: 4px;
   font: 700 9px var(--r-font);

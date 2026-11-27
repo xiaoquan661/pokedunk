@@ -5,22 +5,17 @@
  *   - 筛选：全部 / 已获得 / 按系别（18 属性 chips，属性色，取引擎 getPokemon(types[0])）
  * 数据源 = 新存档 save.dex；快照 dex-data.js 提供中文名/位置/综合。
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
-import { getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=598";
-import { openDetail } from "./detail.js?v=598";
-import { playAcquire } from "./anim.js?v=598";
-import {
-  milestoneRows, rewardText, claimMilestone, monRewardBannerHtml, claimMonReward,
-  typeRewardRows, claimTypeReward,
-} from "../systems/milestones.js?v=598";
-import { DEX_CHAPTERS, chapterRows, claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
+import { getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { rarityOf, RARITY_COLOR } from "../systems/build.js?v=682";
+import { openDetail } from "./detail.js?v=682";
+import { typeRewardRows, claimTypeReward } from "../systems/milestones.js?v=682";
+import { claimChapterReward, DEX_CHAPTER_REWARDS } from "../systems/dex-chapters.js?v=682";
 
 const ROWS = window.__PJ_DEX_ROWS || [];
 let curFilter = "all"; // "all" | "own" | "Type:Fire" ...
-let curChapter = null; // "kanto" | "johto" | "hoenn" | null
-let msOpen = false; // 里程碑档位列表是否展开
+let curChapter = null; // 当前展开的地区 id；null = 全部收起
 
 let toastTimer = null;
 function toast(msg, ms = 2400) {
@@ -35,6 +30,17 @@ function toast(msg, ms = 2400) {
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const TYPE_ORDER = Object.keys(TYPE_ZH);
 const RARITY_ORDER = ["传说", "稀有", "普通"];
+
+/* 地区下拉（S92）：图鉴按全国编号分组，点一行展开该地区条目 */
+const DEX_REGIONS = [
+  { id: "kanto", name: "关都", from: 1, to: 151, color: "#c94f42" },
+  { id: "johto", name: "城都", from: 152, to: 251, color: "#a9822d" },
+  { id: "hoenn", name: "丰缘", from: 252, to: 386, color: "#3f945c" },
+  { id: "sinnoh", name: "神奥", from: 387, to: 493, color: "#4a63b5" },
+  { id: "unova", name: "合众", from: 494, to: 649, color: "#3b587a" },
+  { id: "other", name: "其他地区", from: 650, to: 1025, color: "#75664f" },
+];
+const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4.5" y="10" width="15" height="10" rx="2" fill="currentColor"/></svg>';
 
 const ownedSet = () => {
   const s = loadSave();
@@ -73,8 +79,8 @@ function cardHtml(r, owned, seen) {
     '<button class="dex-card' + (has ? "" : " off") + '" data-dex="' + dex + '" style="border-color:' + color + '">' +
     '<span class="no">No.' + dex + "</span>" +
     '<span class="dex-rar" style="--rc:' + RARITY_COLOR[rarity] + '">' + rarity + "</span>" +
-    '<img loading="lazy" src="./sprites/' + dex + '.png" alt="' + (has ? name : "???") + '">' +
-    '<div class="nm">' + (has ? name : "？？？") + "</div>" +
+    '<img loading="lazy" src="./sprites/' + dex + '.png" alt="' + name + '">' +
+    '<div class="nm">' + name + "</div>" +
     (has ? '<div class="info">' + r[2] + " · " + r[3] + "</div>" : "") +
     "</button>"
   );
@@ -87,26 +93,66 @@ const TYPE_COLOR_MAP = { Normal: "#a8a878", Fire: "#ee8130", Water: "#6390f0", E
 
 function renderGrid(root, owned, seen) {
   const body = root.querySelector("#dex-grid");
-  let list = ROWS;
-  if (curChapter) {
-    const ch = DEX_CHAPTERS.find((x) => x.id === curChapter);
-    if (ch) list = ROWS.filter((r) => Number(r[0]) >= ch.from && Number(r[0]) <= ch.to);
-  } else if (curFilter === "own") list = ROWS.filter((r) => owned[r[0]]);
+  if (!body) return;
+  const region = DEX_REGIONS.find((x) => x.id === curChapter) || null;
+  let list = region
+    ? ROWS.filter((r) => Number(r[0]) >= region.from && Number(r[0]) <= region.to)
+    : [];
+  if (curFilter === "own") list = list.filter((r) => owned[r[0]]);
   else if (curFilter.startsWith("Rarity:")) {
     const rar = curFilter.slice(7);
-    list = ROWS.filter((r) => rarityOf(r[0]) === rar);
+    list = list.filter((r) => rarityOf(r[0]) === rar);
   } else if (curFilter.startsWith("Type:")) {
     const t = curFilter.slice(5);
-    list = ROWS.filter((r) => typeOf(r[0]) === t);
+    list = list.filter((r) => typeOf(r[0]) === t);
   }
   body.innerHTML = list.length
     ? list.map((r) => cardHtml(r, owned, seen)).join("")
     : '<div class="dex-empty">这里还没有收集记录。<br>比赛签约、孵蛋和商店获得的精灵会点亮图鉴。</div>';
 }
 
-function rarityChipsHtml(owned) {
+/** 各地区收集进度；未解锁地区不出条目 */
+function dexRegionRows(save, owned) {
+  const regionNo = Number(save?.journey?.regionNo) || 1;
+  return DEX_REGIONS.map((r, i) => {
+    const list = ROWS.filter((row) => Number(row[0]) >= r.from && Number(row[0]) <= r.to);
+    const total = list.length;
+    const got = list.filter((row) => owned[row[0]]).length;
+    return {
+      ...r, no: i + 1, total, got,
+      pct: total ? Math.round((got / total) * 100) : 0,
+      unlocked: i + 1 <= regionNo || got > 0,
+    };
+  }).filter((r) => r.total > 0);
+}
+
+function regionListHtml(rows, owned) {
+  return `<div class="dx-regions">${rows.map((r) => {
+    const open = !!curChapter && curChapter === r.id && r.unlocked;
+    const list = open ? ROWS.filter((row) => Number(row[0]) >= r.from && Number(row[0]) <= r.to) : null;
+    return `<button type="button" class="dx-region${open ? " on" : ""}${r.unlocked ? "" : " locked"}" data-chapter="${r.id}" style="--rc:${r.color}">
+      <span class="dx-region-head">
+        <b>${r.name}</b>
+        <span>${r.unlocked ? `${r.got} / ${r.total}` : `${LOCK_SVG}<em>地区未解锁</em>`}</span>
+      </span>
+      <span class="dx-region-bar"><i style="width:${r.pct}%"></i></span>
+      <small>${r.unlocked ? `已收集 ${r.pct}%` : `图鉴 ${r.total} 只`}</small>
+      <span class="dx-region-arrow" aria-hidden="true">›</span>
+    </button>${open ? `<div class="dx-region-panel" style="--rc:${r.color}">
+      <div class="dex-chips">
+        <button data-f="all"${curFilter === "all" ? ' class="on"' : ""}>全部</button>
+        <button data-f="own"${curFilter === "own" ? ' class="on"' : ""}>已获得</button>
+      </div>
+      <div class="dex-chips rarity-chips">${rarityChipsHtml(owned, list)}</div>
+      <div class="dex-chips type-chips">${chipsHtml(owned, list)}</div>
+      <div class="dex-grid" id="dex-grid"></div>
+    </div>` : ""}`;
+  }).join("")}</div>`;
+}
+
+function rarityChipsHtml(owned, list = ROWS) {
   const cnt = {};
-  for (const r of ROWS) {
+  for (const r of list) {
     if (!owned[r[0]]) continue;
     const rar = rarityOf(r[0]);
     cnt[rar] = (cnt[rar] || 0) + 1;
@@ -119,10 +165,10 @@ function rarityChipsHtml(owned) {
   }).join("");
 }
 
-function chipsHtml(owned) {
+function chipsHtml(owned, list = ROWS) {
   // 属性 chips：已获得的属性先亮出数量
   const cnt = {};
-  for (const r of ROWS) {
+  for (const r of list) {
     if (!owned[r[0]]) continue;
     const t = typeOf(r[0]);
     cnt[t] = (cnt[t] || 0) + 1;
@@ -133,29 +179,6 @@ function chipsHtml(owned) {
     const c = cnt[t] || 0;
     return `<button data-f="${key}"${on ? ' class="on"' : ""} style="--tc:${TYPE_COLOR_MAP[t]}">${TYPE_ZH[t]}${c ? ` ${c}` : ""}</button>`;
   }).join("");
-}
-
-/** 里程碑区块：进度条 + 下一档 + 可折叠档位列表 */
-function milestoneHtml(save) {
-  const rows = milestoneRows(save);
-  const got = rows[0]?.got || 0;
-  const next = rows.find((r) => !r.reached) || null;
-  const ready = rows.filter((r) => r.canClaim).length;
-  const prevN = [...rows].reverse().find((r) => r.reached && r.n < (next?.n ?? 999))?.n || 0;
-  const pct = next ? Math.round(((got - prevN) / (next.n - prevN)) * 100) : 100;
-  return `
-    <div class="ms-box">
-      <div class="ms-head"><b>图鉴里程碑</b><span>${got} / ${ROWS.length}</span></div>
-      <div class="ms-next">${next ? `下一档 ${next.n} 只 · 还差 ${next.remain} 只 · ${rewardText(next)}` : "全部档位已达成"}</div>
-      <div class="ms-bar"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>
-      <button class="ms-toggle" data-ms-toggle>${msOpen ? "收起档位" : "查看全部档位"}${ready ? ` · ${ready} 档可领` : ""}</button>
-      ${msOpen ? `<div class="ms-list">${rows.map((r) => `
-        <div class="ms-row ${r.claimed ? "done" : ""} ${r.reached ? "reached" : ""}">
-          <span class="ms-n">${r.n}</span>
-          <span class="ms-r"><b>${rewardText(r)}</b><small>${r.claimed ? "已领取" : r.reached ? "已达成" : `还差 ${r.remain} 只`}</small></span>
-          <button class="ms-btn" data-ms="${r.n}" ${r.canClaim ? "" : "disabled"}>${r.claimed ? "已领取" : r.reached ? "领取" : "未达成"}</button>
-        </div>`).join("")}</div>` : ""}
-    </div>`;
 }
 
 /** 属性收集徽章：每个属性集齐 8 种点亮徽章（纯展示，不送精灵） */
@@ -217,18 +240,18 @@ function chapterPanelHtml(ch) {
 
 /** 渲染图鉴页到 root（全屏页，主界面菜单项进入） */
 export function renderDex(root) {
+  const scrollTop = root.scrollTop || 0;
   const owned = ownedSet();
   const seen = seenSet();
   const got = ROWS.filter((r) => owned[r[0]]).length;
   const save = loadSave() || { dex: {} };
-  const chapters = chapterRows(save);
-  const selectedChapter = chapters.find((c) => c.id === curChapter) || null;
   root.innerHTML = `
     <style>
       .dex-chips.rarity-chips button{border-color:var(--rc);color:var(--rc)}
       .dex-chips.rarity-chips button.on{background:var(--rc);color:#10203f;box-shadow:0 0 8px var(--rc)}
       .dex-card .dex-rar{position:absolute;right:6px;top:5px;font-style:normal;font-size:9px;font-weight:700;color:var(--rc);border:1px solid var(--rc);border-radius:4px;padding:0 4px;background:rgba(0,0,0,.28)}
       .dex-card.off .dex-rar{opacity:.55}
+      .dex-card.off .nm{color:var(--text-dim)}
       .ty-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
       .ty-chip{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:5px;
         border:1px solid var(--line,rgba(255,255,255,.12));background:rgba(0,0,0,.18);color:var(--text-dim)}
@@ -260,27 +283,42 @@ export function renderDex(root) {
       .dcp-rewards button:disabled{opacity:.45}
       .dcp-note{display:flex;align-items:center;gap:4px;margin:7px 0 0;font-size:9.5px;color:var(--text-dim)}
       .dcp-note svg{width:12px;height:12px;color:var(--gold);flex:none}
+      .dx-regions{display:flex;flex-direction:column;gap:8px}
+      .dx-region{position:relative;display:flex;flex-direction:column;gap:5px;width:100%;padding:13px 14px 12px;border-radius:11px;
+        border:1px solid color-mix(in srgb,var(--rc) 70%,transparent);color:#fff;text-align:left;overflow:hidden;
+        background:linear-gradient(105deg,color-mix(in srgb,var(--rc) 92%,#0a1020),color-mix(in srgb,var(--rc) 55%,#0a1020));
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 4px 12px rgba(0,0,0,.28)}
+      .dx-region.on{border-radius:11px 11px 0 0}
+      .dx-region-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-right:18px}
+      .dx-region-head b{font:700 19px var(--sport);letter-spacing:.5px}
+      .dx-region-head>span{display:flex;align-items:center;gap:4px;font:700 11px var(--sport);color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
+      .dx-region-head>span svg{width:13px;height:13px;flex:none;color:rgba(255,255,255,.75)}
+      .dx-region-head>span em{font-style:normal}
+      .dx-region-bar{display:block;height:5px;border-radius:3px;background:rgba(0,0,0,.3);overflow:hidden}
+      .dx-region-bar i{display:block;height:100%;border-radius:3px;background:rgba(255,255,255,.88);transition:width .25s}
+      .dx-region>small{font:700 9px var(--sport);color:rgba(255,255,255,.7)}
+      .dx-region-arrow{position:absolute;right:12px;bottom:9px;font:700 18px/1 var(--sport);color:rgba(255,255,255,.6);transform:rotate(90deg);transition:transform .2s}
+      .dx-region.on .dx-region-arrow{transform:rotate(-90deg)}
+      .dx-region.locked{filter:saturate(.35);opacity:.72}
+      .dx-region.locked .dx-region-bar i{width:0!important}
+      .dx-region-panel{padding:10px 10px 12px;margin:-2px 0 4px;border:1px solid color-mix(in srgb,var(--rc) 40%,transparent);
+        border-top:none;border-radius:0 0 11px 11px;background:rgba(0,0,0,.22)}
+      .dx-region-panel .dex-chips{margin-bottom:8px}
+      .dx-region-panel .dex-chips button{padding:4px 10px;font-size:10.5px}
+      .dx-region-panel .dex-chips.type-chips{margin-top:0;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}
+      .dx-region-panel .dex-chips.type-chips::-webkit-scrollbar{display:none}
+      .dx-region-panel .dex-chips.type-chips button{flex:none;padding:4px 8px;font-size:10px}
+      .dx-region-panel .dex-grid{margin-top:9px}
     </style>
     <div class="page-head">
       <button class="back" data-back>‹</button>
       <h2>图鉴</h2>
       <span class="count">${got} / ${ROWS.length}</span>
     </div>
-    <p class="page-sub">收集你结缘过的精灵 · 剪影代表尚未结缘 · 卡边框=属性色</p>
-    ${chapterCardsHtml(chapters)}
-    ${chapterPanelHtml(selectedChapter)}
-    ${milestoneHtml(save)}
-    ${monRewardBannerHtml(save)}
-    ${typeRewardHtml(save)}
-    <div class="dex-chips">
-      <button data-f="all"${curFilter === "all" && !curChapter ? ' class="on"' : ""}>全部</button>
-      <button data-f="own"${curFilter === "own" ? ' class="on"' : ""}>已获得</button>
-    </div>
-    <div class="dex-chips rarity-chips">${rarityChipsHtml(owned)}</div>
-    <div class="dex-chips type-chips">${chipsHtml(owned)}</div>
-    <div class="dex-grid" id="dex-grid"></div>`;
+    ${regionListHtml(dexRegionRows(save, owned), owned)}`;
 
   renderGrid(root, owned, seen);
+  root.scrollTop = scrollTop;
 
   // 只绑定一次：renderDex 会被 onClose 重入，重复绑定会导致一次点击叠多层详情
   if (root.__dexBound) return;
@@ -289,6 +327,7 @@ export function renderDex(root) {
     const chCard = e.target.closest("[data-chapter]");
     if (chCard) {
       const id = chCard.dataset.chapter;
+      if (chCard.classList.contains("locked")) { toast("该地区尚未解锁"); return; }
       curChapter = curChapter === id ? null : id;
       curFilter = "all";
       renderDex(root);
@@ -306,11 +345,6 @@ export function renderDex(root) {
       renderDex(root);
       return;
     }
-    if (e.target.closest("[data-ms-toggle]")) {
-      msOpen = !msOpen;
-      renderDex(root);
-      return;
-    }
     const tyBtn = e.target.closest("[data-ty-claim]");
     if (tyBtn) {
       const fresh = loadSave() || {};
@@ -319,36 +353,6 @@ export function renderDex(root) {
       writeSave(fresh);
       gameAudio.play("special");
       toast(`${r.cn}属性徽章已点亮`);
-      renderDex(root);
-      return;
-    }
-    if (e.target.closest("[data-mon-claim]")) {
-      const fresh = loadSave() || {};
-      const r = claimMonReward(fresh);
-      if (!r.ok) return toast(r.error);
-      writeSave(fresh);
-      gameAudio.play("special");
-      if (r.dex) {
-        playAcquire({
-          dex: r.dex,
-          kicker: "图鉴收集奖励",
-          title: `获得 ${r.name || ""}`,
-          sub: `已加入${r.placed === "box" ? "仓库" : "队伍"}`,
-        }, () => renderDex(root));
-      } else {
-        toast(`收集奖励：${r.name || "精灵"} 加入${r.placed === "box" ? "仓库" : "队伍"}`);
-        renderDex(root);
-      }
-      return;
-    }
-    const msBtn = e.target.closest("[data-ms]");
-    if (msBtn && !msBtn.disabled) {
-      const fresh = loadSave() || {};
-      const r = claimMilestone(fresh, Number(msBtn.dataset.ms));
-      if (!r.ok) return toast(r.error);
-      writeSave(fresh);
-      gameAudio.play("coin");
-      toast(`里程碑达成：${r.text}`);
       renderDex(root);
       return;
     }
@@ -364,7 +368,6 @@ export function renderDex(root) {
     }
     const cb = e.target.closest(".dex-chips button");
     if (cb) {
-      curChapter = null;
       curFilter = cb.dataset.f;
       root.querySelectorAll(".dex-chips button").forEach((b) => b.classList.toggle("on", b === cb));
       renderGrid(root, ownedSet(), seenSet()); // 每次点击取最新存档，避免闭包持有旧收集状态

@@ -4,19 +4,19 @@
  *   草地：SVG 草坪场景，拥有的精灵可直接拖上草地挂机（2 经验/分钟，无上限）；拖出草地即收回
  *   训练：给精灵分配训练点（自由点 / 返还点 / 购买点）+ 一键推荐 + 广告 +5 + 重置
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
 import { watchRewardedAd } from "../platform/ads.js";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=598";
-import { getPokemon, POSITION_WEIGHTS } from "../../engine/readable/play-core.js?v=598";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=682";
+import { getPokemon, POSITION_WEIGHTS } from "../../engine/readable/play-core.js?v=682";
 import {
   STAT_KEYS, STAT_ZH, growthStats, mainOVR, trainCaps, trainPrice, trainStat, resetTrain,
   ITEM_TYPES, itemCount, useItem,
-} from "../systems/build.js?v=598";
+} from "../systems/build.js?v=682";
 import {
   grassState, grassCandidates, placeOnGrass, collectGrass, removeFromGrass, isStarter,
-} from "../systems/grass.js?v=598";
-import { openDetail } from "./detail.js?v=598";
+} from "../systems/grass.js?v=682";
+import { openDetail } from "./detail.js?v=682";
 
 const AD_TRAIN_MAX = 3;
 const AD_TRAIN_POINTS = 10;
@@ -669,7 +669,7 @@ export function renderTrain(page, save) {
       ${boxIds.length ? `<div class="tn-pk-grp">仓库 · ${boxIds.length}</div><div class="tn-pk-grid">${boxIds.map(pickBtn).join("")}</div>` : ""}
     </div>`;
     const b = getPokemon(m.dex);
-    const caps = trainCaps(m);
+    const caps = trainCaps(m, save);
     const tr = m.train || {};
     const freeLeft = (tr.bank || 0) + (tr.free || 0);
     const blocked = caps.points >= caps.totalCap || (freeLeft <= 0 && (tr.paid || 0) >= caps.paidCap);

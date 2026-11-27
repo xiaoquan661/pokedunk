@@ -7,8 +7,9 @@
  *            撞车返还商店价 50%（普通 35 / 高级 110）；传说撞车 200。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { addMon, hasDex } from "../storage.js?v=598";
-import { rarityOf, LEGENDARY_DEX } from "./build.js?v=598";
+import { addMon, hasDex } from "../storage.js?v=682";
+import { rarityOf, LEGENDARY_DEX } from "./build.js?v=682";
+import { facilityState } from "./badge-unlocks.js?v=682";
 
 const MIN20 = 20 * 60 * 1000;
 const HOUR2 = 2 * 60 * 60 * 1000;
@@ -116,11 +117,12 @@ function pickShopMons(save) {
   const all = (window.__PJ_DEX_ROWS || []).filter((r) => !LEGENDARY_DEX.has(r[0]));
   let pool = all.filter((r) => !save.dex || !save.dex[r[0]]);
   if (!pool.length) return [];
+  const slots = SHOP_MON_SLOTS + (facilityState(save).shopBonus || 0);
   const isNewbie = !!(save.newbie && !save.newbie.done);
-  // 新手之路：货架只出低价精灵，保证开局 200 币能买一只
+  // 新手之路：货架只出低价精灵，保证开局 300 币能买两只
   if (isNewbie) {
     const cheap = pool.filter((r) => (getPokemon(r[0]).ovr || 0) < 70);
-    if (cheap.length >= SHOP_MON_SLOTS) pool = cheap;
+    if (cheap.length >= slots) pool = cheap;
   }
   const common = pool.filter((r) => rarityOf(r[0]) === "普通");
   const rare = pool.filter((r) => rarityOf(r[0]) !== "普通");
@@ -148,7 +150,7 @@ function pickShopMons(save) {
     if (rare.length && Math.random() < 0.15) take(rare);
     else if (!take(common)) take(rare);
   }
-  while (picks.length < SHOP_MON_SLOTS && take(pool)) {}
+  while (picks.length < slots && take(pool)) {}
   // 每日稀有保底：非新手期货架至少 1 只稀有（OVR≥70）
   if (!isNewbie && picks.length && !picks.some((r) => rarityOf(r[0]) !== "普通")) {
     const pickedDex = new Set(picks.map((r) => r[0]));
@@ -156,7 +158,7 @@ function pickShopMons(save) {
     const rr = weightedPick(rareLeft, new Set());
     if (rr) picks[picks.length - 1] = rr;
   }
-  return picks.slice(0, SHOP_MON_SLOTS);
+  return picks.slice(0, slots);
 }
 
 /** 重摇当日货架（6 精灵 + 普通蛋 + 高级蛋 + 树果） */
@@ -218,13 +220,14 @@ export function shopCoinRefresh(save) {
   return { ok: true, price: COIN_REFRESH_PRICE, coins: save.coins };
 }
 
-/** 每日免费刷新货架 1 次（先用免费，再走广告刷新） */
+/** 每日免费刷新（基础 1 次，7 徽章 +1 次） */
 export function shopFreeRefresh(save) {
   shopEnsure(save);
   const day = todayStr();
   const cur = save.shop.freeDay || {};
   const used = cur.date === day ? (cur.count || 0) : 0;
-  if (used >= 1) return { ok: false, error: "今日免费刷新已用完" };
+  const allowance = 1 + (facilityState(save).free1 ? 1 : 0);
+  if (used >= allowance) return { ok: false, error: "今日免费刷新已用完" };
   rollShop(save);
   save.shop.freeDay = { date: day, count: used + 1 };
   return { ok: true };
@@ -233,7 +236,8 @@ export function shopFreeRefresh(save) {
 export function shopFreeRefreshLeft(save) {
   shopEnsure(save);
   const day = todayStr();
-  return save.shop.freeDay && save.shop.freeDay.date === day ? Math.max(0, 1 - (save.shop.freeDay.count || 0)) : 1;
+  const allowance = 1 + (facilityState(save).free1 ? 1 : 0);
+  return save.shop.freeDay && save.shop.freeDay.date === day ? Math.max(0, allowance - (save.shop.freeDay.count || 0)) : allowance;
 }
 
 /** 货架视图：[{slot, type, dex, price, owned}]；已拥有的精灵不再展示 */

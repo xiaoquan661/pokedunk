@@ -3,9 +3,9 @@
  * 存档：pokedunk.achv.v1（{成就id: 解锁时间戳}）。
  * 判定源：v2 生涯存档（stats/journey/mons/dex）+ 启动全量评估；比赛类成就由 settle 结算后调 evaluateMatch。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { writeSave } from "../storage.js?v=598";
-import { rollEggDex } from "./shop.js?v=598";
+import { getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { writeSave } from "../storage.js?v=682";
+import { rollEggDex } from "./shop.js?v=682";
 
 const KEY = "pokedunk.achv.v1";
 const SAVE_KEY = "pokedunk.save.v1";
@@ -69,7 +69,7 @@ function isStillValid(id, save) {
   }
 }
 
-/** 首次运行/换档时清理过期解锁；徽章类每次同步都校验（赛季重置后靠冠军历史保留） */
+/** 首次运行/换档时清理过期解锁；徽章类每次同步都校验（地区切换后靠冠军历史保留） */
 function syncStore(save) {
   if (!save) return;
   const sid = String(save.createdAt || "");
@@ -153,7 +153,7 @@ const defs = [
   { id: "badges2", name: "初露锋芒", desc: "集齐 2 枚道馆徽章",            check: (s) => badgeCount(s) >= 2, reward: { coins: 40 } },
   { id: "badges4", name: "四方来朝", desc: "集齐 4 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 4, reward: { coins: 75 } },
   { id: "badges8", name: "八方来朝", desc: "集齐 8 枚道馆徽章",            check: (s) => s.journey.gymBadges.length >= 8, reward: { coins: 125, item: "hatch" } },
-  { id: "champion", name: "联盟之王", desc: "赢得赛季总冠军",              check: (s) => hasChampion(s), reward: { coins: 200, item: "hatch", n: 2 } },
+  { id: "champion", name: "联盟之王", desc: "赢得地区冠军",              check: (s) => hasChampion(s), reward: { coins: 200, item: "hatch", n: 2 } },
   { id: "tour1",   name: "巡回骑士", desc: "进入巡回赛，踏上无尽挑战",      check: (s) => s.journey.stage === "tour" || s.journey.gymBadges.includes("champion"), reward: { coins: 75 } },
   { id: "evo1",    name: "进化之光", desc: "拥有一只进化后的精灵",          check: (s) => evolvedCount(s) >= 1, reward: { coins: 25 } },
   { id: "evo5",    name: "养成大师", desc: "进化精灵达到 5 只",            check: (s) => evolvedCount(s) >= 5, reward: { coins: 75, item: "berryPremium" } },

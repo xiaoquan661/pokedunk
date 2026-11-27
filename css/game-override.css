@@ -41,9 +41,17 @@
 .pause-tune{margin:0 0 12px;padding:9px 11px;border:1px solid rgba(245,197,66,.28);border-radius:12px;background:rgba(255,255,255,.035)}
 .pause-tune .pt-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;color:var(--gold,#f5c542);font:700 12px var(--sport)}
 .pause-tune .pt-title button{padding:3px 8px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.24);color:rgba(255,255,255,.68);font:700 9.5px var(--sport)}
-.pause-tune .pt-row{display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:11px;color:#d9d9d9}
+.pause-tune .pt-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px;font-size:11px;color:#d9d9d9}
+.pause-tune .pt-row>span{flex:1;min-width:0}
+.pause-tune .pt-row em{font-style:normal;font-size:8px;color:rgba(255,255,255,.45);margin-left:3px}
 .pause-tune .pt-row output{color:var(--gold,#f5c542);font:700 11px var(--sport);font-variant-numeric:tabular-nums}
 .pause-tune input[type=range]{width:100%;margin:3px 0 2px;accent-color:var(--gold,#f5c542)}
+.pause-tune .pt-sub{margin:9px 0 1px;font:700 9px var(--sport);letter-spacing:.08em;color:rgba(255,255,255,.42)}
+.pause-tune .pt-seg{display:flex;flex:none;gap:3px}
+.pause-tune .pt-seg button{padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.22);color:rgba(255,255,255,.62);font:700 9.5px var(--sport)}
+.pause-tune .pt-seg button.on{background:rgba(245,197,66,.18);border-color:rgba(245,197,66,.62);color:var(--gold,#f5c542)}
+.pause-tune .pt-note{margin:8px 0 0;font-size:8.5px;line-height:1.45;color:rgba(255,255,255,.4)}
+.game .pause-menu .panel{max-height:min(86dvh,760px);overflow-y:auto;scrollbar-width:thin}
 
 /* —— 竖屏比分栏：参考转播记分牌，横排色块 + 底部信息条 —— */
 @media (orientation:portrait) and (max-width:700px){
@@ -140,6 +148,20 @@
 .game.rot .battle{top:46px !important;bottom:auto !important;left:50%;right:auto;width:max-content;max-width:calc(100% - 180px);padding:4px 9px;transform:translate(-50%,-6px);opacity:0}
 .game.rot .battle.show{transform:translate(-50%,0);opacity:1}
 
+/* —— 观战播报：固定居中在战斗画面下方，不再落到右下角 —— */
+.game.is-spectating .battle{
+  top:auto !important;
+  bottom:max(10px,env(safe-area-inset-bottom,0px)) !important;
+  left:50% !important;
+  right:auto !important;
+  width:min(560px,calc(100% - 24px)) !important;
+  max-width:calc(100% - 24px) !important;
+  padding:5px 12px !important;
+  transform:translate(-50%,140%) !important;
+}
+.game.is-spectating .battle.show{transform:translate(-50%,0) !important;}
+.game.is-spectating .battle p{text-align:center;}
+
 /* —— 横屏 CSS 兜底（方向锁不可用时）：旋转整个 .game 容器 ——
    触屏摇杆/按键是 .game 的子元素，随容器一起旋转。
    container-type:size 让内部 .stage 用 cqw/cqh 取"旋转后的视口"：
@@ -215,8 +237,11 @@ button[disabled]{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
 .game.has-touch .touch .tb[data-b="shoot"].on{background:rgba(255,203,5,.32)}
 .game.has-touch .touch .tb[data-b="pass"]{right:136px;bottom:50px;width:72px;height:72px;border-color:#5b9dff;background:rgba(59,111,216,.22);color:#cfe0ff}
 .game.has-touch .touch .tb[data-b="pass"] b{width:24px;height:24px}
-.game.has-touch .touch .tb[data-b="steal"]{right:112px;bottom:172px;width:64px;height:64px;border-color:#ff8a7f;background:rgba(224,64,64,.18);color:#ffd3ce}
+.game.has-touch .touch .tb[data-b="steal"]{right:112px;bottom:172px;width:64px;height:64px;border-color:#ff8a7f;background:rgba(224,64,64,.18);color:#ffd3ce;position:relative}
 .game.has-touch .touch .tb[data-b="steal"] b{width:22px;height:22px}
+.game.has-touch .touch .tb .pd-steal-cd{position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;
+  background:conic-gradient(rgba(4,7,16,.68) calc(var(--steal-cd,0) * 360deg),transparent 0);transition:opacity .08s}
+.game.has-touch .touch .tb.pd-cooling .pd-steal-cd{opacity:1}
 .game.has-touch .touch .tb[data-b="special"]{right:10px;bottom:196px;width:72px;height:72px;border-color:#b8e63c;background:rgba(184,230,60,.14);color:#e6ffb0}
 .game.has-touch .touch .tb[data-b="special"] b{width:24px;height:24px}
 .game.has-touch .touch .tb[data-b="special"].ready{border-color:#ffcb05;background:#ffb900f2;color:#1a1400;animation:pdPulse .5s infinite alternate}
@@ -258,3 +283,44 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 /* 教练称号：赛前对阵 + 首发动画 */
 .game .s5-head .s5-coach{color:#ffe08a;border:1px solid rgba(255,224,138,.55);background:rgba(0,0,0,.5);padding:3px 5px;font-size:.5rem;letter-spacing:.04em;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .brief-coach-title{font-style:normal;font-size:9.5px;line-height:1.4;color:var(--gold,#f5c542);border:1px solid rgba(245,197,66,.35);background:rgba(245,197,66,.1);border-radius:999px;padding:0 7px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== 总冠军颁奖庆典（S49） ===== */
+.champ-celebrate{background:radial-gradient(circle,#141414 0%,#050505 70%);padding:calc(var(--safe-t,0px) + 16px) 14px 20px;z-index:970}
+.champ-celebrate .confetti{z-index:1}
+.champ-card{position:relative;z-index:2;margin:auto;width:100%;max-width:340px;background:#101010;border:2px solid #f5c542;border-radius:6px;padding:20px 16px 18px;box-shadow:0 0 32px rgba(245,197,66,.25),7px 7px 0 rgba(0,0,0,.6);text-align:center;animation:champ-pop .5s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes champ-pop{from{transform:translateY(18px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+.champ-kicker{margin:0 0 4px;color:#9a9a9a;font-size:11px;letter-spacing:2px}
+.champ-trophy{width:64px;height:64px;margin:2px auto 4px;filter:drop-shadow(0 0 12px rgba(245,197,66,.55));animation:champ-bob 2.2s ease-in-out infinite}
+.champ-trophy svg{width:100%;height:100%}
+@keyframes champ-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.champ-title{margin:0;color:#f5c542;font:800 30px/1.1 var(--sport,system-ui);letter-spacing:6px;text-shadow:0 0 18px rgba(245,197,66,.45)}
+.champ-team{margin:8px 0 12px;color:#f2f2f2;font-size:13px}
+.champ-team span{margin-left:8px;color:#9a9a9a;font-size:11px}
+.champ-lineup{display:flex;justify-content:center;gap:6px;margin:6px 0 14px}
+.champ-mon{width:52px}
+.champ-mon img{width:100%;height:52px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.5))}
+.champ-mon small{display:block;margin-top:2px;color:#c9c9c9;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.champ-awards{display:flex;flex-direction:column;gap:5px;margin:0 0 12px;text-align:left}
+.champ-award{display:grid;grid-template-columns:18px 62px 1fr;grid-template-areas:"ico label name" "ico label line";gap:0 6px;align-items:center;background:#161616;border:1px solid #2b2b2b;border-radius:4px;padding:6px 8px}
+.champ-award .ca-ico{grid-area:ico;color:#9a9a9a;font-size:12px;text-align:center}
+.champ-award .ca-label{grid-area:label;color:#9a9a9a;font-size:10px}
+.champ-award b{grid-area:name;color:#f2f2f2;font-size:12px}
+.champ-award small{grid-area:line;color:#7d7d7d;font-size:9.5px}
+.champ-award.is-mvp{border-color:rgba(245,197,66,.6);background:rgba(245,197,66,.1)}
+.champ-award.is-mvp .ca-ico,.champ-award.is-mvp b{color:#f5c542}
+.champ-empty{margin:0 0 12px;color:#8a8a8a;font-size:11px}
+.champ-news{margin:0 0 14px;color:#c9c9c9;font-size:10.5px;line-height:1.6;padding:8px;background:#131313;border-left:2px solid #f5c542;text-align:left}
+.champ-acts{display:flex;flex-direction:column;gap:8px}
+@media (prefers-reduced-motion:reduce){.champ-card{animation:none}.champ-trophy{animation:none}}
+
+/* 主线：下一地区内容未就绪时的拦截提示（S65） */
+.season-blocked{display:block;padding:10px 12px;border:1px dashed rgba(245,197,66,.5);border-radius:6px;background:rgba(245,197,66,.08);color:var(--gold,#f5c542);font-size:11px;line-height:1.5;text-align:center}
+
+/* 开局页在 390×844 下的高度预算：昵称行占位后收一点精灵图，避免底部按钮被裁切（S53） */
+.screen-starter .starter-cards .starter-card img{width:126px;height:126px}
+.screen-starter .starter-cards{gap:6px}
+
+/* 开局选择本命时的训练师昵称（S53） */
+.starter-nick{display:flex;align-items:center;gap:8px;width:100%;max-width:360px;margin:0 auto;padding:8px 12px;border:1px solid rgba(255,255,255,.18);border-radius:6px;background:rgba(0,0,0,.5);color:#c9c9c9;font-size:11px;box-sizing:border-box}
+.starter-nick b{flex:1;min-width:0;color:#fff;font:700 15px var(--sport,sans-serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.starter-nick button{flex:0 0 auto;border:1px solid rgba(245,197,66,.6);border-radius:4px;background:rgba(245,197,66,.14);color:var(--gold,#f5c542);font:700 11px var(--sport,sans-serif);padding:5px 12px}

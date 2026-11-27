@@ -7,18 +7,18 @@
  *   - 1v1 篮球（2 节 × 60 秒，无换人）
  *   - 赢了野生精灵加入；输了只给 XP
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { getPokemon } from "../../engine/readable/play-core.js?v=598";
-import { mainOVR } from "../systems/build.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { getPokemon } from "../../engine/readable/play-core.js?v=682";
+import { mainOVR } from "../systems/build.js?v=682";
 import {
   WILD_ROUTES, wildEnsure, wildLeft, wildMax, wildUseAttempt, wildGrantAdAttempt,
   wildRouteUnlocked, wildEligibleMons, pickWildOpponent, recordWildResult, badgeCount,
-} from "../journey/wild.js?v=598";
-import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
-import { watchRewardedAd } from "../platform/ads.js?v=598";
-import { playAcquire } from "./anim.js?v=598";
-import { addRep, bumpRepMission } from "../systems/reputation.js?v=598";
+} from "../journey/wild.js?v=682";
+import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
+import { watchRewardedAd } from "../platform/ads.js?v=682";
+import { playAcquire } from "./anim.js?v=682";
+import { addRep, bumpRepMission } from "../systems/reputation.js?v=682";
 
 const el = (html) => {
   const t = document.createElement("template");
@@ -152,7 +152,7 @@ function renderRoutes(save, opts = {}) {
     <div class="wd-actions">
       <button type="button" class="wd-btn${w.adUsed ? "" : " main"}" data-ad ${w.adUsed ? "disabled" : ""}>${w.adUsed ? "今日广告次数已用完" : "看广告 +1 次"}</button>
     </div>
-    <p class="wd-note">每次挑战打一场 2 节 × 60 秒的半场 1v1；不推进赛季、不计战绩。参赛精灵获得 XP，赢了野生精灵加入；同种已拥有则折算 25 币 + 普通树果。</p>
+    <p class="wd-note">每次挑战打一场 2 节 × 60 秒的半场 1v1；不推进主线、不计战绩。参赛精灵获得 XP，赢了野生精灵加入；同种已拥有则折算 25 币 + 普通树果。</p>
   </div>`);
   mountModal(page);
   page.addEventListener("click", async (e) => {

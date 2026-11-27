@@ -202,7 +202,7 @@
   padding: 2px 2px 0;
 }
 .screen-menu .title::before {
-  content: "STREET BASKETBALL // SEASON";
+  content: "pokedunk";
   display: block;
   font: 700 9px var(--v-font);
   letter-spacing: 0.3em;

@@ -3,15 +3,15 @@
  * 布局移植旧 journey-ui 的 shopView/eggView 设计（卡片网格+价格胶囊+状态按钮），
  * 数据层走新 systems/shop.js 与 systems/egg.js。
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft, shopCoinRefresh, COIN_REFRESH_PRICE } from "../systems/shop.js?v=598";
-import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=598";
-import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=598";
-import { watchRewardedAd } from "../platform/ads.js?v=598";
-import { adLeft, adUse } from "../platform/ad-caps.js?v=598";
-import { playHatch, playAcquire } from "./anim.js?v=598";
-import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=598";
-import { ICON, coinInline } from "./icons.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { shopList, shopBuy, shopAdClaim, PRICES, EGG_TIERS, BERRY_XP, shopAdRefresh, shopAdRefreshLeft, shopFreeRefresh, shopFreeRefreshLeft, shopCoinRefresh, COIN_REFRESH_PRICE } from "../systems/shop.js?v=682";
+import { eggList, eggHatch, eggStart, eggSpeedUp, eggAdInstant, eggBuySlot, eggAdSlot, eggItemSpeedUp, HATCH_ITEM, EGG_SLOT_PRICE } from "../systems/egg.js?v=682";
+import { rarityOf, RARITY_COLOR, ensureLineupSlots } from "../systems/build.js?v=682";
+import { watchRewardedAd } from "../platform/ads.js?v=682";
+import { adLeft, adUse } from "../platform/ad-caps.js?v=682";
+import { playHatch, playAcquire } from "./anim.js?v=682";
+import { minAcquireLevel, syncAcquireLevel } from "../systems/acquire.js?v=682";
+import { ICON, coinInline } from "./icons.js?v=682";
 
 const AD_EGG_INSTANT_MAX = 2;
 const monName = (dex) => {
@@ -121,9 +121,14 @@ export function renderShop(root) {
         const name = monName(r.dex);
         const finishBuy = () => {
           renderShop(root);
-          if (save.newbie && !save.newbie.done && (save.newbie.shopBuys || 0) >= 1 && !save.newbie.teamDone) {
-            toast("新伙伴已入队，去队伍页把他拖进首发", 2600);
-            setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
+          if (save.newbie && !save.newbie.done) {
+            const buys = save.newbie.shopBuys || 0;
+            if (buys >= 2 && !save.newbie.teamDone) {
+              toast("两只新伙伴已入队，去队伍页把他们拖进首发", 2600);
+              setTimeout(() => root.dispatchEvent(new CustomEvent("page-goto", { detail: "newbie" })), 800);
+            } else if (buys === 1) {
+              toast("第一只新伙伴已入队，再买一只补满首发", 2600);
+            }
           }
         };
         playAcquire({

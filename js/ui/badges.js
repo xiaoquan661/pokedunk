@@ -1,7 +1,7 @@
 /**
  * ui/badges.js —— 道馆徽章：统一徽章图形、获得动画、徽章详情页
  * 8 枚徽章沿用现有徽章形状（奖牌 + 绶带），按道馆主题配色与图腾区分。
- * 徽章页承载「八大天王入口」与赛季徽章记录。
+ * 徽章页承载四天王入口与当前地区徽章记录。
  */
 
 const GLYPHS = {
@@ -41,9 +41,8 @@ export function badgeMedal(id, size = 64, opts = {}) {
 }
 
 const CSS = `
-.bd-seasons{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
-.bd-seasons button{flex:0 0 auto;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);font:700 11px var(--sport,sans-serif)}
-.bd-seasons button.on{border-color:var(--gold,#f5c542);background:rgba(245,197,66,.16);color:var(--gold,#f5c542)}
+.bd-quest{display:block;width:100%;margin:12px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(245,197,66,.4);background:rgba(245,197,66,.1);color:var(--gold,#f5c542);font:700 11px var(--sport,sans-serif)}
+.bd-quest:active{transform:scale(.98)}
 .bd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
 .bd-card{display:flex;align-items:center;gap:8px;padding:9px 8px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.045);min-width:0}
 .bd-card.locked{opacity:.5;filter:grayscale(.7)}
@@ -85,7 +84,7 @@ function ensureCss() {
   document.head.appendChild(st);
 }
 
-// 赛季页的徽章数字与徽章入口样式需要立即生效，不能等到打开详情页才注入
+// 徽章入口样式需要立即生效，不能等到打开详情页才注入
 ensureCss();
 
 function badgeRecord(s, venue) {
@@ -93,67 +92,47 @@ function badgeRecord(s, venue) {
   return list[list.length - 1] || null;
 }
 
-/** 徽章详情页：按赛季分别展示 8 枚道馆徽章，旧赛季记录不重置 */
+/** 徽章详情页：展示当前地区的 8 枚道馆徽章 */
 export function openBadgeDetail(save, opts = {}) {
   ensureCss();
   const cur = save?.journey?.season || {};
-  const archive = save?.journey?.badgeSeasons || {};
-  const seasons = Object.values({ ...archive, [cur.no || 1]: { no: cur.no || 1, badges: cur.badges || [], champion: !!cur.champion } })
-    .sort((a, b) => (b.no || 0) - (a.no || 0));
-  let picked = cur.no || seasons[0]?.no || 1;
+  const got = new Set(cur.badges || []);
+  const count = GYM_BADGES.filter((g) => got.has(g.badge)).length;
+  const fk = cur.fourKings || {};
 
   const wrap = document.createElement("div");
   wrap.className = "pj-scrim page-modal";
   wrap.style.cssText = "position:fixed;inset:0;z-index:1100;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
   wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body">
-    <div class="page-head"><button class="back" data-bd-back>‹</button><h2>道馆徽章</h2><span class="count" data-bd-count></span></div>
+    <div class="page-head"><button class="back" data-bd-back>‹</button><h2>道馆徽章</h2><span class="count">${count} / 8</span></div>
     <p class="page-sub">击败道馆馆主获得徽章 · 8 枚解锁四天王</p>
-    <div class="bd-seasons">
-      ${seasons.map((x) => `<button type="button" data-bd-season="${x.no}">S${x.no}</button>`).join("")}
+    <div class="bd-grid">
+      ${GYM_BADGES.map((g, i) => {
+        const has = got.has(g.badge);
+        const rec = badgeRecord(cur, i);
+        const sub = has
+          ? (rec ? `${rec.myScore}:${rec.oppScore}${rec.sim ? " 模拟" : ""}` : "已获得")
+          : "击败馆主后获得";
+        return `<div class="bd-card ${has ? "got" : "locked"}">
+          ${badgeMedal(g.badge, 56, { earned: has })}
+          <div class="bd-info"><b>${g.venueCn}</b><span>${g.badgeCn}</span><small>${sub}</small></div>
+        </div>`;
+      }).join("")}
     </div>
-    <div class="bd-grid" data-bd-grid></div>
-    <div data-bd-rewards></div>
-    <p class="bd-note">每个赛季独立记录；已经获得的赛季徽章不会重置。</p>
+    <div>
+      ${count < 8
+        ? ""
+        : !fk.cleared
+          ? `<div class="bd-rewards"><button type="button" class="bd-elite" data-bd-elite><span>挑战四天王</span><small>ELITE FOUR</small></button></div>`
+          : `<div class="bd-rewards"><button type="button" class="bd-elite" disabled><span>四天王已通关</span></button></div>`}
+    </div>
+    <button type="button" class="bd-quest" data-bd-quest>查看完整主线进度 ›</button>
+    <p class="bd-note">击败馆主后永久记录；地区冠军后进入下一地区。</p>
   </div></div>`;
-
-  const grid = wrap.querySelector("[data-bd-grid]");
-  const countEl = wrap.querySelector("[data-bd-count]");
-  const rewardsEl = wrap.querySelector("[data-bd-rewards]");
-
-  const paint = () => {
-    const data = seasons.find((x) => Number(x.no) === Number(picked)) || seasons[0] || { no: picked, badges: [] };
-    const got = new Set(data.badges || []);
-    const count = GYM_BADGES.filter((g) => got.has(g.badge)).length;
-    countEl.textContent = `S${data.no} · ${count} / 8`;
-    wrap.querySelectorAll("[data-bd-season]").forEach((b) => b.classList.toggle("on", Number(b.dataset.bdSeason) === Number(data.no)));
-    grid.innerHTML = GYM_BADGES.map((g, i) => {
-      const has = got.has(g.badge);
-      const rec = Number(data.no) === Number(cur.no) ? badgeRecord(cur, i) : null;
-      const sub = has
-        ? (rec ? `S${rec.season || data.no} · ${rec.myScore}:${rec.oppScore}${rec.sim ? " 模拟" : ""}` : `S${data.no} · 已获得`)
-        : "击败馆主后获得";
-      return `<div class="bd-card ${has ? "got" : "locked"}">
-        ${badgeMedal(g.badge, 56, { earned: has })}
-        <div class="bd-info"><b>${g.venueCn}</b><span>${g.badgeCn}</span><small>${sub}</small></div>
-      </div>`;
-    }).join("");
-    const isCur = Number(data.no) === Number(cur.no);
-    const fk = cur.fourKings || {};
-    // 当前赛季集齐 8 枚即可挑战，不受赛程阶段影响；通关后入口置灰
-    const eliteOpen = isCur && count >= 8 && !fk.cleared;
-    const eliteHtml = !isCur || count < 8
-      ? ""
-      : eliteOpen
-        ? `<button type="button" class="bd-elite" data-bd-elite><span>挑战四天王</span><small>ELITE FOUR</small></button>`
-        : `<button type="button" class="bd-elite" disabled><span>${fk.cleared ? "本赛季四天王已通关" : "四天王暂未解锁"}</span></button>`;
-    rewardsEl.innerHTML = eliteHtml ? `<div class="bd-rewards">${eliteHtml}</div>` : "";
-  };
-  paint();
   wrap.addEventListener("click", (e) => {
     if (e.target === wrap || e.target.closest("[data-bd-back]")) { wrap.remove(); opts.onClose?.(); return; }
-    const sb = e.target.closest("[data-bd-season]");
-    if (sb) { picked = Number(sb.dataset.bdSeason); paint(); return; }
-    if (e.target.closest("[data-bd-elite]")) { wrap.remove(); opts.onElite?.(); }
+    if (e.target.closest("[data-bd-elite]")) { wrap.remove(); opts.onElite?.(); return; }
+    if (e.target.closest("[data-bd-quest]")) { wrap.remove(); opts.onQuest?.(); }
   });
   (document.getElementById("stage")||document.body).appendChild(wrap);
 }

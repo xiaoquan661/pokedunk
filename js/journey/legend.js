@@ -1,9 +1,9 @@
 /**
- * journey/legend.js —— 赛季传说奖励（v3）
+ * journey/legend.js —— 地区传说奖励（v3）
  *
  * 规则（docs/09 v3.1）：
- *   - 当前实际传说池 16 只，每赛季 2 只，8 个赛季轮换，循环不永久绝版。
- *   - 联赛总冠军、四天王挑战共享同一个赛季池：
+ *   - 当前实际传说池 16 只，每地区 2 只，8 个地区轮换，循环不永久绝版。
+ *   - 四天王通关解锁同一个地区池：
  *       先完成的一条线 → 2 选 1；
  *       后完成的另一条线 → 拿剩下的 1 只；
  *       两条都完成 → 当季 2 只全拿。
@@ -11,9 +11,9 @@
  *   - 传说直接进队伍；队伍满 10 只进仓库；重复折算 200 币。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=598";
-import { addMon } from "../storage.js?v=598";
-import { LEGENDARY_DEX } from "../systems/build.js?v=598";
+import { POKEMON_LIST } from "../../engine/readable/play-core.js?v=682";
+import { addMon } from "../storage.js?v=682";
+import { LEGENDARY_DEX } from "../systems/build.js?v=682";
 
 export const LEGEND_DUPE_COINS = 300;
 const DEXES = new Set(POKEMON_LIST.map((p) => p.dex));
@@ -27,7 +27,7 @@ export const LEGEND_ROTATION = [...LEGENDARY_DEX]
   .filter((dex) => DEXES.has(dex))
   .sort((a, b) => a - b);
 
-/** 该赛季的 2 只候选传说 */
+/** 该地区的 2 只候选传说 */
 export function legendChoicesForSeason(seasonNo) {
   const list = LEGEND_ROTATION.length ? LEGEND_ROTATION : [150, 151, 249];
   const no = Math.max(1, Number(seasonNo) || 1);
@@ -91,7 +91,7 @@ export function claimLegendReward(save, seasonNo, dex) {
   const l = ensureLegend(save);
   const no = Number(seasonNo) || 1;
   const idx = l.pending.findIndex((p) => p.season === no);
-  if (idx < 0) return { ok: false, error: "没有待领取的赛季传说" };
+  if (idx < 0) return { ok: false, error: "没有待领取的地区传说" };
   const item = l.pending[idx];
   if (!item.choices.includes(dex)) return { ok: false, error: "这只传说不在本期可选范围" };
 

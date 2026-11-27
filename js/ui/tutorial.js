@@ -3,10 +3,10 @@
  * 使用引擎 practice + drill：移动 / 传球 / 上篮 / 扣篮 / 空接 / 投篮 / 抢断 / 盖帽，约 2 分钟。
  * 教程使用独立的 5 人训练阵容，不读写生涯队伍与战绩。
  */
-import { buildPlayer } from "../../engine/readable/play-core.js?v=598";
-import { startMatchLoop } from "../../engine/readable/play-core.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
-import { createTouchUI } from "../journey/match-screen.js?v=598";
+import { buildPlayer } from "../../engine/readable/play-core.js?v=682";
+import { startMatchLoop } from "../../engine/readable/play-core.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
+import { createTouchUI } from "../journey/match-screen.js?v=682";
 
 const HOME_DEXES = [1, 4, 7, 25, 133];
 const AWAY_DEXES = [16, 19, 21, 23, 27];
@@ -352,7 +352,7 @@ export function startTutorial(root, save, actions = {}) {
         ? { label: "开始第一场比赛", done: "match" }
         : { label: "返回主页", done: "exit" };
     const hint = canContinue
-      ? "下一步：去商店挑一只新伙伴，再把他拖进首发。"
+      ? "下一步：去商店挑两只新伙伴，再把他们拖进首发。"
       : giftDex.length
         ? "首发五人已就位，直接打第一场。"
         : "现在可以开始第一场比赛了。";
@@ -459,7 +459,7 @@ export function startTutorial(root, save, actions = {}) {
   if (g) g.classList.add("tut-on");
   page.insertAdjacentHTML("beforeend", `<div class="tut-strip">
       <div class="tut-text"><span class="tut-step"></span><b class="tut-hint"></b></div>
-      <div class="tut-acts"><button data-tut="skip">跳过本项</button><button class="ghost" data-tut="exit">退出</button></div>
+      <div class="tut-acts"><button data-tut="skip">跳过本项</button><button class="ghost" data-tut="exit">跳过教程</button></div>
       <i class="tut-prog"></i>
     </div><div class="tut-intro"><div class="panel">
       <h2>先认识按键</h2>

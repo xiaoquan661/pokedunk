@@ -3,7 +3,7 @@
  * 悬浮在状态卡与记分牌之间的空隙里（不压球场、不盖比分板）；
  * 常态显示当前挑战分与今日权重，得分时同一张卡闪出大字加分播报。
  */
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=598";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=682";
 
 const CSS = `
 .dsh{position:absolute;inset:0;z-index:36;pointer-events:none}

@@ -1,11 +1,11 @@
 /**
- * ui/legend.js —— 赛季传说 2 选 1 弹窗（v3）
- * 联赛总冠军 / 四天王挑战共享本赛季传说池；领取后立即写入存档。
+ * ui/legend.js —— 地区传说 2 选 1 弹窗（v3）
+ * 四天王通关解锁本地区传说池；领取后立即写入存档。
  */
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=598";
-import { ICON } from "./icons.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { claimLegendReward, dexName, LEGEND_DUPE_COINS } from "../journey/legend.js?v=682";
+import { ICON } from "./icons.js?v=682";
 
 const TYPE_ZH = {
   Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰",
@@ -64,12 +64,12 @@ export function openLegendPicker(save, pending, opts = {}) {
     card.innerHTML = `<div class="sub-page pj-page-body">
       <div class="page-head">
         <button class="back" data-legend-close>‹</button>
-        <h2>赛季传说</h2>
-        <span class="count">S${seasonNo} · ${currentPending.choices.length} 选 1</span>
+        <h2>地区传说</h2>
+        <span class="count">${currentPending.choices.length} 选 1</span>
       </div>
-      <p class="page-sub">联赛总冠军 / 四天王挑战共享本赛季传说池 · 选择一只加入球队</p>
+      <p class="page-sub">四天王通关后解锁本地区传说池 · 选择一只加入球队</p>
       <div class="legend-choice-grid">${currentPending.choices.map((dex) => choiceCard(currentSave, dex)).join("")}</div>
-      <p class="legend-pick-note">本赛季还可领取 ${currentPending.claims || 1} 只；未领取的奖励会保留在赛季页。</p>
+      <p class="legend-pick-note">当前还可领取 ${currentPending.claims || 1} 只；未领取的奖励会保留在主线页。</p>
     </div>`;
   };
 
@@ -80,7 +80,7 @@ export function openLegendPicker(save, pending, opts = {}) {
       <div class="page-head">
         <button class="back" data-legend-close>‹</button>
         <h2>传说降临</h2>
-        <span class="count">S${seasonNo}</span>
+        <span class="count">地区传说</span>
       </div>
       <div class="legend-reveal">
         <span class="legend-reveal-ring"></span>

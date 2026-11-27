@@ -1,8 +1,8 @@
 /**
  * journey/gyms.js —— 八馆 + 四天王配置（pokedunk-v2）
- * 从 match-screen.js 抽出，供赛季系统与比赛屏共用。
+ * 从 match-screen.js 抽出，供主线与比赛屏共用。
  */
-import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=598";
+import { LEAGUE_GYMS, buildPlayer, POKEMON_LIST } from "../../engine/readable/play-core.js?v=682";
 
 const GYM_DEXES = {
   Rock: [95, 111, 74, 138, 247],
@@ -42,17 +42,17 @@ export const GYM_ROSTERS = {
 };
 
 /**
- * 赛季 1 的原始目标平均战力：
+ * 首个地区的原始目标平均战力：
  * 60 / 63 / 66 / 69 / 72 / 75 / 78 / 81，四天王 88。
  * 下面的加成是把各馆原版阵容校准到该目标后反推的值。
- * 从第 2 赛季起，每赛季再 +2 全属性（由 season.js 的 extra 注入）。
+ * 进入下一地区后 +2 全属性（由 season.js 的 extra 注入）。
  */
 export const GYM_TARGETS = { 1: 60, 2: 63, 3: 66, 4: 69, 5: 72, 6: 75, 7: 78, 8: 81, elite: 88 };
 export const GYM_BONUS = { 1: -3, 2: -4, 3: -7, 4: 2, 5: 2, 6: -1, 7: 3, 8: 2, elite: 2 };
 
 const STAT_KEYS = ["spd", "sht", "ins", "pas", "def", "blk", "reb", "hnd"];
 
-/** 按馆主配置挑 5 只；extra = 赛季加成（全八维 +N） */
+/** 按馆主配置挑 5 只；extra = 地区周目加成（全八维 +N） */
 export function pickGymRoster(stage, types, extra = 0) {
   const dexes = GYM_ROSTERS[stage] ?? GYM_DEXES[types[0]] ?? [];
   const pool = [];

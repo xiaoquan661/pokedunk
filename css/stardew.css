@@ -182,7 +182,7 @@
   box-shadow: 0 3px 0 var(--s-shadow), inset 0 0 0 1px #fffdf4;
 }
 .screen-menu .title::before {
-  content: "小镇街头篮球 · 第 01 赛季";
+  content: "pokedunk";
   display: block;
   margin-bottom: 4px;
   border: 0;

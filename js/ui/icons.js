@@ -40,6 +40,14 @@ export const ICON = {
       `<path d="M11 8.2h5M11 11.4h5M11 14.6h3.4" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".9"/>` +
       `<rect x="14.4" y="3.6" width="2.2" height="4.4" rx=".8" fill="#ffd84d" stroke="#6b4a00" stroke-width=".9"/>`
   ),
+  /* 冒险进度：折叠地图 */
+  map: svg(
+    grad("ic-map", "#9be38b", "#3d9a52") +
+      `<path d="M3.4 6.4 8.8 4.4l6.4 2 5.4-2v13.2l-5.4 2-6.4-2-5.4 2z" fill="url(#ic-map)" stroke="#173f27" stroke-width="1.5" stroke-linejoin="round"/>` +
+      `<path d="M8.8 4.4v15.2M15.2 6.4v15.2" stroke="#e2f7e2" stroke-width="1.3" opacity=".85"/>` +
+      `<path d="M10.2 11.4h3.2M10.8 13.6h2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>` +
+      `<circle cx="17.4" cy="9.4" r="1.4" fill="#f5c542" stroke="#6b4a00" stroke-width=".9"/>`
+  ),
   /* 队伍：两名球员 */
   team: svg(
     grad("ic-team", "#ffffff", "#c3d2f2") +

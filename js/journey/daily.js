@@ -6,20 +6,20 @@
  *   - 结算分 = 我方得分 + 扣篮×3 + 三分×2 + 抢断×2 + 盖帽×2 + 胜利 10；模拟 ×0.8
  *   - 每日首胜 +100 币；3 个当日任务（完成场次/首胜/单场扣篮）另领币
  *   - 分数奖励：60 分 +80 币 / 90 分随机稀有（每周限 1 只）/ 120 分随机传说（每周限 1 只）
- *   - 不推进赛季、不计生涯战绩、不给 XP/签约，避免与训练师之旅互相刷取
+ *   - 不推进主线、不计生涯战绩、不给 XP/签约，避免与训练师之旅互相刷取
  * 状态：save.daily（按 date 懒重置，history 保留最近 7 天）
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=598";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=598";
-import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=598";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=598";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=598";
-import { loadSet } from "../ui/settings.js?v=598";
-import { bumpDaily } from "../ui/earn.js?v=598";
-import { ACHV } from "../systems/achv.js?v=598";
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=598";
+} from "../../engine/readable/play-core.js?v=682";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=682";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=682";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=682";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=682";
+import { loadSet } from "../ui/settings.js?v=682";
+import { bumpDaily } from "../ui/earn.js?v=682";
+import { ACHV } from "../systems/achv.js?v=682";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=682";
 
 const FIRST_WIN_COINS = 100;
 
@@ -210,7 +210,7 @@ export function dailyPreview(save) {
   };
 }
 
-/** 构建今日比赛配置（固定 90 秒 × 4 节） */
+/** 构建今日比赛配置（固定 120 秒 × 4 节） */
 export function buildDailyMatch(save) {
   const mod = modOfToday();
   const target = targetPowerOf(save);
@@ -229,7 +229,7 @@ export function buildDailyMatch(save) {
       roster: awayRoster, bench: [], human: false, boost: 0,
     },
     difficulty: target >= 90 ? "legend" : target >= 75 ? "allstar" : "pro",
-    quarterLen: 180, // 与赛季一致：每节 3 分钟
+    quarterLen: 120, // 与主线一致：每节 2 分钟
     autoSwitch: loadSet().autoSwitch !== false,
     userAutoSubs: true,
     seed,
@@ -305,7 +305,7 @@ function grantDailyLegend(save) {
 /**
  * 每日挑战结算：记录场次/胜场/最高分/最佳扣篮，发首胜币。
  * 分数里程碑：60 分发币，90 分随机稀有 / 120 分随机传说（各每周限 1 只）。
- * 不写 stats.w/l、不推进赛季、不发 XP。
+ * 不写 stats.w/l、不推进主线、不发 XP。
  */
 export function settleDaily(save, engine, quit = false, simulated = false) {
   const d = ensureDaily(save);

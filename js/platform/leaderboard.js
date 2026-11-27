@@ -48,6 +48,45 @@ export async function submitDailyScore(score, dateKey = todayKey()) {
 }
 
 /** 读取今日榜单、我的最佳排名和总人数 */
+/** 通用榜：提交整数分 + 自定义数据（异步对决等） */
+export async function submitBoardScore(score, rankType, dataLoad) {
+  if (!leaderboardSupported()) return { ok: false, supported: false, message: "排行榜暂不可用", data: null };
+  const api = window.LampsPlatform;
+  if (!api || typeof api.submitLeaderboardScore !== "function") {
+    return { ok: false, supported: false, message: "排行榜暂不可用", data: null };
+  }
+  const n = Math.round(Number(score));
+  if (!Number.isFinite(n) || n <= 0) return { ok: false, supported: true, message: "没有可上报的分数", data: null };
+  try {
+    return await api.submitLeaderboardScore(n, rankType, dataLoad);
+  } catch (err) {
+    return { ok: false, supported: true, message: err?.message || "排行榜上报失败", data: null };
+  }
+}
+
+/** 通用榜：读取前 50 + 我的记录 + 总人数 */
+export async function fetchBoard(rankType) {
+  if (!leaderboardSupported()) return { supported: false, list: [], record: null, total: 0, message: "排行榜暂不可用" };
+  const api = window.LampsPlatform;
+  if (!api) return { supported: false, list: [], record: null, total: 0, message: "排行榜暂不可用" };
+  try {
+    const [board, mine, info] = await Promise.all([
+      typeof api.getLeaderboard === "function" ? api.getLeaderboard(rankType) : null,
+      typeof api.getMyLeaderboardRecord === "function" ? api.getMyLeaderboardRecord(rankType) : null,
+      typeof api.getLeaderboardInfo === "function" ? api.getLeaderboardInfo(rankType) : null,
+    ]);
+    return {
+      supported: true,
+      list: board?.data?.list || [],
+      record: mine?.data?.record || null,
+      total: Number(info?.data?.totalCount) || 0,
+      message: board && board.ok === false ? (board.message || "读取榜单失败") : "",
+    };
+  } catch (err) {
+    return { supported: true, list: [], record: null, total: 0, message: err?.message || "读取榜单失败" };
+  }
+}
+
 export async function fetchDailyLeaderboard(dateKey = todayKey()) {
   const type = dailyRankType(dateKey);
   if (!leaderboardSupported()) {

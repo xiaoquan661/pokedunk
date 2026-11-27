@@ -3,12 +3,12 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=598";
-import { gameAudio } from "../platform/audio.js?v=598";
+import { loadSave, writeSave } from "../storage.js?v=682";
+import { gameAudio } from "../platform/audio.js?v=682";
 import {
   dailyPreview, dailyMissionRows, dailyScoreRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=598";
-import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=598";
+} from "../journey/daily.js?v=682";
+import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=682";
 
 const DAILY_CSS = `
 .daily-score{display:flex;flex-direction:column;gap:6px}
@@ -197,7 +197,7 @@ export function openDaily(save, actions = {}) {
       <div class="dsec daily-sec">今日排行榜 <small>每日挑战分 · 每日 0 点换榜</small></div>
       <div class="daily-rank" id="daily-rank"><p class="dr-loading">加载中…</p></div>
 
-      <div class="daily-note">${p.firstWin ? "今日首胜奖励已领取" : "今日首胜额外 +100 篮球币"} · 3 分钟 × 4 节 · 本模式仅限手动比赛</div>
+      <div class="daily-note">${p.firstWin ? "今日首胜奖励已领取" : "今日首胜额外 +100 篮球币"} · 2 分钟 × 4 节 · 本模式仅限手动比赛</div>
 
       <div class="dsec daily-sec">计分方式 <small>每场只记最高分</small></div>
       <div class="daily-score-help">

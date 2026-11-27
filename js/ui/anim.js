@@ -99,9 +99,9 @@ const CSS =
   ".hatch-ov.acquire .hc-t{color:#ffd75e}" +
   ".hatch-ov.acquire .hc-kicker{color:#ffcb05}" +
   /* 升级/进化：立绘放大 100%，舞台与金环同步放大 */
-  ".hatch-ov.evo .hatch-stage{width:min(300px,82vw);height:min(300px,82vw)}" +
-  ".hatch-ov.evo .hatch-mon{left:0;right:0;top:0;bottom:0;margin:auto;width:min(288px,78vw);height:min(288px,78vw);object-fit:contain}" +
-  ".hatch-ov.evo .hatch-ring{left:0;right:0;top:0;bottom:0;margin:auto;width:min(320px,86vw);height:min(320px,86vw)}";
+  ".hatch-ov.evo-mode .hatch-stage{width:min(300px,82vw);height:min(300px,82vw)}" +
+  ".hatch-ov.evo-mode .hatch-mon{left:0;right:0;top:0;bottom:0;margin:auto;width:min(288px,78vw);height:min(288px,78vw);object-fit:contain}" +
+  ".hatch-ov.evo-mode .hatch-ring{left:0;right:0;top:0;bottom:0;margin:auto;width:min(320px,86vw);height:min(320px,86vw)}";
 
 let styleInjected = false;
 function ensureCss() {
@@ -233,7 +233,7 @@ function runAcquireQueue() {
 }
 function playAcquireNow(o, onDone) {
   const ov = buildOverlay("pj-acquire-ov");
-  // 获得动画必须盖住商店/图鉴/赛季等弹窗（最高 1100），统一放到 1200
+  // 获得动画必须盖住商店/图鉴/主线等弹窗（最高 1100），统一放到 1200
   ov.style.zIndex = String(o.z ?? 1200);
   const q = (sel) => ov.querySelector(sel);
   const mon = q(".hatch-mon"), ring = q(".hatch-ring"), card = q(".hatch-card");
@@ -305,7 +305,7 @@ export function playEvolve(o, onDone) {
   egg.style.display = "none"; crack.style.display = "none";
   st.style.display = "none"; sb.style.display = "none";
   mon.src = `./sprites/${o.newDex || o.oldDex}.png`;
-  ov.classList.add("on", "evo");
+  ov.classList.add("on", "evo-mode");
 
   // 连续升级/进化时，一键跳过当前动画和剩余队列
   const skipAll = q(".hatch-skip-all");

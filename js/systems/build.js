@@ -5,8 +5,9 @@
  * 位置：推荐位置 pos + 适配度 fit + 越位倍率 0.90~1.00；save.assign 存实际位置
  * 羁绊：首发 5 人，最多 3 条（通用/属性/防守/进攻/经济 各取 1）
  */
-import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=598";
+import { getPokemon, calcOVR, calcArchetype, POSITION_WEIGHTS, POSITION_ORDER } from "../../engine/readable/play-core.js?v=682";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
+import { facilityState } from "./badge-unlocks.js?v=682";
 export { POSITION_ORDER };
 
 export const STAT_KEYS = ["spd", "sht", "ins", "pas", "def", "blk", "reb", "hnd"];
@@ -113,9 +114,10 @@ export function trainPrice(mon) {
   return TRAIN_COST_BASE + TRAIN_COST_STEP * (mon.train.paid || 0);
 }
 /** 训练额度：升级赠送的免费点 + 可购买点（4 + 等级÷2，最多 40） */
-export function trainCaps(mon) {
+export function trainCaps(mon, save = null) {
+  const bonus = save ? (facilityState(save).trainBonus || 0) : 0;
   tidy(mon);
-  const paidCap = Math.min(TRAIN_MAX, 4 + Math.floor((mon.level || 1) / 2));
+  const paidCap = Math.min(TRAIN_MAX + 10, 4 + Math.floor((mon.level || 1) / 2) + bonus);
   const freeMax = Math.max(0, mon.train.freeEarned || 0);
   return {
     paidCap,
@@ -128,7 +130,7 @@ export function trainCaps(mon) {
 }
 export function canTrain(save, mon) {
   tidy(mon);
-  const cap = trainCaps(mon);
+  const cap = trainCaps(mon, save);
   if (mon.train.points >= cap.totalCap) {
     return { ok: false, error: `已达当前训练上限（${cap.totalCap} 点），升级后可继续` };
   }
@@ -566,7 +568,7 @@ export function buildMatchPlayer(save, id, bondMap) {
   const bm = bondMap ? (bondMap.get(mon) || {}) : {};
   const eff = {};
   for (const k of STAT_KEYS) eff[k] = clamp99(Math.round(s[k] * mult * (1 + (bm[k] || 0))));
-  const p = { ...base, dex: mon.dex, pos: assigned, r: eff };
+  const p = { ...base, dex: mon.dex, pos: assigned, r: eff, saveId: id };
   p.ovr = calcOVR(assigned, eff);
   p.archetype = calcArchetype(assigned, eff, p.ovr);
   return p;

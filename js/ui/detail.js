@@ -5,18 +5,19 @@
  * 数据源：引擎注册表（getPokemon/calcOVR/POSITION_WEIGHTS）+ 新存档个体。
  * 图鉴页点击未结缘精灵也可看（剪影详情：无个体数据，只显示基础信息）。
  */
-import { getPokemon, calcOVR, calcArchetype, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=598";
+import { getPokemon, calcOVR, calcArchetype, STAT_LABELS, SPECIAL_MOVES, SPECIAL_EFFECTS, xpToNext } from "../../engine/readable/play-core.js?v=682";
 import {
   STAT_KEYS, growthStats, mainOVR, versatility, rarityOf, RARITY_COLOR, posMult,
   growthZh, recommendedPositions,
-} from "../systems/build.js?v=598";
-import { rollGrowth } from "../../engine/growth.js?v=598";
-import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=598";
-import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=598";
-import { BERRY_XP } from "../systems/shop.js?v=598";
-import { bumpDaily } from "./earn.js?v=598";
-import { playEvolve } from "./anim.js?v=598";
-import { ICON } from "./icons.js?v=598";
+} from "../systems/build.js?v=682";
+import { rollGrowth } from "../../engine/growth.js?v=682";
+import { loadSave, writeSave, moveMon, recordEvolution } from "../storage.js?v=682";
+import { mergeOwnedSpecies } from "../systems/evo-merge.js?v=682";
+import { BERRY_XP } from "../systems/shop.js?v=682";
+import { bumpDaily } from "./earn.js?v=682";
+import { playEvolve } from "./anim.js?v=682";
+import { ICON } from "./icons.js?v=682";
+import { levelCapOf } from "../journey/regions.js?v=682";
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
 
 const STAT_ZH = { spd: "速度", sht: "投篮", ins: "终结", pas: "传球", def: "防守", blk: "盖帽", reb: "篮板", hnd: "控球" };
@@ -130,14 +131,14 @@ export function openDetail(dexNo, monId = null, onClose = null) {
         <div class="lock-body">
           <span class="lock-no">No.${dexNo}</span>
           <img class="lock-sil" src="./sprites/${dexNo}.png" alt="" draggable="false">
-          <b class="lock-name">？？？</b>
-          <p class="lock-hint">尚未在球场上遇见</p>
-          <small>遇见后解锁图鉴资料</small>
-          <p class="lock-hint" style="margin-top:10px;font-size:11px;line-height:1.7">获取途径：每日商店 · 孵蛋 · 战胜签约 · 每日挑战 / 赛季传说</p>
+          <b class="lock-name">${monName(dexNo)}</b>
+          <p class="lock-hint">尚未结缘 · 资料未解锁</p>
+          <small>遇见后解锁能力与必杀资料</small>
+          <p class="lock-hint" style="margin-top:10px;font-size:11px;line-height:1.7">获取途径：每日商店 · 孵蛋 · 道馆路线 · 战胜签约 · 地区传说</p>
         </div>
       </div>`;
     ov.addEventListener("click", (e) => {
-      if (e.target === ov || e.target.closest(".dback")) { ov.remove(); onClose?.(); }
+      if (e.target === ov || e.target.closest(".dback")) { ov.remove(); onClose?.(); return; }
     });
     (document.getElementById("stage") || document.body).appendChild(ov);
     return;
@@ -262,13 +263,14 @@ export function openDetail(dexNo, monId = null, onClose = null) {
       const tier = b.dataset.feed;
       const key = tier === "normal" ? "berryNormal" : "berryPremium";
       if ((save.bag[key] || 0) <= 0) return toast("树果不足（去商店购买）");
-      if (mon.level >= 99) return toast("已 Lv99 满级");
+      const cap = levelCapOf(save);
+      if (mon.level >= cap) return toast(`已达本地区等级上限 Lv.${cap}，先拿徽章`);
       save.bag[key]--;
       bumpDaily("feed");
       mon.xp += BERRY_XP[tier];
       const fromLevel = mon.level;
       const growthAll = [];
-      while (mon.xp >= xpToNext(mon.level) && mon.level < 99) {
+      while (mon.xp >= xpToNext(mon.level) && mon.level < cap) {
         mon.xp -= xpToNext(mon.level);
         mon.level++;
         growthAll.push(...rollGrowth({ dex: mon.dex, bonus: mon.bonus }, Math.random).map(growthZh));

@@ -1,27 +1,23 @@
 /**
- * journey/season.js —— 篮球赛季状态机（docs/09 v3.1）
+ * journey/season.js —— 主线进度状态（S72/S73）
  *
- * 9 队 = 8 个道馆队 + 玩家队伍。
- * 常规赛：9 队单循环 9 轮，每轮 4 场 + 1 队轮空；玩家 8 场 + 1 轮轮空。
- * 每轮玩家比赛结束后，本轮其他 3 场同步模拟并写入战况；玩家轮空轮直接模拟 4 场。
- * 前 4 进季后赛：半决赛 1v4、2v3 → 总决赛 → 总冠军。
- * 8-0（8 徽章）解锁四天王独立挑战；四天王不参与积分榜/季后赛/总冠军。
+ * 现行结构：地区 → 按顺序 8 个道馆 → 四天王 → 地区冠军 → 下一地区。
+ * 已移除 9 队联赛：不再生成赛程、积分榜、轮空或季后赛。
  *
- * 存档 journey.season：
- * { v, no, phase, round, byeRound, schedule[], rounds[], results[], table[],
- *   playoffs, fourKings, badges[], champion, history[] }
+ * 存档 journey.season（v4）：
+ * { v, no, phase, badges[], results[], fourKings, champion, history[],
+ *   contracts, contractWins, contractDry, playerStats, ovrBase, awards, mvp }
+ * 旧档的 schedule / rounds / table / playoffs / byeRound / round 在读取时清理。
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=598";
-import { pickGymRoster } from "./gyms.js?v=598";
-import { teamPower as buildTeamPower } from "../systems/build.js?v=598";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=682";
+import { pickGymRoster } from "./gyms.js?v=682";
+import { teamPower as buildTeamPower } from "../systems/build.js?v=682";
+import { REGIONS, ensureMainline } from "./regions.js?v=682";
 
-export const GYM_CN = ["深灰道馆", "华蓝道馆", "枯叶道馆", "彩虹道馆", "浅红道馆", "金黄道馆", "红莲道馆", "常磐道馆"];
-export const ROUNDS = 9;
-const SEASON_V = 3;
-const BYE = "bye";
+const MAINLINE_V = 4;
+const LEGACY_KEYS = ["schedule", "scheduleSeason", "rounds", "table", "playoffs", "byeRound", "round"];
 
 const avgOvr = (roster) => (roster.length ? Math.round(roster.reduce((a, p) => a + p.ovr, 0) / roster.length) : 60);
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 function hashStr(str) {
   let h = 2166136261;
@@ -32,95 +28,70 @@ function hashStr(str) {
   return h >>> 0;
 }
 
-function rngFrom(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function emptySeason(no, history = []) {
+function emptySeason(no = 1, history = []) {
   return {
-    v: SEASON_V,
+    v: MAINLINE_V,
     no,
     phase: "regular",
-    round: 0,
-    byeRound: -1,
-    schedule: [],
-    scheduleSeason: null,
-    rounds: [],
-    results: [],
-    table: null,
-    playoffs: null,
-    fourKings: { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false },
     badges: [],
+    results: [],
+    fourKings: { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false, rewardGiven: false },
     contracts: 0,
     contractWins: 0,
     contractDry: 0,
     champion: false,
+    playerStats: {},
+    ovrBase: {},
+    awards: [],
+    mvp: null,
     history,
   };
 }
 
-/** 9 队单循环：加一个 BYE 凑 10 队，圆桌轮转 9 轮 */
-function makeSchedule(seasonNo = 1) {
-  // 该排序让第 1 赛季玩家轮空落在第 5 轮，前后各 4 场，对手由弱到强。
-  let ring = ["me", "g7", "g6", "g5", "g4", BYE, "g3", "g2", "g1", "g0"];
-  const n = ring.length;
-  const rounds = [];
-  for (let r = 0; r < n - 1; r++) {
-    const pairs = [];
-    let bye = "";
-    for (let i = 0; i < n / 2; i++) {
-      const a = ring[i], b = ring[n - 1 - i];
-      if (a === BYE) bye = b;
-      else if (b === BYE) bye = a;
-      else pairs.push({ a, b });
-    }
-    rounds.push({ round: r, bye, games: pairs });
-    const fixed = ring[0];
-    const rest = ring.slice(1);
-    rest.unshift(rest.pop());
-    ring = [fixed, ...rest];
-  }
-  // 赛季之间轮转赛程，轮空位置与对阵顺序会变化
-  const offset = (Math.max(1, Number(seasonNo) || 1) - 1) % rounds.length;
-  if (offset) {
-    const shifted = rounds.slice(offset).concat(rounds.slice(0, offset));
-    return shifted.map((r, i) => ({ ...r, round: i }));
-  }
-  return rounds;
+/** 旧档迁移：只保留主线需要的字段，清掉联赛残留 */
+function migrateSeason(old) {
+  const s = emptySeason(Number(old?.no) || 1, Array.isArray(old?.history) ? old.history : []);
+  if (!old || typeof old !== "object") return s;
+  s.badges = Array.isArray(old.badges) ? [...old.badges] : [];
+  s.results = Array.isArray(old.results) ? [...old.results] : [];
+  // 新规则下四天王通关即地区冠军；旧档已通四天王的直接补成冠军
+  s.champion = !!old.champion || !!old.fourKings?.cleared;
+  s.fourKings = {
+    unlocked: !!(old.fourKings?.unlocked || s.badges.filter((b) => b !== "champion").length >= 8),
+    attempts: old.fourKings?.attempts || 0,
+    cleared: !!old.fourKings?.cleared,
+    rewardClaimed: !!old.fourKings?.rewardClaimed,
+    rewardGiven: !!old.fourKings?.rewardGiven,
+  };
+  s.contracts = old.contracts || 0;
+  s.contractWins = old.contractWins || 0;
+  s.contractDry = old.contractDry || 0;
+  s.playerStats = old.playerStats || {};
+  s.ovrBase = old.ovrBase || {};
+  s.awards = Array.isArray(old.awards) ? old.awards : [];
+  s.mvp = old.mvp ?? null;
+  s.phase = s.champion ? "done" : "regular";
+  return s;
 }
 
 export function ensureSeason(save) {
   const j = (save.journey ||= {});
   let s = j.season;
-  if (!s || s.v !== SEASON_V) {
-    const no = typeof s?.no === "number" ? s.no : 1;
-    const history = Array.isArray(s?.history) ? s.history : [];
-    s = j.season = emptySeason(no, history);
-  }
-  s.v = SEASON_V;
-  s.contractDry ||= 0;
-  s.round ||= 0;
-  s.results ||= [];
-  s.rounds ||= [];
+  if (!s || s.v !== MAINLINE_V) s = j.season = migrateSeason(s);
+  for (const key of LEGACY_KEYS) delete s[key];
+  s.v = MAINLINE_V;
+  s.no ||= 1;
   s.badges ||= [];
+  s.results ||= [];
   s.history ||= [];
-  s.fourKings ||= { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false };
-  s.phase ||= "regular";
-  if (!Array.isArray(s.schedule) || !s.schedule.length || s.scheduleSeason !== s.no) {
-    s.schedule = makeSchedule(s.no);
-    s.scheduleSeason = s.no;
-  }
-  if (s.byeRound == null || s.byeRound < 0) {
-    const bye = s.schedule.find((r) => r.bye === "me");
-    s.byeRound = bye ? bye.round : 0;
-  }
-  if (!s.table) buildTable(save, s);
+  s.fourKings ||= { unlocked: false, attempts: 0, cleared: false, rewardClaimed: false, rewardGiven: false };
+  s.fourKings.rewardGiven ??= false;
+  s.contractDry ||= 0;
+  s.playerStats ||= {};
+  s.ovrBase ||= {};
+  s.awards ||= [];
+  s.mvp ??= null;
+  s.phase = s.champion ? "done" : "regular";
   try { syncLegacy(save, s); } catch {}
   return s;
 }
@@ -129,294 +100,65 @@ export function myTeamPower(save) {
   try { return buildTeamPower(save); } catch { return 0; }
 }
 
-function buildTable(save, s) {
-  const extra = (s.no - 1) * 2;
-  const rows = GYM_CN.map((name, i) => {
-    const gym = LEAGUE_GYMS[i];
-    const roster = pickGymRoster(gym.gym, gym.types, extra);
-    return {
-      id: "g" + i,
-      venue: i,
-      name,
-      abbr: gym.abbr,
-      color: gym.color,
-      power: avgOvr(roster),
-      w: 0, l: 0, pf: 0, pa: 0,
-      isMe: false,
-    };
-  });
-  rows.push({
-    id: "me",
-    name: (save.coach?.name || "我") + "队",
-    abbr: "ME",
-    color: "#3b6fd8",
-    power: myTeamPower(save),
-    w: 0, l: 0, pf: 0, pa: 0,
-    isMe: true,
-  });
-  s.table = rows;
-}
-
-export function teamRow(s, id) {
-  ensureTable(s);
-  return s.table.find((r) => r.id === id) || null;
-}
-function ensureTable(s) {
-  if (!s.table) s.table = [];
-}
-
-function rankOf(s, id) {
-  const row = teamRow(s, id);
-  if (!row) return 99;
-  return rankTable(s).findIndex((r) => r.id === id);
-}
-
-function headToHead(s, a, b) {
-  let aw = 0, bw = 0;
-  for (const round of s.rounds || []) {
-    for (const g of round.games || []) {
-      if (!g.sa && !g.sb) continue;
-      if (g.a === a && g.b === b) { if (g.sa > g.sb) aw++; else bw++; }
-      else if (g.a === b && g.b === a) { if (g.sa > g.sb) bw++; else aw++; }
-    }
-  }
-  return aw - bw;
-}
-
-export function rankTable(s) {
-  return [...(s.table || [])].sort((a, b) => {
-    if (b.w !== a.w) return b.w - a.w;
-    const da = a.pf - a.pa, db = b.pf - b.pa;
-    if (db !== da) return db - da;
-    const h = headToHead(s, a.id, b.id);
-    if (h !== 0) return -h;
-    if (b.pf !== a.pf) return b.pf - a.pf;
-    return b.power - a.power;
-  });
-}
-
-function simScore(a, b, rng) {
-  const diff = a.power - b.power;
-  const p = clamp(0.5 + diff * 0.018, 0.08, 0.92);
-  const winA = rng() < p;
-  const base = 76 + Math.round(((a.power + b.power) / 2) * 0.12);
-  let sa = base + Math.round(rng() * 30 - 15) + Math.round(clamp(diff * 0.3, -12, 12));
-  let sb = base + Math.round(rng() * 30 - 15) - Math.round(clamp(diff * 0.3, -12, 12));
-  if (winA && sa <= sb) sa = sb + 1 + Math.floor(rng() * 6);
-  if (!winA && sb <= sa) sb = sa + 1 + Math.floor(rng() * 6);
-  return [sa, sb];
-}
-
-function applyGame(s, aId, bId, sa, sb) {
-  const A = teamRow(s, aId), B = teamRow(s, bId);
-  if (!A || !B) return;
-  A.pf += sa; A.pa += sb;
-  B.pf += sb; B.pa += sa;
-  if (sa > sb) { A.w++; B.l++; }
-  else { B.w++; A.l++; }
-}
-
-/** 推进一轮：玩家结果 + 其他 3 场；玩家轮空则模拟 4 场 */
-function simulateRound(save, s, playerResult = null) {
-  const sched = s.schedule[s.round];
-  if (!sched) return;
-  const games = [];
-  for (const pair of sched.games) {
-    let sa, sb;
-    if (pair.a === "me" || pair.b === "me") {
-      const pr = playerResult || s.results.find((r) => r.round === s.round);
-      if (!pr) return; // 玩家比赛还没打，不能推进
-      const meHome = pair.a === "me";
-      sa = meHome ? pr.myScore : pr.oppScore;
-      sb = meHome ? pr.oppScore : pr.myScore;
-    } else {
-      const A = teamRow(s, pair.a), B = teamRow(s, pair.b);
-      const rng = rngFrom(hashStr(`${s.no}-${s.round}-${pair.a}-${pair.b}`));
-      [sa, sb] = simScore(A, B, rng);
-    }
-    games.push({ a: pair.a, b: pair.b, sa, sb });
-    applyGame(s, pair.a, pair.b, sa, sb);
-  }
-  s.rounds.push({ round: s.round, bye: sched.bye, games });
-  s.round += 1;
-  syncLegacy(save, s);
-  if (s.round >= ROUNDS) finalizeRegular(save, s);
-}
-
-/** 玩家轮空轮：模拟本轮 4 场并推进 */
-export function advanceBye(save) {
-  const s = ensureSeason(save);
-  const sched = s.schedule[s.round];
-  if (!sched || sched.bye !== "me") return { ok: false };
-  simulateRound(save, s, null);
-  return { ok: true, seasonEnded: s.phase === "done" };
-}
-
-function finalizeRegular(save, s) {
-  const ranked = rankTable(s);
-  const seeds = ranked.slice(0, 4).map((r) => r.id);
-  if (!seeds.includes("me")) {
-    s.phase = "done";
-    s.playoffs = { seeds, semis: [], final: null, champion: null, missed: true };
-    s.champion = false;
-    syncLegacy(save, s);
-    return;
-  }
-  s.phase = "playoffs";
-  const semis = [
-    { a: seeds[0], b: seeds[3], sa: null, sb: null, winner: null },
-    { a: seeds[1], b: seeds[2], sa: null, sb: null, winner: null },
-  ];
-  s.playoffs = { seeds, semis, final: null, champion: null };
-  for (const semi of semis) {
-    if (semi.a !== "me" && semi.b !== "me") simulatePlayoff(s, semi);
-  }
-  syncLegacy(save, s);
-}
-
-function simulatePlayoff(s, game) {
-  const A = teamRow(s, game.a), B = teamRow(s, game.b);
-  if (!A || !B) return;
-  const rng = rngFrom(hashStr(`${s.no}-po-${game.a}-${game.b}`));
-  const [sa, sb] = simScore(A, B, rng);
-  game.sa = sa; game.sb = sb;
-  game.winner = sa > sb ? game.a : game.b;
-}
-
-function startFinal(save, s) {
-  const p = s.playoffs;
-  if (!p || p.final || !p.semis.every((x) => x.winner)) return;
-  p.final = { a: p.semis[0].winner, b: p.semis[1].winner, sa: null, sb: null, winner: null };
-  if (p.final.a !== "me" && p.final.b !== "me") {
-    simulatePlayoff(s, p.final);
-    p.champion = p.final.winner;
-    s.phase = "done";
-    syncLegacy(save, s);
-  }
-}
-
-function recordPlayoffResult(save, info, won, myScore, oppScore) {
-  const s = ensureSeason(save);
-  const p = s.playoffs;
-  if (!p) return { seasonEnded: true, champion: false, legendTrack: null };
-  let changed = false;
-  if (info.playoffRound === "semi") {
-    const semi = p.semis[info.slot];
-    if (semi && semi.winner === null) {
-      semi.sa = myScore; semi.sb = oppScore;
-      semi.winner = won ? "me" : (semi.a === "me" ? semi.b : semi.a);
-      changed = true;
-    }
-    // 另一场半决赛若还没打，先模拟
-    for (const other of p.semis) if (!other.winner) simulatePlayoff(s, other);
-    startFinal(save, s);
-    if (!won) {
-      if (!p.final) startFinal(save, s);
-      if (p.final && !p.final.winner) {
-        simulatePlayoff(s, p.final);
-        p.champion = p.final.winner;
-      }
-      s.phase = "done";
-      s.champion = false;
-    }
-  } else if (info.playoffRound === "final") {
-    const f = p.final;
-    if (f && f.winner === null) {
-      f.sa = myScore; f.sb = oppScore;
-      f.winner = won ? "me" : (f.a === "me" ? f.b : f.a);
-      p.champion = f.winner;
-      s.phase = "done";
-      s.champion = won;
-      changed = true;
-      if (won) {
-        s.history.push({ no: s.no, champion: true, at: Date.now(), w: save.stats.w, l: save.stats.l });
-      }
-    }
-  }
-  syncLegacy(save, s);
-  return {
-    seasonEnded: s.phase === "done",
-    champion: !!s.champion,
-    legendTrack: s.champion ? "champion" : null,
-    changed,
-  };
-}
-
-/** 赛程/积分/战况信息给 UI */
+/** 当前主线道馆：按徽章数顺序推进 */
 export function leagueInfo(save) {
   const s = ensureSeason(save);
-  if (s.phase === "done") {
-    return { kind: "done", season: s.no, smallName: "赛季结束", label: `赛季 ${s.no} · 赛季结束`, round: s.round };
+  const reg = REGIONS[(save.journey?.regionNo || 1) - 1] || REGIONS[0];
+  const badges = (s.badges || []).filter((b) => b !== "champion").length;
+  if (s.champion) {
+    return { kind: "done", region: reg, badges, smallName: `${reg.name}冠军`, label: `${reg.name}冠军达成 · 前往下一地区` };
   }
-  if (s.phase === "playoffs") {
-    const p = s.playoffs;
-    if (!p) return null;
-    const semi = p.semis.find((x) => (x.a === "me" || x.b === "me") && x.winner === null);
-    if (semi) {
-      const oppId = semi.a === "me" ? semi.b : semi.a;
-      const gym = opponentGym(save, s, oppId);
-      return {
-        kind: "playoff", playoffRound: "semi", slot: p.semis.indexOf(semi),
-        season: s.no, smallName: "半决赛", venue: gym.venue,
-        gym, leaderRoster: gym.roster, leaderPower: gym.power, targetPower: gym.power,
-        attempt: 1, opponentId: oppId, label: `赛季 ${s.no} · 季后赛 · 半决赛 VS ${gym.name}`,
-      };
-    }
-    const fin = p.final;
-    if (fin && fin.winner === null && (fin.a === "me" || fin.b === "me")) {
-      const oppId = fin.a === "me" ? fin.b : fin.a;
-      const gym = opponentGym(save, s, oppId);
-      return {
-        kind: "playoff", playoffRound: "final", slot: 0,
-        season: s.no, smallName: "总决赛", venue: gym.venue,
-        gym, leaderRoster: gym.roster, leaderPower: gym.power, targetPower: gym.power,
-        attempt: 1, opponentId: oppId, label: `赛季 ${s.no} · 季后赛 · 总决赛 VS ${gym.name}`,
-      };
-    }
-    return { kind: "done", season: s.no, smallName: "赛季结束", label: `赛季 ${s.no} · 赛季结束`, round: s.round };
+  if (badges >= 8) {
+    return { kind: "done", region: reg, badges, smallName: "四天王", label: "8 徽章达成 · 挑战四天王" };
   }
-  // 常规赛
-  const sched = s.schedule[s.round];
-  if (!sched) return null;
-  if (sched.bye === "me") {
-    return {
-      kind: "bye", season: s.no, round: s.round, smallName: "轮空",
-      label: `赛季 ${s.no} · 第 ${s.round + 1} 轮 · 轮空`,
-    };
-  }
-  const pair = sched.games.find((g) => g.a === "me" || g.b === "me");
-  if (!pair) return null;
-  const oppId = pair.a === "me" ? pair.b : pair.a;
-  const gym = opponentGym(save, s, oppId);
+  const venue = badges;
+  const row = reg.gyms[venue];
+  const base = LEAGUE_GYMS[venue];
+  if (!base || !row) return { kind: "done", region: reg, badges, smallName: "主线", label: "主线已完成" };
+  const roster = pickGymRoster(base.gym, base.types, (s.no - 1) * 2);
+  const power = avgOvr(roster);
   return {
-    kind: "league", season: s.no, round: s.round, small: 0,
-    venue: gym.venue, smallName: `第 ${s.round + 1} 轮`,
-    gym, leaderRoster: gym.roster, leaderPower: gym.power,
-    targetPower: Math.min(gym.power, myTeamPower(save) + 10),
-    attempt: 1, opponentId: oppId,
-    label: `赛季 ${s.no} · 第 ${s.round + 1} 轮 · VS ${gym.name}`,
+    kind: "league", season: s.no, small: 0,
+    venue, key: `gym-${save.journey?.regionNo || 1}-${venue}`,
+    smallName: `第 ${venue + 1} 馆`,
+    gym: {
+      ...base, name: row.name, leader: row.leader, typeCn: row.type,
+      venue, badge: row.badge,
+    },
+    leaderRoster: roster,
+    leaderPower: power,
+    targetPower: power,
+    attempt: 1,
+    badgeName: row.name,
+    label: `${reg.name} · 第 ${venue + 1} 馆 · VS ${row.name} · ${row.leader}`,
   };
 }
 
-function opponentGym(save, s, id) {
-  const row = teamRow(s, id);
-  if (!row) return null;
-  if (id === "me") return null;
-  const i = row.venue;
-  const gym = LEAGUE_GYMS[i];
-  const roster = pickGymRoster(gym.gym, gym.types, (s.no - 1) * 2);
-  return {
-    ...gym,
-    name: GYM_CN[i],
-    venue: i,
-    roster,
-    power: row.power,
-  };
+/** 四天王首通关卡奖励（每地区一次）：金币 + 高级树果 + 孵蛋加速券 */
+export const FOUR_KINGS_REWARD = { coins: 2000, berryPremium: 2, hatch: 1 };
+
+/** 是否还有未领取的四天王通关奖励（清关后未发过） */
+export function fourKingsRewardPending(save) {
+  const s = ensureSeason(save);
+  return !!(s.fourKings?.cleared && !s.fourKings.rewardGiven);
+}
+
+/** 发放四天王通关奖励；已发过返回 null。调用方负责 writeSave */
+export function grantFourKingsReward(save) {
+  const s = ensureSeason(save);
+  if (!s.fourKings?.cleared || s.fourKings.rewardGiven) return null;
+  save.coins = (save.coins || 0) + FOUR_KINGS_REWARD.coins;
+  save.bag ||= {};
+  save.bag.berryPremium = (save.bag.berryPremium || 0) + FOUR_KINGS_REWARD.berryPremium;
+  save.bag.items ||= {};
+  save.bag.items.hatch = (save.bag.items.hatch || 0) + FOUR_KINGS_REWARD.hatch;
+  s.fourKings.rewardGiven = true;
+  s.fourKings.rewardClaimed = true;
+  return { ...FOUR_KINGS_REWARD };
 }
 
 export function fourKingsInfo(save) {
   const s = ensureSeason(save);
-  // 集齐 8 枚徽章即可随时挑战，与赛程阶段无关；通关后不再生成对阵
   const badgeCount = (s.badges || []).filter((b) => b !== "champion").length;
   if (badgeCount < 8 || s.fourKings?.cleared) return null;
   const extra = (s.no - 1) * 2;
@@ -428,7 +170,7 @@ export function fourKingsInfo(save) {
     gym: { ...elite, name: "四天王联队", abbr: "E4" },
     leaderRoster: roster, leaderPower: power, targetPower: power,
     attempt: (s.fourKings.attempts || 0) + 1,
-    label: `赛季 ${s.no} · 四天王挑战 · 第 ${(s.fourKings.attempts || 0) + 1} 次`,
+    label: `四天王挑战 · 第 ${(s.fourKings.attempts || 0) + 1} 次`,
   };
 }
 
@@ -438,82 +180,76 @@ export function currentMatchInfo(save, mode = "league") {
 
 export function matchSeed(save, info) {
   const s = ensureSeason(save);
-  const str = info?.key || `${s.no}-${info?.kind}-${info?.round ?? info?.playoffRound ?? ""}-${info?.venue ?? info?.opponentId ?? ""}-${info?.attempt || 1}`;
+  const str = info?.key || `${s.no}-${info?.kind}-${info?.venue ?? ""}-${info?.attempt || 1}`;
   return hashStr(str);
 }
 
-/** 记录一场比赛并推进；四天王与联赛分开 */
+/** 记录一场比赛并推进；四天王通关即地区冠军 */
 export function recordResult(save, info, { won, myScore, oppScore, sim }) {
   const s = ensureSeason(save);
-  const seasonNo = s.no;
+  const no = s.no;
 
   if (info.kind === "elite") {
     s.fourKings.attempts = (s.fourKings.attempts || 0) + 1;
     let legendTrack = null;
-    if (won) {
-      if (!s.fourKings.cleared) {
-        s.fourKings.cleared = true;
-        s.fourKings.rewardClaimed = true;
-        legendTrack = "fourKings";
-      }
+    const justCleared = !!(won && !s.fourKings.cleared);
+    if (won && !s.fourKings.cleared) {
+      s.fourKings.cleared = true;
+      s.fourKings.rewardClaimed = true;
+      legendTrack = "fourKings";
+      s.champion = true;
+      s.phase = "done";
+      s.history.push({ no, champion: true, at: Date.now(), w: save.stats.w, l: save.stats.l });
     }
     syncLegacy(save, s);
-    const after = currentMatchInfo(save, "elite");
     return {
-      badgeGained: null, champion: false, seasonEnded: false,
-      fourKings: true, legendTrack, fourKingsCleared: s.fourKings.cleared,
-      nextLabel: after ? after.label : "本赛季四天王已通关",
+      badgeGained: null, champion: justCleared, seasonEnded: justCleared,
+      fourKings: true, legendTrack, fourKingsCleared: s.fourKings.cleared, fourKingsJustCleared: justCleared,
+      nextLabel: justCleared ? "地区冠军达成 · 前往下一地区" : "四天王挑战失败 · 可再次挑战",
     };
   }
 
-  if (info.kind === "bye") {
-    advanceBye(save);
-    return { badgeGained: null, champion: false, seasonEnded: s.phase === "done", legendTrack: null, nextLabel: "" };
-  }
-
   if (info.kind === "league") {
-    if (s.phase !== "regular") {
-      return { badgeGained: null, champion: false, seasonEnded: s.phase === "done", legendTrack: null, nextLabel: "" };
-    }
     s.results.push({
-      season: seasonNo, round: s.round, venue: info.venue,
+      no, venue: info.venue,
       win: !!won, myScore, oppScore, sim: !!sim, at: Date.now(),
     });
     let badgeGained = null;
     if (won) {
       badgeGained = info.gym?.badge || null;
       if (badgeGained && !s.badges.includes(badgeGained)) s.badges.push(badgeGained);
-      if (s.badges.length >= 8) s.fourKings.unlocked = true;
+      if (s.badges.filter((b) => b !== "champion").length >= 8) s.fourKings.unlocked = true;
     }
-    simulateRound(save, s, s.results[s.results.length - 1]);
     syncLegacy(save, s);
     const after = leagueInfo(save);
     return {
-      badgeGained, champion: false, seasonEnded: s.phase === "done",
-      legendTrack: null, nextLabel: after ? after.label : "赛季结束",
-    };
-  }
-
-  if (info.kind === "playoff") {
-    const r = recordPlayoffResult(save, info, won, myScore, oppScore);
-    return {
-      badgeGained: null, champion: r.champion, seasonEnded: r.seasonEnded,
-      legendTrack: r.legendTrack, nextLabel: leagueInfo(save)?.label || "赛季结束",
+      badgeGained, champion: false, seasonEnded: false,
+      legendTrack: null, nextLabel: after ? after.label : "8 徽章达成 · 挑战四天王",
     };
   }
 
   return { badgeGained: null, champion: false, seasonEnded: false, legendTrack: null, nextLabel: "" };
 }
 
+/** 冠军后进入下一地区；下一地区内容未就绪时拦截 */
 export function startNextSeason(save) {
   const old = ensureSeason(save);
-  // 进入新赛季前先把旧赛季徽章封存，避免徽章随赛季重置而丢失
   syncLegacy(save, old);
+  ensureMainline(save);
+  const next = REGIONS[(save.journey.regionNo || 1)];
+  if (old.champion && next && !next.available) {
+    return { blocked: true, region: next };
+  }
   const nextNo = (old.no || 1) + 1;
-  const history = old.history || [];
-  save.journey.season = emptySeason(nextNo, history);
-  const s = ensureSeason(save);
-  return s;
+  const s0 = emptySeason(nextNo, old.history || []);
+  // 非冠军重开时保留地区进度；冠军进入下一地区才清零
+  if (!old.champion) {
+    s0.badges = [...(old.badges || [])];
+    s0.fourKings.unlocked = s0.badges.filter((b) => b !== "champion").length >= 8;
+  }
+  save.journey.season = s0;
+  if (old.champion && next) save.journey.regionNo = next.no;
+  return ensureSeason(save);
 }
 
 /** 同步旧字段（成就/主页） */
@@ -523,28 +259,6 @@ export function syncLegacy(save, s) {
   const badges = [...s.badges];
   if (s.champion) badges.push("champion");
   j.gymBadges = badges;
-  j.stage = s.phase === "done" ? "done" : "league";
+  j.stage = s.champion ? "done" : "gym";
   j.seasonNo = s.no;
-  // 每个赛季的徽章独立留档，跨赛季不重置已获得的记录
-  j.badgeSeasons ||= {};
-  j.badgeSeasons[s.no] = {
-    no: s.no,
-    badges: [...s.badges],
-    champion: !!s.champion,
-  };
-  j.badgeVault ||= [];
-  for (const b of s.badges) if (!j.badgeVault.includes(b)) j.badgeVault.push(b);
-}
-
-export function progressLabel(save) {
-  const info = currentMatchInfo(save);
-  return info ? info.label : "赛季结束";
-}
-
-/** UI 用：当前轮次展示（含未打轮） */
-export function roundView(save, index) {
-  const s = ensureSeason(save);
-  const done = s.rounds[index];
-  const sched = s.schedule[index];
-  return { ...(sched || {}), ...(done || {}), done: !!done };
 }
