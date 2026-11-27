@@ -11,15 +11,15 @@
  */
 import {
   getPokemon, buildPlayer, calcOVR, POKEMON_LIST, POSITION_ORDER,
-} from "../../engine/readable/play-core.js?v=689";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=689";
-import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=689";
-import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=689";
-import { LEGEND_ROTATION, dexName } from "./legend.js?v=689";
-import { loadSet } from "../ui/settings.js?v=689";
-import { bumpDaily } from "../ui/earn.js?v=689";
-import { ACHV } from "../systems/achv.js?v=689";
-import { liveScore, scoreWeights } from "../systems/daily-score.js?v=689";
+} from "../../engine/readable/play-core.js?v=693";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=693";
+import { teamPower, STAT_KEYS, rarityOf, LEGENDARY_DEX } from "../systems/build.js?v=693";
+import { writeSave, markSeen, addMon, hasDex } from "../storage.js?v=693";
+import { LEGEND_ROTATION, dexName } from "./legend.js?v=693";
+import { loadSet } from "../ui/settings.js?v=693";
+import { bumpDaily } from "../ui/earn.js?v=693";
+import { ACHV } from "../systems/achv.js?v=693";
+import { liveScore, scoreWeights } from "../systems/daily-score.js?v=693";
 
 const FIRST_WIN_COINS = 100;
 

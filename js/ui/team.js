@@ -4,17 +4,17 @@
  * 首发阵容 5 槽（POSITION_ORDER）→ 替补席横排 → 一键布阵/仓库管理。
  * 调动规则走 storage.moveMon：队伍≥5 锁底、≤10 上限。
  */
-import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=689";
-import { moveMon, writeSave, loadSave } from "../storage.js?v=689";
-import { openDetail } from "./detail.js?v=689";
-import { ICON } from "./icons.js?v=689";
+import { getPokemon, POSITION_ORDER, TYPE_COLORS } from "../../engine/readable/play-core.js?v=693";
+import { moveMon, writeSave, loadSave } from "../storage.js?v=693";
+import { openDetail } from "./detail.js?v=693";
+import { ICON } from "./icons.js?v=693";
 import {
   autoLineup as buildAutoLineup, mainOVR, monPower, teamPower, bondMultipliers,
   activeBonds, ensureLineupSlots, recommendedPositions, rarityOf, RARITY_COLOR,
   assignStarterSlot, substituteBenchToSlot, substituteStarterToBench, isOnGrass,
   starterIds, benchIds as benchMonIds,
   POSITION_ORDER as BUILD_POSITIONS,
-} from "../systems/build.js?v=689";
+} from "../systems/build.js?v=693";
 
 const POS_CN = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "中锋" };
 /** 中文名（引擎 getPokemon().name 可能仍是英文，页面其它地方依赖 zh 观察器） */
@@ -118,7 +118,7 @@ export function renderTeam(page, save) {
         .lineup-row{display:flex;justify-content:center;gap:9px;margin-bottom:8px}
         .lineup-slot{width:31.5%;max-width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .12s}
         .lineup-slot.empty{opacity:.9}
-        .slot-card{position:relative;width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,#16224a 0%,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:#fff;cursor:pointer;touch-action:none;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
+        .slot-card{position:relative;width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:15px 5px 8px;background:linear-gradient(160deg,color-mix(in srgb,var(--tc,#888) 12%,var(--r-paper-3,#161616)) 0%,var(--r-paper,#060606) 78%);border:2px solid var(--tc,#2a3170);border-radius:14px;color:var(--r-ink,#fff);cursor:pointer;touch-action:none;box-shadow:0 0 12px color-mix(in srgb,var(--tc) 40%,transparent),inset 0 0 18px rgba(0,0,0,.45);overflow:hidden}
         /* 精灵底不再有淡色光晕，立绘整体放大 50% */
         .slot-img{display:grid;place-items:center;width:96px;height:96px;background:none}
         .slot-img img{width:84px;height:84px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
@@ -134,7 +134,7 @@ export function renderTeam(page, save) {
         .slot-empty small{font-size:10px}
         .lineup-slot.drop-hot{transform:scale(1.04)}
         .lineup-slot.drop-hot .slot-card,.lineup-slot.drop-hot .slot-empty{outline:2px solid var(--gold);box-shadow:0 0 24px rgba(245,197,66,.35)}
-        .bench-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 5px 7px;background:linear-gradient(160deg,#16224a,#0b1024 78%);border:2px solid var(--tc,#2a3170);border-radius:10px;color:#fff;cursor:pointer;touch-action:none;box-shadow:0 0 10px color-mix(in srgb,var(--tc) 35%,transparent)}
+        .bench-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 5px 7px;background:linear-gradient(160deg,color-mix(in srgb,var(--tc,#888) 10%,var(--r-paper-3,#161616)),var(--r-paper,#060606) 78%);border:2px solid var(--tc,#2a3170);border-radius:10px;color:var(--r-ink,#fff);cursor:pointer;touch-action:none;box-shadow:0 0 10px color-mix(in srgb,var(--tc) 35%,transparent)}
         .bench-card img{width:46px;height:46px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
         .bench-card .sc-ovr{font:700 12px var(--sport,sans-serif);color:var(--tc)}
         .bench-card .bc-name{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

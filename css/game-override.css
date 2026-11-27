@@ -444,3 +444,33 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 .tab-shell .newbie-top .nt-txt b em{font-style:normal;font-size:9px;color:var(--gold,#f5c542);margin-left:4px}
 .tab-shell .newbie-top .nt-txt small{font-size:8px;color:var(--text-dim,#9a9a9a);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tab-shell .newbie-top .nt-arrow{flex:none;font-size:10px;font-weight:700;color:var(--gold,#f5c542)}
+
+/* 冒险美术：复用口袋冒险的地区/道馆/馆主素材 */
+.tab-shell .adv-region-hero{position:relative;height:104px;border:1px solid rgba(255,255,255,.16);border-radius:8px;overflow:hidden;margin-bottom:8px;background-image:linear-gradient(90deg,rgba(4,6,10,.86),rgba(4,6,10,.26)),var(--banner);background-size:cover;background-position:center 42%;box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.tab-shell .adv-region-hero-mask{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.58))}
+.tab-shell .adv-region-hero-body{position:relative;z-index:1;height:100%;display:flex;align-items:center;gap:8px;padding:0 9px;box-sizing:border-box}
+.tab-shell .adv-region-hero-body>button{width:31px;height:40px;flex:0 0 auto;border:1px solid rgba(255,255,255,.24);border-radius:5px;background:rgba(0,0,0,.48);color:var(--gold,#f5c542);font:700 19px/1 var(--sport,sans-serif)}
+.tab-shell .adv-region-hero-body>button:disabled{opacity:.22}
+.tab-shell .adv-region-hero-copy{flex:1;min-width:0;text-align:center;text-shadow:0 2px 4px rgba(0,0,0,.8)}
+.tab-shell .adv-region-hero-copy small{display:block;font-size:8px;letter-spacing:1.4px;color:rgba(255,255,255,.75)}
+.tab-shell .adv-region-hero-copy b{display:block;margin-top:2px;font:700 22px var(--sport,sans-serif);color:#fff;letter-spacing:.06em}
+.tab-shell .adv-region-hero-copy span{display:block;margin-top:3px;font-size:9px;color:var(--gold,#f5c542)}
+.tab-shell .adv-node-thumb{position:relative;width:58px;height:42px;flex:0 0 auto;border:1px solid rgba(255,255,255,.15);border-radius:5px;overflow:hidden;background-image:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.3)),var(--thumb);background-size:cover;background-position:center;box-shadow:inset 0 0 12px rgba(0,0,0,.35)}
+.tab-shell .adv-node.current .adv-node-thumb{width:70px;height:50px;border-color:color-mix(in srgb,var(--gold,#f5c542) 65%,transparent)}
+.tab-shell .adv-node.locked .adv-node-thumb{filter:grayscale(1) brightness(.55)}
+.tab-shell .adv-node-leader{position:absolute;right:-3px;bottom:-5px;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8))}
+.tab-shell .adv-node.current .adv-node-leader{width:35px;height:35px}
+.tab-shell .adv-node-icon{position:absolute;left:2px;top:2px;width:18px;height:18px;border:1px solid rgba(255,255,255,.4);border-radius:50%;background:rgba(0,0,0,.68);font-size:8px;color:#fff;z-index:2}
+.tab-shell .adv-node-icon svg{width:10px;height:10px}
+.tab-shell .adv-node-badge{width:21px;height:21px;flex:0 0 auto;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.tab-shell .adv-node.done .adv-node-badge{opacity:1}
+.tab-shell .adv-node.locked .adv-node-badge{opacity:.4;filter:grayscale(1)}
+
+/* 修正素材 URL 解析：背景图由内联样式按文档路径提供 */
+.tab-shell .adv-region-hero{background-image:none}
+.tab-shell .adv-node-thumb{background-image:none}
+.tab-shell .adv-node-badge{display:block;background-repeat:no-repeat;background-size:800% 100%;background-position:calc(var(--bi,0) * 14.2857%) 0;image-rendering:pixelated;border-radius:3px;object-fit:unset}
+
+.tab-shell .adv-node{position:relative}
+.tab-shell .adv-node-scene{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.55;pointer-events:none}
+.tab-shell .adv-node-main,.tab-shell .adv-substeps,.tab-shell .adv-node-cta{position:relative;z-index:1}

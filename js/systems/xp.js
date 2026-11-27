@@ -4,10 +4,10 @@
  * 进化不再自动触发，由玩家在详情页手动进化。
  * 供训练草地等非比赛来源复用，避免第三份实现走样。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=689";
-import { rollGrowth } from "../../engine/growth.js?v=689";
-import { growthZh } from "./build.js?v=689";
-import { levelCapOf } from "../journey/regions.js?v=689";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=693";
+import { rollGrowth } from "../../engine/growth.js?v=693";
+import { growthZh } from "./build.js?v=693";
+import { levelCapOf } from "../journey/regions.js?v=693";
 
 /** 把多级成长合并成“速度 +2、投篮 +1” */
 function growthLine(list) {

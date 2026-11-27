@@ -5,13 +5,13 @@
  * 前 4 进季后赛：半决赛 1v4、2v3 → 总决赛。
  * 不影响徽章、四天王、地区冠军与主线存档。
  */
-import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=689";
-import { pickGymRoster } from "./gyms.js?v=689";
-import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=689";
-import { teamPower, starterIds } from "../systems/build.js?v=689";
-import { grantXp } from "../systems/xp.js?v=689";
-import { regionOf } from "./regions.js?v=689";
-import { loadSet } from "../ui/settings.js?v=689";
+import { LEAGUE_GYMS } from "../../engine/readable/play-core.js?v=693";
+import { pickGymRoster } from "./gyms.js?v=693";
+import { buildMyRoster, simulateHeadless } from "./match-screen.js?v=693";
+import { teamPower, starterIds } from "../systems/build.js?v=693";
+import { grantXp } from "../systems/xp.js?v=693";
+import { regionOf } from "./regions.js?v=693";
+import { loadSet } from "../ui/settings.js?v=693";
 
 export const LEAGUE_ROUNDS = 9;
 const LEAGUE_V = 1;

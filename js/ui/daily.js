@@ -3,12 +3,12 @@
  * 主页「每日挑战」入口 → 今日 modifier / 对手阵容 / 双方战力 / 最佳分 / 当日任务 / 开球。
  * 比赛与结算由 app.js 接线（本文件只负责面板）。
  */
-import { loadSave, writeSave } from "../storage.js?v=689";
-import { gameAudio } from "../platform/audio.js?v=689";
+import { loadSave, writeSave } from "../storage.js?v=693";
+import { gameAudio } from "../platform/audio.js?v=693";
 import {
   dailyPreview, dailyMissionRows, dailyScoreRows, claimDailyMission, ensureDaily,
-} from "../journey/daily.js?v=689";
-import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=689";
+} from "../journey/daily.js?v=693";
+import { fetchDailyLeaderboard, leaderboardSupported } from "../platform/leaderboard.js?v=693";
 
 const DAILY_CSS = `
 .daily-score{display:flex;flex-direction:column;gap:6px}
