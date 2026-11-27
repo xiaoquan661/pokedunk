@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=694";
-import { regionOf } from "../journey/regions.js?v=694";
-import { wildRoutePool } from "../journey/wild.js?v=694";
-import { buildMyRoster } from "../journey/match-screen.js?v=694";
-import { pickGymRoster } from "../journey/gyms.js?v=694";
-import { teamPower, starterIds } from "../systems/build.js?v=694";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=694";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=694";
-import { ICON } from "./icons.js?v=694";
-import { loadSave } from "../storage.js?v=694";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=695";
+import { regionOf } from "../journey/regions.js?v=695";
+import { wildRoutePool } from "../journey/wild.js?v=695";
+import { buildMyRoster } from "../journey/match-screen.js?v=695";
+import { pickGymRoster } from "../journey/gyms.js?v=695";
+import { teamPower, starterIds } from "../systems/build.js?v=695";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=695";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=695";
+import { ICON } from "./icons.js?v=695";
+import { loadSave } from "../storage.js?v=695";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };

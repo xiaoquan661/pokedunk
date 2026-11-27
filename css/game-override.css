@@ -345,9 +345,15 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 .tab-shell .tabbar-item.on::before{content:"";position:absolute;top:-1px;width:24px;height:2px;border-radius:0 0 2px 2px;background:var(--gold,#f5c542);box-shadow:0 0 10px color-mix(in srgb,var(--gold,#f5c542) 55%,transparent)}
 .tab-shell .tabbar-item:active{background:rgba(255,255,255,.035)}
 
-.tab-shell .tab-subnav{flex:0 0 auto;display:flex;gap:5px;padding:2px 12px 8px;border-bottom:1px solid rgba(255,255,255,.08)}
-.tab-shell .tab-subnav button{flex:1;min-width:0;padding:6px 4px;border:1px solid var(--line,rgba(255,255,255,.16));border-radius:4px;background:rgba(0,0,0,.22);color:var(--text-dim,#9a9a9a);font:700 10px var(--sport,sans-serif)}
-.tab-shell .tab-subnav button.on{border-color:var(--gold,#f5c542);background:color-mix(in srgb,var(--gold,#f5c542) 12%,transparent);color:var(--gold,#f5c542)}
+.tab-shell .tab-subnav{flex:0 0 auto;display:flex;gap:0;padding:0 8px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(10,11,16,.5),rgba(10,11,16,0))}
+.tab-shell .tab-subnav button{position:relative;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;height:38px;padding:0 2px;border:0;border-radius:0;background:none;color:rgba(255,255,255,.44);font:600 11px/1 var(--sport,sans-serif);letter-spacing:.06em;-webkit-tap-highlight-color:transparent;transition:color .16s ease}
+.tab-shell .tab-subnav button .ts-ico{width:14px;height:14px;display:grid;place-items:center;opacity:.62;transition:opacity .16s ease,transform .16s ease}
+.tab-shell .tab-subnav button .ts-ico svg{width:13px;height:13px;display:block;fill:currentColor}
+.tab-shell .tab-subnav button.on{color:var(--gold,#f5c542);font-weight:800}
+.tab-shell .tab-subnav button.on .ts-ico{opacity:1;transform:translateY(-.5px)}
+.tab-shell .tab-subnav button.on::after{content:"";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);width:calc(100% - 18px);max-width:52px;height:2px;border-radius:2px 2px 0 0;background:linear-gradient(90deg,transparent,var(--gold,#f5c542) 18%,var(--gold,#f5c542) 82%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--gold,#f5c542) 55%,transparent)}
+.tab-shell .tab-subnav button:active{color:rgba(255,255,255,.8)}
+.tab-shell .tab-subnav button:focus-visible{outline:1px solid var(--gold,#f5c542);outline-offset:-6px}
 
 .tab-shell .tab-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
 .tab-shell .tab-quick{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px;border:1px solid var(--line,rgba(255,255,255,.16));border-radius:6px;background:linear-gradient(180deg,var(--panel-2,#171717),var(--panel,#111));text-align:left;color:var(--text,#f2f2f2)}
