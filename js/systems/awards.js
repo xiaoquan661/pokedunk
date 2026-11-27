@@ -7,8 +7,8 @@
  * 以个体 saveId 为键（进化后仍归同一只），展示时用当前 dex 取中文名。
  * 只负责数据；颁奖演出在 js/ui/champion.js。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=696";
-import { mainOVR } from "./build.js?v=696";
+import { getPokemon } from "../../engine/readable/play-core.js?v=697";
+import { mainOVR } from "./build.js?v=697";
 
 export const MIN_GP = 4;
 const STAT_KEYS = ["gp", "gs", "pts", "reb", "ast", "stl", "blk", "fgm", "fga", "tpm", "tpa", "dnk", "sec"];

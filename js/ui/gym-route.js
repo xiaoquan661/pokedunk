@@ -3,16 +3,16 @@
  * 沿用赛前对阵版式：双方战力、预计胜率、对手首发、系别克制、我方阵容。
  * 路线 5 关压成一条横向进度条，当前关对局放在首屏。
  */
-import { routeState, routeForGym } from "../journey/gym-route.js?v=696";
-import { regionOf } from "../journey/regions.js?v=696";
-import { wildRoutePool } from "../journey/wild.js?v=696";
-import { buildMyRoster } from "../journey/match-screen.js?v=696";
-import { pickGymRoster } from "../journey/gyms.js?v=696";
-import { teamPower, starterIds } from "../systems/build.js?v=696";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=696";
-import { GYM_BADGES, badgeMedal } from "./badges.js?v=696";
-import { ICON } from "./icons.js?v=696";
-import { loadSave } from "../storage.js?v=696";
+import { routeState, routeForGym } from "../journey/gym-route.js?v=697";
+import { regionOf } from "../journey/regions.js?v=697";
+import { wildRoutePool } from "../journey/wild.js?v=697";
+import { buildMyRoster } from "../journey/match-screen.js?v=697";
+import { pickGymRoster } from "../journey/gyms.js?v=697";
+import { teamPower, starterIds } from "../systems/build.js?v=697";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=697";
+import { GYM_BADGES, badgeMedal } from "./badges.js?v=697";
+import { ICON } from "./icons.js?v=697";
+import { loadSave } from "../storage.js?v=697";
 
 const TYPE_ZH = { Normal: "一般", Fire: "火", Water: "水", Electric: "电", Grass: "草", Ice: "冰", Fighting: "格斗", Poison: "毒", Ground: "地面", Flying: "飞行", Psychic: "超能力", Bug: "虫", Rock: "岩石", Ghost: "幽灵", Dragon: "龙", Dark: "恶", Steel: "钢", Fairy: "妖精" };
 const POS_ZH = { PG: "控卫", SG: "分卫", SF: "小前", PF: "大前", C: "C" };
@@ -209,7 +209,7 @@ function matchupHtml(save, st, leadId = null) {
 
   const winP = winPct(winBase, winOpp);
   return `<section class="route-pms" style="--tc:${gb.color}">
-    <span class="brief-stage">第 ${st.step + 1}/5 关</span>
+    <span class="brief-stage">当前 · ${STEP_ZH[cur.kind] || "关卡"}</span>
     <h2>${esc(cur.title)}</h2>
     <div class="brief-vs">
       <div class="brief-side"><b>${esc(coach)}</b><small>${esc(myPowerText)}</small></div>
@@ -263,13 +263,16 @@ export function openGymRoute(save, opts = {}) {
     const gb = GYM_BADGES[Number(st.info.venue)] || GYM_BADGES[0];
     const starterList = starterIds(f);
     if (!leadId || !starterList.some((id) => String(id) === String(leadId))) leadId = starterList[0] || null;
+    const badgeCount = (f.journey?.season?.badges || []).filter((b) => b !== "champion").length;
+    const doneCount = st.steps.filter((s) => s.done).length;
+    const gymTotal = reg.gyms?.length || 8;
 
     body.innerHTML = `
       <style>
         .route-modal .pj-page-card{height:auto;max-height:min(84%,720px)}
         .route-shell{display:flex;flex-direction:column;flex:1;min-height:0}
         .route-embed-shell{height:100%}
-        .route-embed .route-body{flex:1;min-height:0;overflow-y:auto;padding:0 0 8px!important;background:transparent}
+        .route-embed .route-body{flex:1;min-height:0;overflow-y:auto;padding:4px 12px 10px!important;background:transparent}
         .route-body{flex:1;min-height:0;overflow-y:auto;padding:0 14px 12px!important}
         .route-foot{flex:none;display:flex;gap:7px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line,rgba(255,255,255,.12));background:var(--panel,#12224a);box-shadow:0 -8px 20px rgba(0,0,0,.18)}
         .route-foot .pk-btn-gold{flex:1;min-width:0;padding:10px 6px}
@@ -308,6 +311,22 @@ export function openGymRoute(save, opts = {}) {
         .rm-step.cur{border-color:rgba(245,197,66,.65);background:rgba(245,197,66,.12)}
         .rm-step.cur i,.rm-step.cur small{color:var(--gold,#f5c542)}
         .rm-step.lock{opacity:.38}
+        .route-progress{margin:0 0 8px;padding:8px 10px 9px;border:1px solid rgba(245,197,66,.22);border-radius:9px;background:linear-gradient(180deg,rgba(245,197,66,.05),rgba(0,0,0,.16))}
+        .rp-top{display:flex;align-items:baseline;gap:7px;margin-bottom:9px;min-width:0}
+        .rp-top b{flex:none;font:700 11px var(--sport,sans-serif);color:var(--gold,#f5c542)}
+        .rp-count{flex:none;font:700 12px var(--sport,sans-serif);color:var(--text,#fff);font-variant-numeric:tabular-nums}
+        .rp-top em{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;font-size:8.5px;color:var(--text-dim,#b9b0a0)}
+        .rp-steps{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+        .rp-steps::before{content:"";position:absolute;left:9%;right:9%;top:9px;height:2px;border-radius:2px;background:rgba(255,255,255,.1)}
+        .rp-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.42}
+        .rp-step.done{opacity:.86}
+        .rp-step.cur{opacity:1}
+        .rp-dot{width:18px;height:18px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.22);border-radius:50%;background:#0b0c11;color:rgba(255,255,255,.6);font:700 8px var(--sport,sans-serif);font-variant-numeric:tabular-nums}
+        .rp-step.done .rp-dot{border-color:#57c785;background:rgba(87,199,133,.14);color:#57c785}
+        .rp-step.cur .rp-dot{border-color:var(--gold,#f5c542);background:var(--gold,#f5c542);color:#0b0c11;box-shadow:0 0 10px color-mix(in srgb,var(--gold,#f5c542) 55%,transparent)}
+        .rp-step small{font:700 8.5px var(--sport,sans-serif);color:var(--text-dim,#b9b0a0);white-space:nowrap}
+        .rp-step.done small{color:rgba(255,255,255,.66)}
+        .rp-step.cur small{color:var(--gold,#f5c542)}
         .route-head-card{display:flex;align-items:center;gap:9px;margin:0 0 7px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--gc) 55%,transparent);border-radius:9px;background:
           radial-gradient(100% 100% at 100% 0%,color-mix(in srgb,var(--gc) 20%,transparent),transparent 70%),
           linear-gradient(135deg,color-mix(in srgb,var(--gc) 12%,var(--panel-2,#12224a)),var(--panel-2,#12224a) 76%)}
@@ -341,15 +360,21 @@ export function openGymRoute(save, opts = {}) {
         }
       </style>
       <div class="page-head"><button class="back" data-back>‹</button><h2>道馆路线</h2>
-        <span class="route-head-right"><span class="count">${st.step + 1}/${st.steps.length}</span></span>
+        <span class="route-head-right"><span class="count">徽章 ${badgeCount}/8</span></span>
       </div>
       ${state.notice ? `<p class="route-note">${esc(state.notice)}</p>` : ""}
       ${state.flash ? `<p class="route-note">${esc(state.flash)}</p>` : ""}
       ${opts.compact ? "" : routeMapHtml(f, st)}
       <div class="route-head-card" style="--gc:${gb.color};--gc2:${gb.color2}">
         ${badgeMedal(gb.badge, 42)}
-        <div class="route-head-txt"><b>${esc(st.gym.name)}</b><small>${esc(reg.name)} · 第 ${Number(st.info.venue) + 1} 馆 · 馆主 ${esc(st.gym.leader || "")} · ${esc(st.gym.typeCn || "")}属性</small></div>
+        <div class="route-head-txt"><b>${esc(st.gym.name)}</b><small>${esc(reg.name)} · 第 ${Number(st.info.venue) + 1}/${gymTotal} 馆 · 馆主 ${esc(st.gym.leader || "")} · ${esc(st.gym.typeCn || "")}属性</small></div>
       </div>
+      <section class="route-progress" aria-label="路线进度：第 ${st.step + 1} 关，共 ${st.steps.length} 关">
+        <div class="rp-top"><b>路线进度</b><span class="rp-count">第 ${st.step + 1} / ${st.steps.length} 关</span><em>已完成 ${doneCount} 关</em></div>
+        <div class="rp-steps">
+          ${st.steps.map((s) => `<div class="rp-step ${s.done ? "done" : s.current ? "cur" : "lock"}"><span class="rp-dot">${s.done ? "✓" : s.index + 1}</span><small>${STEP_ZH[s.kind] || s.name}</small></div>`).join("")}
+        </div>
+      </section>
       ${matchupHtml(f, st, leadId)}`;
     foot.innerHTML = cur.kind === "wild"
       ? `<button class="pk-btn-gold" data-stage>手动挑战</button>

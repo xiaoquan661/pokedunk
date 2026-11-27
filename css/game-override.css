@@ -366,7 +366,7 @@ html[data-ui-theme="retro"] .game.has-touch .touch .tb[data-b="shoot"]{border-co
 /* 路线页嵌入 Tab 时的底部按钮 */
 .tab-shell .route-embed .route-shell{height:100%}
 .tab-shell .route-embed .route-foot{padding-bottom:8px}
-.tab-shell .route-embed .route-body{padding:0 0 8px!important}
+.tab-shell .route-embed .route-body{padding:4px 12px 10px!important}
 
 @media (max-width:360px){
   .tab-shell .tabbar-item{font-size:8px}

@@ -7,18 +7,18 @@
  *   - 1v1 篮球（2 节 × 60 秒，无换人）
  *   - 赢了野生精灵加入；输了只给 XP
  */
-import { loadSave, writeSave } from "../storage.js?v=696";
-import { getPokemon } from "../../engine/readable/play-core.js?v=696";
-import { mainOVR } from "../systems/build.js?v=696";
+import { loadSave, writeSave } from "../storage.js?v=697";
+import { getPokemon } from "../../engine/readable/play-core.js?v=697";
+import { mainOVR } from "../systems/build.js?v=697";
 import {
   WILD_ROUTES, wildEnsure, wildLeft, wildMax, wildUseAttempt, wildGrantAdAttempt,
   wildRouteUnlocked, wildEligibleMons, pickWildOpponent, recordWildResult, badgeCount,
-} from "../journey/wild.js?v=696";
-import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=696";
-import { gameAudio } from "../platform/audio.js?v=696";
-import { watchRewardedAd } from "../platform/ads.js?v=696";
-import { playAcquire } from "./anim.js?v=696";
-import { addRep, bumpRepMission } from "../systems/reputation.js?v=696";
+} from "../journey/wild.js?v=697";
+import { buildWildMatch, mountMatch } from "../journey/match-screen.js?v=697";
+import { gameAudio } from "../platform/audio.js?v=697";
+import { watchRewardedAd } from "../platform/ads.js?v=697";
+import { playAcquire } from "./anim.js?v=697";
+import { addRep, bumpRepMission } from "../systems/reputation.js?v=697";
 
 const el = (html) => {
   const t = document.createElement("template");

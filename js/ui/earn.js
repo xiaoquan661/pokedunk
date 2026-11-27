@@ -5,14 +5,14 @@
  *  2. 每日活跃任务：按日重置的任务列表（打比赛/投喂/签约…），完成领币。
  * 存档：pokedunk.daily.v1（{date, tasks:{id:true}, adAt}）。
  */
-import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=696";
+import { loadSave, writeSave, addMon, hasDex } from "../storage.js?v=697";
 import { getPokemon } from "../../engine/data/pokemon.js";
-import { LEGENDARY_DEX } from "../systems/build.js?v=696";
-import { watchRewardedAd } from "../platform/ads.js?v=696";
-import { gameAudio } from "../platform/audio.js?v=696";
-import { rollEggDex } from "../systems/shop.js?v=696";
-import { ICON } from "./icons.js?v=696";
-import { playAcquire } from "./anim.js?v=696";
+import { LEGENDARY_DEX } from "../systems/build.js?v=697";
+import { watchRewardedAd } from "../platform/ads.js?v=697";
+import { gameAudio } from "../platform/audio.js?v=697";
+import { rollEggDex } from "../systems/shop.js?v=697";
+import { ICON } from "./icons.js?v=697";
+import { playAcquire } from "./anim.js?v=697";
 
 const DAILY_KEY = "pokedunk.daily.v1";
 const AD_COINS = 200;     // 每次看广告奖励（S46：300→200，并加每日上限）

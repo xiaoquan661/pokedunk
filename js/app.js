@@ -3,52 +3,52 @@
  * 场景流：开始界面 →（点击开始）→ 五位置选初始伙伴 → 主界面（图二布局）
  * 存档判定：进入即 loadSave()——有档直接进主界面（单档自动，GDD S8），无档走开局。
  */
-import "./systems/evo-rules.js?v=696"; // 先覆盖引擎原进化等级，再加载其余模块
-import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=696";
-import { renderDex } from "./ui/dex.js?v=696";
-import { renderCareer } from "./ui/career.js?v=696";
-import { renderShop, renderEgg } from "./ui/shop-egg.js?v=696";
-import { openSettings, openSettingsGuide } from "./ui/settings.js?v=696";
-import { renderBag } from "./ui/bag.js?v=696";
-import { renderTeam } from "./ui/team.js?v=696";
-import { renderTrain, focusTrainMon } from "./ui/train.js?v=696";
-import { openDetail } from "./ui/detail.js?v=696";
-import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=696";
-import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=696";
-import { watchRewardedAd } from "./platform/ads.js?v=696";
-import { adLeft, adUse } from "./platform/ad-caps.js?v=696";
-import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, startNextSeason, FOUR_KINGS_REWARD } from "./journey/season.js?v=696";
-import { settleMatchResult, signContract } from "./journey/settle.js?v=696";
-import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=696";
-import { showOfflineGrass } from "./ui/offline-grass.js?v=696";
-import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=696";
-import { openDaily } from "./ui/daily.js?v=696";
-import { openCoachProfile } from "./ui/coach.js?v=696";
-import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=696";
-import { submitDailyScore } from "./platform/leaderboard.js?v=696";
-import { openAchievements } from "./ui/achv-ui.js?v=696";
-import { startTutorial } from "./ui/tutorial.js?v=696";
-import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=696";
-import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=696";
-import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=696";
-import { ACHV } from "./systems/achv.js?v=696";
-import { eggList } from "./systems/egg.js?v=696";
-import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=696";
-import { playEvolve, playAcquire } from "./ui/anim.js?v=696";
-import { ICON } from "./ui/icons.js?v=696";
-import { LINE_ICON } from "./ui/menu-line-icons.js?v=696";
-import { pendingLegend } from "./journey/legend.js?v=696";
-import { syncAcquireLevel } from "./systems/acquire.js?v=696";
-import { openLegendPicker } from "./ui/legend.js?v=696";
-import { openChampionCeremony } from "./ui/champion.js?v=696";
-import { openMainQuest } from "./ui/main-quest.js?v=696";
-import { openLeaguePage } from "./ui/league.js?v=696";
-import { buildLeagueMatch, recordLeagueResult, hasLeagueUnlocked } from "./journey/league.js?v=696";
-import { openGymRoute } from "./ui/gym-route.js?v=696";
-import { ROUTE_STEPS, routeState, buildRouteWild, buildRouteMinor, recordRouteWild, recordRouteMinor, claimRouteRest } from "./journey/gym-route.js?v=696";
-import { regionOf, REGIONS, badgeCountOf } from "./journey/regions.js?v=696";
-import { randomNickname } from "./systems/profile.js?v=696";
-import { openWild } from "./ui/wild.js?v=696";
+import "./systems/evo-rules.js?v=697"; // 先覆盖引擎原进化等级，再加载其余模块
+import { loadSave, createSave, writeSave, startJourney, addMon, hasDex } from "./storage.js?v=697";
+import { renderDex } from "./ui/dex.js?v=697";
+import { renderCareer } from "./ui/career.js?v=697";
+import { renderShop, renderEgg } from "./ui/shop-egg.js?v=697";
+import { openSettings, openSettingsGuide } from "./ui/settings.js?v=697";
+import { renderBag } from "./ui/bag.js?v=697";
+import { renderTeam } from "./ui/team.js?v=697";
+import { renderTrain, focusTrainMon } from "./ui/train.js?v=697";
+import { openDetail } from "./ui/detail.js?v=697";
+import { buildGymMatch, mountMatch, buildQuickMatch, quickRoster, quickDraftPool, QUICK_LEVELS } from "./journey/match-screen.js?v=697";
+import { gameAudio, installAudioUnlock } from "./platform/audio.js?v=697";
+import { watchRewardedAd } from "./platform/ads.js?v=697";
+import { adLeft, adUse } from "./platform/ad-caps.js?v=697";
+import { ensureSeason, currentMatchInfo, myTeamPower, leagueInfo, startNextSeason, FOUR_KINGS_REWARD } from "./journey/season.js?v=697";
+import { settleMatchResult, signContract } from "./journey/settle.js?v=697";
+import { grassState, settleOffline, offlineGrassPending } from "./systems/grass.js?v=697";
+import { showOfflineGrass } from "./ui/offline-grass.js?v=697";
+import { buildDailyMatch, settleDaily, dailyPreview } from "./journey/daily.js?v=697";
+import { openDaily } from "./ui/daily.js?v=697";
+import { openCoachProfile } from "./ui/coach.js?v=697";
+import { addRep, bumpRepMission, repInfo, repMissionRows } from "./systems/reputation.js?v=697";
+import { submitDailyScore } from "./platform/leaderboard.js?v=697";
+import { openAchievements } from "./ui/achv-ui.js?v=697";
+import { startTutorial } from "./ui/tutorial.js?v=697";
+import { startOnboarding, mountGuide } from "./ui/onboarding.js?v=697";
+import { openBadgeDetail, playBadgeGrant } from "./ui/badges.js?v=697";
+import { openEarn, openDailyTasks, bumpDaily, signInfo, dailyClaimable } from "./ui/earn.js?v=697";
+import { ACHV } from "./systems/achv.js?v=697";
+import { eggList } from "./systems/egg.js?v=697";
+import { ensureLineupSlots, monPower, mainOVR, bondMultipliers, rarityOf, RARITY_COLOR, starterIds } from "./systems/build.js?v=697";
+import { playEvolve, playAcquire } from "./ui/anim.js?v=697";
+import { ICON } from "./ui/icons.js?v=697";
+import { LINE_ICON } from "./ui/menu-line-icons.js?v=697";
+import { pendingLegend } from "./journey/legend.js?v=697";
+import { syncAcquireLevel } from "./systems/acquire.js?v=697";
+import { openLegendPicker } from "./ui/legend.js?v=697";
+import { openChampionCeremony } from "./ui/champion.js?v=697";
+import { openMainQuest } from "./ui/main-quest.js?v=697";
+import { openLeaguePage } from "./ui/league.js?v=697";
+import { buildLeagueMatch, recordLeagueResult, hasLeagueUnlocked } from "./journey/league.js?v=697";
+import { openGymRoute } from "./ui/gym-route.js?v=697";
+import { ROUTE_STEPS, routeState, buildRouteWild, buildRouteMinor, recordRouteWild, recordRouteMinor, claimRouteRest } from "./journey/gym-route.js?v=697";
+import { regionOf, REGIONS, badgeCountOf } from "./journey/regions.js?v=697";
+import { randomNickname } from "./systems/profile.js?v=697";
+import { openWild } from "./ui/wild.js?v=697";
 import {
   getPokemon,
   calcOVR,
@@ -64,7 +64,7 @@ import {
   COURT_STYLES,
   defaultCourtStyle,
   LEAGUE_GYMS,
-} from "../engine/readable/play-core.js?v=696";
+} from "../engine/readable/play-core.js?v=697";
 
 const app = document.getElementById("app");
 const el = (html) => {
@@ -2741,7 +2741,7 @@ window.addEventListener("pj-open-train", (e) => {
 
 /* ================= 启动路由 ================= */
 // settle.js 引用 play-core 内部符号（xpToNext/rollGrowth/LEAGUE_GYMS 等已由引擎直连导出）
-window.__PC = await import("../engine/readable/play-core.js?v=696");
+window.__PC = await import("../engine/readable/play-core.js?v=697");
 preloadSprites?.([]); // 触发引擎资源预载（容错）
 installAudioUnlock();
 const existing = loadSave();
