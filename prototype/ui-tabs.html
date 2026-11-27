@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>口袋灌篮 · 底部 Tab UI 原型</title>
+<style>
+  @font-face {
+    font-family: "FusionPixel";
+    src: url("../assets/fonts/fusion-pixel-12-sc.subset.woff2") format("woff2");
+    font-weight: 400 800;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #060606;
+    --panel: #111111;
+    --panel-2: #171717;
+    --panel-3: #1d1d1d;
+    --line: #303030;
+    --line-soft: #242424;
+    --ink: #f4f1e8;
+    --ink-dim: #b8b8b8;
+    --muted: #8f8f8f;
+    --green: #b8e63c;
+    --green-2: #8fbf2a;
+    --orange: #ff7a1a;
+    --orange-2: #ff9a4d;
+    --red: #ff8a7f;
+    --blue: #7bd3ff;
+    --font: "FusionPixel", "PingFang SC", "Microsoft YaHei", monospace;
+    --shadow: 0 10px 30px rgba(0,0,0,.45);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; width: 100%; height: 100%; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; background:
+      radial-gradient(circle at 50% 20%, rgba(184,230,60,.08), transparent 32%),
+      radial-gradient(circle at 80% 80%, rgba(255,122,26,.06), transparent 28%),
+      #030303;
+    color: var(--ink); font-family: var(--font);
+  }
+  button, input { font: inherit; }
+  button { color: inherit; cursor: pointer; }
+  svg { display: block; }
+  img { image-rendering: pixelated; }
+
+  #stage {
+    position: relative; flex: 0 0 390px; width: 390px; height: 844px;
+    overflow: hidden; background: var(--bg);
+    box-shadow: 0 0 0 1px #1c1c1c, 0 28px 80px rgba(0,0,0,.8);
+    transform-origin: center center;
+  }
+
+  .app { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  .app::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .28;
+    background:
+      linear-gradient(90deg, transparent 0 48.5%, rgba(255,255,255,.035) 48.5% 49%, transparent 49% 100%),
+      linear-gradient(0deg, transparent 0 48.5%, rgba(255,255,255,.025) 48.5% 49%, transparent 49% 100%);
+    background-size: 100% 100%;
+    mask-image: linear-gradient(to bottom, #000, transparent 68%);
+  }
+
+  /* ============ 顶栏 ============ */
+  .topbar {
+    position: relative; z-index: 3; display: flex; align-items: center; gap: 7px;
+    padding: 12px 12px 8px; flex: 0 0 auto;
+  }
+  .coach {
+    min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px;
+    padding: 4px 7px 4px 4px; border: 1px solid var(--line-soft); border-radius: 6px;
+    background: rgba(17,17,17,.86); text-align: left;
+  }
+  .coach:active, .icon-btn:active, .coin-chip:active { transform: translateY(1px); }
+  .avatar {
+    width: 31px; height: 31px; flex: 0 0 auto; display: grid; place-items: center;
+    border: 1px solid #4b4b4b; border-radius: 5px;
+    background: linear-gradient(145deg, #2a2a2a, #101010); color: var(--green);
+  }
+  .avatar svg { width: 18px; height: 18px; }
+  .coach-copy { min-width: 0; }
+  .coach-copy b { display: block; font-size: 11px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .coach-copy small { display: block; margin-top: 2px; font-size: 9px; color: var(--muted); white-space: nowrap; }
+  .top-actions { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+  .coin-chip {
+    display: flex; align-items: center; gap: 5px; height: 31px; padding: 0 8px;
+    border: 1px solid var(--line); border-radius: 6px; background: #101010;
+    color: var(--green); font-size: 11px;
+  }
+  .coin-chip svg { width: 15px; height: 15px; }
+  .icon-btn {
+    position: relative; width: 31px; height: 31px; padding: 0; display: grid; place-items: center;
+    border: 1px solid var(--line); border-radius: 6px; background: #101010; color: var(--ink-dim);
+  }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .dot {
+    position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--orange); border: 1px solid #060606;
+  }
+
+  /* ============ 内容区 ============ */
+  .content {
+    position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto;
+    padding: 2px 12px 86px; scrollbar-width: none; overscroll-behavior: contain;
+  }
+  .content::-webkit-scrollbar { display: none; }
+  .page { animation: pageIn .2s ease both; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 6px 1px 12px; }
+  .eyebrow { display: block; margin-bottom: 3px; color: var(--green); font-size: 8px; letter-spacing: 1.8px; }
+  .page-head h1 { margin: 0; font-size: 24px; line-height: 1.1; letter-spacing: 1px; }
+  .page-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+  .head-side { flex: 0 0 auto; text-align: right; }
+  .season-pill, .power-pill, .record-pill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px;
+    border: 1px solid var(--line); border-radius: 4px; background: var(--panel);
+    color: var(--ink-dim); font-size: 9px; white-space: nowrap;
+  }
+  .power-pill b { color: var(--green); font-size: 12px; }
+
+  .card {
+    position: relative; border: 1px solid var(--line-soft); border-radius: 7px;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    box-shadow: 0 1px 0 rgba(255,255,255,.035);
+  }
+  .card:active { transform: translateY(1px); }
+
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 1px 8px; }
+  .section-head h3 { margin: 0; font-size: 13px; letter-spacing: .5px; }
+  .section-head button { display: inline-flex; align-items: center; gap: 2px; border: 0; background: none; color: var(--muted); font-size: 9px; padding: 2px; }
+  .section-head button svg { width: 11px; height: 11px; }
+  .section-head button:active { color: var(--green); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    min-height: 30px; padding: 0 10px; border: 1px solid var(--green); border-radius: 4px;
+    background: var(--green); color: #080808; font-size: 10px; font-weight: 800;
+  }
+  .btn:active { transform: translateY(1px); background: var(--green-2); }
+  .btn.ghost { background: transparent; color: var(--green); }
+  .btn.small { min-height: 26px; padding: 0 8px; font-size: 9px; }
+  .btn.full { width: 100%; min-height: 36px; }
+  .btn.orange { border-color: var(--orange); background: var(--orange); }
+  .btn svg { width: 13px; height: 13px; }
+
+  /* ============ 主场 ============ */
+  .hero-card {
+    position: relative; width: 100%; overflow: hidden; text-align: left; padding: 0;
+    border: 1px solid #3b3b3b; border-radius: 8px;
+    background: linear-gradient(145deg, #262626 0%, #101010 55%, #0b0b0b 100%);
+    box-shadow: 0 12px 26px rgba(0,0,0,.35);
+  }
+  .hero-court { position: absolute; inset: 0; opacity: .55; pointer-events: none; }
+  .hero-court::before {
+    content: ""; position: absolute; width: 220px; height: 220px; right: -76px; top: -38px;
+    border: 1px solid rgba(184,230,60,.28); border-radius: 50%;
+  }
+  .hero-court::after {
+    content: ""; position: absolute; width: 96px; height: 96px; right: -18px; top: 42px;
+    border: 1px solid rgba(184,230,60,.2); border-radius: 50%;
+    background: linear-gradient(90deg, transparent 49%, rgba(184,230,60,.18) 49% 51%, transparent 51%);
+  }
+  .hero-inner { position: relative; z-index: 1; padding: 12px; }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; color: var(--green); font-size: 9px; letter-spacing: 1px; }
+  .tag::before { content: ""; width: 5px; height: 5px; background: var(--green); border-radius: 50%; }
+  .hero-badge { padding: 3px 6px; border: 1px solid #404040; border-radius: 3px; color: var(--ink-dim); font-size: 8px; }
+  .hero-main { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 17px 0 13px; }
+  .hero-main small { color: var(--muted); font-size: 10px; }
+  .hero-main h2 { margin: 3px 0 4px; font-size: 25px; letter-spacing: 1px; }
+  .hero-main p { margin: 0; color: var(--ink-dim); font-size: 9px; }
+  .hero-ball { width: 62px; height: 62px; flex: 0 0 auto; display: grid; place-items: center; color: var(--orange); opacity: .95; }
+  .hero-ball svg { width: 58px; height: 58px; }
+  .hero-cta {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px; border-top: 1px solid #303030; background: rgba(184,230,60,.08);
+    color: var(--green); font-size: 11px; font-weight: 800;
+  }
+  .hero-cta svg { width: 15px; height: 15px; }
+
+  .daily-card {
+    display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px;
+    text-align: left;
+  }
+  .daily-icon {
+    width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center;
+    border: 1px solid #3d3d3d; border-radius: 5px; background: #202020; color: var(--orange);
+  }
+  .daily-icon svg { width: 18px; height: 18px; }
+  .grow { flex: 1; min-width: 0; }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .row.between { justify-content: space-between; }
+  .daily-card b { font-size: 10px; }
+  .daily-card p { margin: 3px 0 5px; color: var(--muted); font-size: 8px; }
+  .pill { padding: 2px 5px; border: 1px solid #3b3b3b; border-radius: 3px; color: var(--ink-dim); font-size: 8px; white-space: nowrap; }
+  .bar { height: 4px; overflow: hidden; border-radius: 2px; background: #2a2a2a; }
+  .bar i { display: block; height: 100%; background: var(--green); border-radius: 2px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 8px; }
+  .stat { padding: 8px 9px; }
+  .stat small { display: block; color: var(--muted); font-size: 8px; }
+  .stat b { display: block; margin-top: 4px; font-size: 15px; }
+  .stat em { font-style: normal; color: var(--green); font-size: 9px; }
+
+  .lineup-strip { display: flex; gap: 6px; }
+  .mon-chip {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 7px 3px 6px; border: 1px solid var(--line-soft); border-radius: 6px;
+    background: var(--panel);
+  }
+  .mon-chip img { width: 38px; height: 38px; object-fit: contain; }
+  .mon-chip b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+  .mon-chip small { color: var(--green); font-size: 7px; }
+
+  .news-list { overflow: hidden; }
+  .news-item { display: flex; gap: 8px; width: 100%; padding: 9px 10px; text-align: left; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; }
+  .news-item:last-child { border-bottom: 0; }
+  .news-dot { width: 6px; height: 6px; margin-top: 4px; flex: 0 0 auto; border-radius: 50%; background: var(--green); }
+  .news-item b { display: block; font-size: 9px; }
+  .news-item small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+
+  /* ============ 球队 ============ */
+  .team-hero { overflow: hidden; }
+  .court-lineup {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 4px;
+    padding: 13px 9px 8px; background:
+      radial-gradient(ellipse at 50% 100%, rgba(184,230,60,.13), transparent 54%),
+      repeating-linear-gradient(90deg, transparent 0 48px, rgba(255,255,255,.025) 48px 49px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .slot { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .slot img { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,.45)); }
+  .slot b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+  .slot small { color: var(--green); font-size: 7px; }
+  .team-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; }
+  .team-meta b { font-size: 10px; }
+  .team-meta span { color: var(--muted); font-size: 8px; }
+
+  .action-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 8px; }
+  .action-btn { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 10px 4px; font-size: 9px; }
+  .action-btn svg { width: 14px; height: 14px; color: var(--green); }
+
+  .player-list { overflow: hidden; }
+  .player-row {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 9px;
+    border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; text-align: left;
+  }
+  .player-row:last-child { border-bottom: 0; }
+  .player-row:active { background: #1a1a1a; }
+  .player-row img { width: 34px; height: 34px; object-fit: contain; }
+  .pos {
+    flex: 0 0 auto; width: 25px; padding: 3px 0; text-align: center;
+    border: 1px solid #3b3b3b; border-radius: 3px; color: var(--ink-dim); font-size: 7px;
+  }
+  .player-name { flex: 1; min-width: 0; }
+  .player-name b { display: block; font-size: 9px; }
+  .player-name small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .player-ovr { text-align: right; }
+  .player-ovr b { display: block; color: var(--green); font-size: 14px; }
+  .player-ovr small { color: var(--muted); font-size: 7px; }
+  .player-row > svg { width: 13px; height: 13px; color: #5a5a5a; }
+
+  .bench-row { display: flex; gap: 6px; padding: 8px; }
+  .bench-mon { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 5px; background: #171717; border: 1px solid #292929; border-radius: 4px; }
+  .bench-mon img { width: 24px; height: 24px; object-fit: contain; }
+  .bench-mon span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 7px; color: var(--ink-dim); }
+
+  /* ============ 赛程 ============ */
+  .season-card { padding: 11px; }
+  .season-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+  .season-top b { font-size: 11px; }
+  .season-top span { color: var(--muted); font-size: 8px; }
+  .badge-row { display: flex; gap: 5px; margin-bottom: 11px; }
+  .badge-dot {
+    flex: 1; height: 18px; display: grid; place-items: center;
+    border: 1px solid #383838; border-radius: 3px; background: #161616;
+    color: #555; font-size: 7px;
+  }
+  .badge-dot.on { border-color: rgba(184,230,60,.5); background: rgba(184,230,60,.1); color: var(--green); }
+  .badge-dot.cur { border-color: var(--orange); color: var(--orange); box-shadow: 0 0 0 1px rgba(255,122,26,.18); }
+
+  .route-map { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .node {
+    position: relative; display: flex; align-items: center; gap: 6px; min-width: 0;
+    padding: 7px; border: 1px solid #2b2b2b; border-radius: 5px; background: #141414;
+  }
+  .node-dot {
+    width: 21px; height: 21px; flex: 0 0 auto; display: grid; place-items: center;
+    border: 1px solid #454545; border-radius: 50%; color: #777; font-size: 8px;
+  }
+  .node-copy { min-width: 0; }
+  .node-copy b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
+  .node-copy small { display: block; margin-top: 1px; color: var(--muted); font-size: 7px; }
+  .node.done .node-dot { border-color: rgba(184,230,60,.55); background: rgba(184,230,60,.12); color: var(--green); }
+  .node.current { border-color: rgba(255,122,26,.55); background: linear-gradient(135deg, rgba(255,122,26,.12), #141414); }
+  .node.current .node-dot { border-color: var(--orange); color: var(--orange); box-shadow: 0 0 0 3px rgba(255,122,26,.08); }
+  .node.locked { opacity: .5; }
+
+  .goal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 8px; }
+  .goal { padding: 8px 6px; text-align: center; }
+  .goal svg { width: 16px; height: 16px; margin: 0 auto 4px; color: #666; }
+  .goal b { display: block; font-size: 8px; }
+  .goal small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+  .goal.unlocked svg { color: var(--green); }
+
+  .quick-card { display: flex; align-items: center; gap: 9px; width: 100%; margin-top: 8px; padding: 10px; text-align: left; }
+  .quick-icon { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #3b3b3b; border-radius: 5px; color: var(--blue); }
+  .quick-icon svg { width: 17px; height: 17px; }
+  .quick-card b { display: block; font-size: 10px; }
+  .quick-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .quick-card .chev { flex: 0 0 auto; width: 14px; height: 14px; color: #666; }
+  .quick-card .chev svg { width: 14px; height: 14px; }
+
+  /* ============ 图鉴 ============ */
+  .dex-progress { padding: 10px; }
+  .dex-progress .row { margin-bottom: 6px; }
+  .dex-progress b { font-size: 11px; }
+  .dex-progress span { color: var(--green); font-size: 10px; }
+  .dex-progress small { color: var(--muted); font-size: 8px; }
+  .search-box {
+    display: flex; align-items: center; gap: 7px; margin: 8px 0; padding: 9px 10px;
+    border: 1px solid var(--line-soft); border-radius: 6px; background: var(--panel);
+    color: var(--muted); font-size: 9px;
+  }
+  .search-box svg { width: 14px; height: 14px; }
+  .region-list { display: flex; flex-direction: column; gap: 7px; }
+  .region { overflow: hidden; }
+  .region-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px; border: 0; background: transparent; text-align: left; }
+  .region-orb { width: 27px; height: 27px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #3d3d3d; border-radius: 50%; color: var(--green); font-size: 9px; }
+  .region-copy { flex: 1; min-width: 0; }
+  .region-copy b { display: block; font-size: 10px; }
+  .region-copy small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .region-count { color: var(--ink-dim); font-size: 9px; }
+  .region-head svg { width: 13px; height: 13px; color: #666; transition: transform .18s; }
+  .region.open .region-head svg { transform: rotate(90deg); }
+  .region-body { padding: 0 9px 9px; border-top: 1px solid var(--line-soft); }
+  .type-row { display: flex; gap: 5px; padding: 8px 0; overflow-x: auto; scrollbar-width: none; }
+  .type-row::-webkit-scrollbar { display: none; }
+  .type-chip { flex: 0 0 auto; padding: 3px 7px; border: 1px solid #333; border-radius: 10px; color: var(--muted); font-size: 7px; }
+  .type-chip.on { border-color: rgba(184,230,60,.5); background: rgba(184,230,60,.1); color: var(--green); }
+  .mon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mon-card { padding: 7px 4px 6px; text-align: center; }
+  .mon-card img { width: 49px; height: 49px; object-fit: contain; margin: 0 auto 3px; }
+  .mon-card b { display: block; font-size: 8px; }
+  .mon-card small { display: block; margin-top: 1px; color: var(--green); font-size: 7px; }
+  .mon-card.locked img { filter: brightness(0) opacity(.3); }
+  .mon-card.locked b { color: #777; }
+  .mon-card.locked small { color: #555; }
+
+  /* ============ 商店 ============ */
+  .shop-banner {
+    display: flex; align-items: center; gap: 9px; padding: 10px;
+    border: 1px solid rgba(255,122,26,.28); border-radius: 7px;
+    background: linear-gradient(100deg, rgba(255,122,26,.13), rgba(255,122,26,.02));
+  }
+  .shop-banner svg { width: 22px; height: 22px; color: var(--orange); }
+  .shop-banner b { display: block; font-size: 10px; }
+  .shop-banner small { display: block; margin-top: 2px; color: var(--ink-dim); font-size: 8px; }
+  .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .shop-card { padding: 9px; text-align: left; }
+  .shop-card .item-ico { height: 48px; display: grid; place-items: center; color: var(--green); }
+  .shop-card .item-ico svg { width: 32px; height: 32px; }
+  .shop-card .item-ico img { width: 42px; height: 42px; object-fit: contain; }
+  .shop-card b { display: block; font-size: 9px; }
+  .shop-card small { display: block; margin: 2px 0 7px; color: var(--muted); font-size: 7px; }
+  .price-row { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+  .price { display: inline-flex; align-items: center; gap: 3px; color: var(--green); font-size: 9px; }
+  .price svg { width: 11px; height: 11px; }
+  .shop-card .btn { min-height: 24px; padding: 0 7px; font-size: 8px; }
+
+  .egg-card { margin-top: 8px; padding: 10px; }
+  .egg-top { display: flex; align-items: center; gap: 9px; }
+  .egg-art { width: 45px; height: 45px; display: grid; place-items: center; border: 1px solid #3d3d3d; border-radius: 6px; background: #1c1c1c; color: var(--orange); }
+  .egg-art svg { width: 27px; height: 27px; }
+  .egg-copy { flex: 1; min-width: 0; }
+  .egg-copy b { display: block; font-size: 10px; }
+  .egg-copy small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .egg-bar { margin-top: 8px; }
+  .egg-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; color: var(--muted); font-size: 7px; }
+  .earn-card { display: flex; align-items: center; gap: 9px; width: 100%; margin-top: 8px; padding: 10px; text-align: left; }
+  .earn-card svg { width: 20px; height: 20px; color: var(--green); }
+  .earn-card b { display: block; font-size: 10px; }
+  .earn-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .earn-card .btn { margin-left: auto; }
+
+  /* ============ 底部 tab ============ */
+  .tabbar {
+    position: absolute; z-index: 5; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: stretch; height: calc(58px + var(--safe-b));
+    padding: 0 4px var(--safe-b);
+    border-top: 1px solid #262626;
+    background: linear-gradient(180deg, rgba(10,10,10,.92), #080808);
+    backdrop-filter: blur(12px);
+  }
+  .tab {
+    position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    border: 0; background: transparent; color: #767676; font-size: 8px;
+  }
+  .tab svg { width: 20px; height: 20px; }
+  .tab.active { color: var(--green); }
+  .tab.active::before {
+    content: ""; position: absolute; top: -1px; width: 22px; height: 2px; border-radius: 0 0 2px 2px; background: var(--green);
+    box-shadow: 0 0 10px rgba(184,230,60,.45);
+  }
+  .tab:active { background: rgba(255,255,255,.025); }
+
+  /* ============ 二级页 ============ */
+  .sub-head { display: flex; align-items: center; gap: 8px; padding: 6px 1px 12px; }
+  .back-btn {
+    width: 29px; height: 29px; flex: 0 0 auto; display: grid; place-items: center;
+    border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--ink);
+  }
+  .back-btn svg { width: 16px; height: 16px; }
+  .sub-title { min-width: 0; }
+  .sub-title small { display: block; color: var(--green); font-size: 7px; letter-spacing: 1.2px; }
+  .sub-title h2 { margin: 2px 0 0; font-size: 18px; }
+  .sub-head .head-side { margin-left: auto; }
+
+  .list-card { overflow: hidden; }
+  .list-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; text-align: left; }
+  .list-row:last-child { border-bottom: 0; }
+  .list-row .row-ico { width: 29px; height: 29px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #363636; border-radius: 5px; color: var(--green); }
+  .list-row .row-ico svg { width: 15px; height: 15px; }
+  .list-row .grow b { display: block; font-size: 9px; }
+  .list-row .grow small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+  .list-row > svg { width: 13px; height: 13px; color: #5d5d5d; }
+
+  .profile-card { padding: 12px; text-align: center; }
+  .profile-avatar { width: 64px; height: 64px; margin: 0 auto 8px; display: grid; place-items: center; border: 1px solid #4a4a4a; border-radius: 50%; background: radial-gradient(circle at 40% 30%, #303030, #101010); color: var(--green); }
+  .profile-avatar svg { width: 33px; height: 33px; }
+  .profile-card h3 { margin: 0; font-size: 15px; }
+  .profile-card p { margin: 4px 0 10px; color: var(--muted); font-size: 8px; }
+  .profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .profile-stat { padding: 7px; border: 1px solid #2d2d2d; border-radius: 4px; background: #151515; }
+  .profile-stat b { display: block; color: var(--green); font-size: 13px; }
+  .profile-stat small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+
+  .training-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .training-card { padding: 11px; text-align: left; }
+  .training-card svg { width: 19px; height: 19px; color: var(--green); margin-bottom: 7px; }
+  .training-card b { display: block; font-size: 9px; }
+  .training-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 7px; line-height: 1.5; }
+  .training-card .cost { display: inline-flex; align-items: center; gap: 3px; margin-top: 7px; color: var(--green); font-size: 8px; }
+
+  .bag-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .bag-card { padding: 10px; text-align: left; }
+  .bag-card .bag-ico { height: 43px; display: grid; place-items: center; color: var(--green); }
+  .bag-card .bag-ico svg { width: 28px; height: 28px; }
+  .bag-card b { display: block; font-size: 9px; }
+  .bag-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+
+  .career-hero { padding: 12px; }
+  .career-hero .row { align-items: flex-end; }
+  .career-hero h3 { margin: 0; font-size: 14px; }
+  .career-hero .record { margin-left: auto; color: var(--green); font-size: 15px; }
+  .career-hero p { margin: 4px 0 10px; color: var(--muted); font-size: 8px; }
+  .career-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .career-cell { padding: 7px 4px; text-align: center; border: 1px solid #2d2d2d; border-radius: 4px; background: #151515; }
+  .career-cell b { display: block; color: var(--green); font-size: 12px; }
+  .career-cell small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+
+  .player-detail { padding: 12px; }
+  .player-detail-top { display: flex; align-items: center; gap: 12px; }
+  .player-detail-top img { width: 76px; height: 76px; object-fit: contain; }
+  .player-detail-top h3 { margin: 0; font-size: 18px; }
+  .player-detail-top p { margin: 4px 0 0; color: var(--muted); font-size: 8px; }
+  .ovr-big { margin-left: auto; text-align: center; }
+  .ovr-big b { display: block; color: var(--green); font-size: 25px; line-height: 1; }
+  .ovr-big small { color: var(--muted); font-size: 7px; }
+  .detail-bars { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .detail-bar .row { margin-bottom: 3px; }
+  .detail-bar .row b { font-size: 8px; }
+  .detail-bar .row span { margin-left: auto; color: var(--ink-dim); font-size: 8px; }
+
+  /* ============ 弹层 ============ */
+  .sheet-backdrop {
+    position: absolute; z-index: 20; inset: 0; background: rgba(0,0,0,.66);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  }
+  .sheet-backdrop.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; z-index: 21; left: 0; right: 0; bottom: 0;
+    max-height: 78%; overflow-y: auto; padding: 12px 12px calc(16px + var(--safe-b));
+    border-top: 1px solid #3a3a3a; border-radius: 12px 12px 0 0;
+    background: #101010; box-shadow: 0 -18px 50px rgba(0,0,0,.6);
+    transform: translateY(105%); visibility: hidden; pointer-events: none;
+    transition: transform .22s ease, visibility .22s;
+  }
+  .sheet.show { transform: none; visibility: visible; pointer-events: auto; }
+  .sheet::before { content: ""; display: block; width: 38px; height: 3px; margin: -4px auto 11px; border-radius: 3px; background: #3a3a3a; }
+  .sheet-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .sheet-head b { font-size: 14px; }
+  .sheet-head button { margin-left: auto; width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid #333; border-radius: 5px; background: #181818; color: var(--muted); }
+  .sheet-head button svg { width: 13px; height: 13px; }
+  .setting-row { display: flex; align-items: center; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .setting-row:last-child { border-bottom: 0; }
+  .setting-row .grow b { display: block; font-size: 9px; }
+  .setting-row .grow small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+  .switch { width: 37px; height: 21px; padding: 2px; border: 1px solid #3b3b3b; border-radius: 12px; background: #202020; }
+  .switch i { display: block; width: 15px; height: 15px; border-radius: 50%; background: #777; transition: .18s; }
+  .switch.on { border-color: var(--green); background: rgba(184,230,60,.16); }
+  .switch.on i { transform: translateX(16px); background: var(--green); }
+  .notice-row { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .notice-row:last-child { border-bottom: 0; }
+  .notice-row .news-dot { margin-top: 5px; }
+  .notice-row b { display: block; font-size: 9px; }
+  .notice-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+
+  .toast {
+    position: absolute; z-index: 30; left: 50%; bottom: calc(78px + var(--safe-b));
+    max-width: 310px; padding: 8px 12px; border: 1px solid rgba(184,230,60,.38);
+    border-radius: 5px; background: rgba(15,15,15,.96); color: var(--ink);
+    font-size: 9px; text-align: center; opacity: 0; pointer-events: none;
+    transform: translate(-50%, 8px); transition: .2s ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="app">
+    <header class="topbar">
+      <button class="coach" type="button" data-action="view:profile" aria-label="教练档案">
+        <span class="avatar" id="coach-avatar"></span>
+        <span class="coach-copy"><b>空接教练30</b><small>Lv.12 · 18胜6负</small></span>
+      </button>
+      <div class="top-actions">
+        <button class="coin-chip" type="button" data-action="toast:金币入口：看广告 / 每日任务">12,480</button>
+        <button class="icon-btn" type="button" data-action="sheet:notices" aria-label="通知"><span id="bell-icon"></span><i class="dot"></i></button>
+        <button class="icon-btn" type="button" data-action="sheet:settings" aria-label="设置"><span id="gear-icon"></span></button>
+      </div>
+    </header>
+
+    <main class="content" id="content"></main>
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab active" type="button" data-action="tab:home" data-tab="home"><span data-icon="home"></span><span>主场</span></button>
+      <button class="tab" type="button" data-action="tab:team" data-tab="team"><span data-icon="team"></span><span>球队</span></button>
+      <button class="tab" type="button" data-action="tab:season" data-tab="season"><span data-icon="map"></span><span>赛程</span></button>
+      <button class="tab" type="button" data-action="tab:dex" data-tab="dex"><span data-icon="book"></span><span>图鉴</span></button>
+      <button class="tab" type="button" data-action="tab:shop" data-tab="shop"><span data-icon="shop"></span><span>商店</span></button>
+    </nav>
+
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+    <section class="sheet" id="sheet" aria-live="polite"></section>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5V21H4z"/><path d="M9.5 21v-6h5v6"/></svg>',
+  team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 20c.4-3.4 2.3-5.5 5.5-5.5s5.1 2.1 5.5 5.5"/><path d="M14 20c.2-2.6 1.5-4.2 3.6-4.2 2 0 3.1 1.5 3.4 4.2"/></svg>',
+  map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v18H7.5A3.5 3.5 0 0 0 4 23z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v18h3.5A3.5 3.5 0 0 1 20 23z"/></svg>',
+  shop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1-4H5z"/><path d="M5 9v11h14V9"/><path d="M9 13h6"/></svg>',
+  coin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M9 9.5h6M9 14.5h6M12 7v10"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.5 4.5l2 2M17.5 17.5l2 2M19.5 4.5l-2 2M6.5 17.5l-2 2"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>',
+  ball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3M12 13v5M9 21h6"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+  bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9h12l-1 12H7z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg>',
+  career: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+  egg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c3.5 0 7 6 7 10a7 7 0 0 1-14 0c0-4 3.5-10 7-10z"/></svg>',
+  spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/></svg>',
+  arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>',
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="12" rx="1"/><path d="M12 9v12M4 13h16M12 9c-5 0-5-6 0-6s5 6 0 6zM12 9c5 0 5-6 0-6"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+};
+
+const PLAYERS = [
+  { dex: 25, name: '皮卡丘', pos: 'PG', lv: 16, ovr: 86, type: '电', owned: true },
+  { dex: 7, name: '杰尼龟', pos: 'SG', lv: 15, ovr: 82, type: '水', owned: true },
+  { dex: 1, name: '妙蛙种子', pos: 'SF', lv: 14, ovr: 79, type: '草', owned: true },
+  { dex: 4, name: '小火龙', pos: 'PF', lv: 14, ovr: 78, type: '火', owned: true },
+  { dex: 66, name: '腕力', pos: 'C', lv: 15, ovr: 81, type: '格斗', owned: true },
+  { dex: 133, name: '伊布', pos: 'SG', lv: 12, ovr: 74, type: '一般', owned: true },
+  { dex: 94, name: '耿鬼', pos: 'PG', lv: 13, ovr: 77, type: '幽灵', owned: true },
+  { dex: 143, name: '卡比兽', pos: 'C', lv: 13, ovr: 80, type: '一般', owned: true },
+  { dex: 6, name: '喷火龙', pos: 'PF', lv: 18, ovr: 88, type: '火', owned: false },
+  { dex: 9, name: '水箭龟', pos: 'C', lv: 18, ovr: 87, type: '水', owned: false },
+  { dex: 3, name: '妙蛙花', pos: 'SF', lv: 18, ovr: 87, type: '草', owned: false },
+  { dex: 65, name: '胡地', pos: 'PG', lv: 17, ovr: 84, type: '超能', owned: false },
+];
+
+const state = {
+  tab: 'home',
+  stack: [],
+  dexOpen: 'kanto',
+  sheetOpen: false,
+};
+
+const starters = PLAYERS.slice(0, 5);
+const bench = PLAYERS.slice(5, 8);
+
+const el = (id) => document.getElementById(id);
+const content = el('content');
+const sheet = el('sheet');
+const backdrop = el('sheet-backdrop');
+const toast = el('toast');
+
+function icon(name) { return I[name] || ''; }
+function sprite(dex) { return `../sprites/${dex}.png`; }
+function monChip(p) {
+  return `<button class="mon-chip" type="button" data-action="view:player:${p.dex}"><img src="${sprite(p.dex)}" alt="${p.name}"><b>${p.name}</b><small>${p.pos} · ${p.lv}</small></button>`;
+}
+function playerRow(p) {
+  return `<button class="player-row" type="button" data-action="view:player:${p.dex}">
+    <img src="${sprite(p.dex)}" alt="${p.name}"><span class="pos">${p.pos}</span>
+    <span class="player-name"><b>${p.name}</b><small>Lv.${p.lv} · ${p.type}</small></span>
+    <span class="player-ovr"><b>${p.ovr}</b><small>OVR</small></span>${icon('chevron')}
+  </button>`;
+}
+function node(label, sub, stateClass, num) {
+  return `<div class="node ${stateClass}"><span class="node-dot">${stateClass === 'done' ? icon('check') : num}</span><span class="node-copy"><b>${label}</b><small>${sub}</small></span></div>`;
+}
+function pageHead(eyebrow, title, side = '') {
+  return `<div class="page-head"><div><span class="eyebrow">${eyebrow}</span><h1>${title}</h1></div>${side}</div>`;
+}
+function sectionHead(title, action = '') {
+  return `<div class="section-head"><h3>${title}</h3>${action ? `<button type="button" data-action="${action}">查看全部 ${icon('chevron')}</button>` : ''}</div>`;
+}
+function subHead(eyebrow, title, side = '') {
+  return `<div class="sub-head"><button class="back-btn" type="button" data-action="back" aria-label="返回">${icon('back')}</button><div class="sub-title"><small>${eyebrow}</small><h2>${title}</h2></div>${side ? `<div class="head-side">${side}</div>` : ''}</div>`;
+}
+
+/* ================= 主场 ================= */
+function renderHome() {
+  return `<section class="page">
+    ${pageHead('STREET BASKETBALL WEEKLY', '主场', '<span class="season-pill">S3 · 关都</span>')}
+    <button class="hero-card" type="button" data-action="view:route">
+      <div class="hero-court"></div>
+      <div class="hero-inner">
+        <div class="hero-top"><span class="tag">下一场</span><span class="hero-badge">3 / 8 徽章</span></div>
+        <div class="hero-main">
+          <div><small>华蓝道馆</small><h2>VS 小霞</h2><p>水属性 · 推荐战力 420</p></div>
+          <div class="hero-ball">${icon('ball')}</div>
+        </div>
+        <div class="hero-cta"><span>继续赛程</span>${icon('arrow')}</div>
+      </div>
+    </button>
+
+    ${sectionHead('今日', 'view:tasks')}
+    <button class="daily-card card" type="button" data-action="view:daily">
+      <span class="daily-icon">${icon('target')}</span>
+      <span class="grow"><span class="row between"><b>每日挑战 · 三分大赛</b><span class="pill">最高 18</span></span><p>今日剩余 2 次 · 完成奖励 300 币</p><span class="bar"><i style="width:66%"></i></span></span>
+      <span class="btn small">挑战</span>
+    </button>
+
+    <div class="stat-grid">
+      <div class="stat card"><small>首发</small><b>5 / 5</b><em>阵容完整</em></div>
+      <div class="stat card"><small>图鉴</small><b>86</b><em>已结缘</em></div>
+      <div class="stat card"><small>任务</small><b>3 / 5</b><em>今日进度</em></div>
+    </div>
+
+    ${sectionHead('首发阵容', 'tab:team')}
+    <div class="lineup-strip">${starters.map(monChip).join('')}</div>
+
+    ${sectionHead('最近动态')}
+    <div class="news-list card">
+      <button class="news-item" type="button" data-action="sheet:notices"><i class="news-dot"></i><span><b>华蓝道馆已解锁</b><small>完成 3 枚徽章目标，新的馆主挑战开放。</small></span></button>
+      <button class="news-item" type="button" data-action="tab:shop"><i class="news-dot" style="background:var(--orange)"></i><span><b>每日商店已刷新</b><small>今日出现稀有精灵蛋，06:42:18 后更换。</small></span></button>
+    </div>
+  </section>`;
+}
+
+/* ================= 球队 ================= */
+function renderTeam() {
+  return `<section class="page">
+    ${pageHead('ROSTER', '球队', '<span class="power-pill">战力 <b>428</b></span>')}
+    <div class="team-hero card">
+      <div class="court-lineup">${starters.map((p) => `<div class="slot"><img src="${sprite(p.dex)}" alt="${p.name}"><b>${p.name}</b><small>${p.pos} · ${p.lv}</small></div>`).join('')}</div>
+      <div class="team-meta"><b>首发五人</b><span>平均 Lv.14 · 化学反应 82</span></div>
+    </div>
+    <div class="action-row">
+      <button class="action-btn card" type="button" data-action="view:train">${icon('spark')}训练</button>
+      <button class="action-btn card" type="button" data-action="view:bag">${icon('bag')}背包</button>
+      <button class="action-btn card" type="button" data-action="view:career">${icon('career')}生涯</button>
+    </div>
+    ${sectionHead('球员名单', 'toast:自动布阵：按战力与位置重新排列')}
+    <div class="player-list card">${PLAYERS.slice(0, 5).map(playerRow).join('')}</div>
+    ${sectionHead('替补席', 'toast:替补席管理')}
+    <div class="bench-row card">${bench.map((p) => `<button class="bench-mon" type="button" data-action="view:player:${p.dex}"><img src="${sprite(p.dex)}" alt="${p.name}"><span>${p.name}</span></button>`).join('')}</div>
+  </section>`;
+}
+
+/* ================= 赛程 ================= */
+function renderSeason() {
+  return `<section class="page">
+    ${pageHead('SEASON 3 · KANTO', '赛程', '<span class="record-pill">8 胜 2 负</span>')}
+    <div class="season-card card">
+      <div class="season-top"><b>关都 · 道馆路线</b><span>3 / 8 徽章</span></div>
+      <div class="badge-row">
+        <span class="badge-dot on">1</span><span class="badge-dot on">2</span><span class="badge-dot on">3</span>
+        <span class="badge-dot cur">4</span><span class="badge-dot">5</span><span class="badge-dot">6</span>
+        <span class="badge-dot">7</span><span class="badge-dot">8</span>
+      </div>
+      <div class="route-map">
+        ${node('尼比道馆', '小刚 · 岩石', 'done', 1)}
+        ${node('华蓝道馆', '小霞 · 水', 'current', 2)}
+        ${node('枯叶道馆', '马志士 · 电', 'locked', 3)}
+        ${node('玉虹道馆', '莉佳 · 草', 'locked', 4)}
+        ${node('浅红道馆', '阿桔 · 毒', 'locked', 5)}
+        ${node('金黄道馆', '娜姿 · 超能', 'locked', 6)}
+        ${node('红莲道馆', '夏伯 · 火', 'locked', 7)}
+        ${node('常磐道馆', '坂木 · 地面', 'locked', 8)}
+      </div>
+      <button class="btn ghost full" type="button" data-action="view:route" style="margin-top:9px">查看完整路线 ${icon('arrow')}</button>
+    </div>
+
+    ${sectionHead('赛季目标')}
+    <div class="goal-grid">
+      <div class="goal card">${icon('lock')}<b>四天王</b><small>需 8 徽章</small></div>
+      <div class="goal card">${icon('lock')}<b>冠军</b><small>击败四天王</small></div>
+      <div class="goal card">${icon('lock')}<b>联盟</b><small>赛季终局</small></div>
+    </div>
+
+    <button class="quick-card card" type="button" data-action="view:quick">
+      <span class="quick-icon">${icon('ball')}</span>
+      <span class="grow"><b>快速比赛</b><small>自由对战 · 不计战绩 · 随时开打</small></span>
+      <span class="chev">${icon('chevron')}</span>
+    </button>
+  </section>`;
+}
+
+/* ================= 图鉴 ================= */
+function renderDex() {
+  const regions = [
+    { id: 'kanto', name: '关都', range: '001 - 151', count: '42 / 151', open: state.dexOpen === 'kanto' },
+    { id: 'johto', name: '城都', range: '152 - 251', count: '18 / 100', open: state.dexOpen === 'johto' },
+    { id: 'hoenn', name: '丰缘', range: '252 - 291', count: '9 / 40', open: state.dexOpen === 'hoenn' },
+  ];
+  const dexMons = [
+    PLAYERS[0], PLAYERS[1], PLAYERS[2], PLAYERS[3], PLAYERS[4], PLAYERS[8],
+  ];
+  return `<section class="page">
+    ${pageHead('POKÉDEX', '图鉴', '<span class="record-pill">86 / 291</span>')}
+    <div class="dex-progress card">
+      <div class="row between"><b>关都图鉴</b><span>29%</span></div>
+      <div class="bar"><i style="width:29%"></i></div>
+      <div class="row between" style="margin-top:6px"><small>已结缘 86 · 已遇见 124</small><small>传说 2 / 8</small></div>
+    </div>
+    <div class="search-box">${icon('search')}搜索精灵 / 编号 / 属性</div>
+    <div class="region-list">
+      ${regions.map((r) => `<div class="region card ${r.open ? 'open' : ''}">
+        <button class="region-head" type="button" data-action="dex-region:${r.id}">
+          <span class="region-orb">${r.name.slice(0, 1)}</span>
+          <span class="region-copy"><b>${r.name}地区</b><small>${r.range}</small></span>
+          <span class="region-count">${r.count}</span>${icon('chevron')}
+        </button>
+        ${r.open ? `<div class="region-body">
+          <div class="type-row"><span class="type-chip on">全部</span><span class="type-chip">电</span><span class="type-chip">水</span><span class="type-chip">草</span><span class="type-chip">火</span><span class="type-chip">格斗</span></div>
+          <div class="mon-grid">
+            ${dexMons.map((p) => `<button class="mon-card card ${p.owned ? '' : 'locked'}" type="button" data-action="${p.owned ? `view:player:${p.dex}` : 'toast:尚未结缘，继续探索吧'}"><img src="${sprite(p.dex)}" alt="${p.name}"><b>${p.owned ? p.name : '???'}</b><small>${p.owned ? '已结缘' : p.owned ? '' : '未遇见'}</small></button>`).join('')}
+          </div>
+        </div>` : ''}
+      </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+/* ================= 商店 ================= */
+function renderShop() {
+  return `<section class="page">
+    ${pageHead('SUPPLY', '商店', '<span class="record-pill">06:42:18 后刷新</span>')}
+    <div class="shop-banner">
+      ${icon('spark')}
+      <span class="grow"><b>今日特惠 · 稀有精灵蛋</b><small>前 1 次购买享 8 折，剩余 1 次</small></span>
+      <button class="btn small orange" type="button" data-action="toast:特惠精灵蛋：1,280 币">查看</button>
+    </div>
+
+    ${sectionHead('精灵商店')}
+    <div class="shop-grid">
+      <div class="shop-card card"><div class="item-ico">${icon('egg')}</div><b>随机精灵蛋</b><small>普通 · 30 分钟孵化</small><div class="price-row"><span class="price">${icon('coin')}480</span><button class="btn small" type="button" data-action="toast:购买成功：随机精灵蛋已放入孵蛋屋">购买</button></div></div>
+      <div class="shop-card card"><div class="item-ico">${icon('spark')}</div><b>训练强化券</b><small>随机属性 +3</small><div class="price-row"><span class="price">${icon('coin')}260</span><button class="btn small" type="button" data-action="toast:购买成功：训练强化券已放入背包">购买</button></div></div>
+      <div class="shop-card card"><div class="item-ico">${icon('gift')}</div><b>高级树果</b><small>固定经验 +120</small><div class="price-row"><span class="price">${icon('coin')}180</span><button class="btn small" type="button" data-action="toast:购买成功：高级树果已放入背包">购买</button></div></div>
+      <div class="shop-card card"><div class="item-ico">${icon('target')}</div><b>球探报告</b><small>刷新一次商店</small><div class="price-row"><span class="price">${icon('coin')}150</span><button class="btn small" type="button" data-action="toast:商店已刷新">购买</button></div></div>
+    </div>
+
+    ${sectionHead('孵蛋屋')}
+    <div class="egg-card card">
+      <div class="egg-top">
+        <span class="egg-art">${icon('egg')}</span>
+        <span class="egg-copy"><b>杰尼龟蛋</b><small>预计 12 分钟后孵化</small></span>
+        <span class="pill">68%</span>
+      </div>
+      <div class="bar egg-bar"><i style="width:68%"></i></div>
+      <div class="egg-meta"><span>1 / 2 个孵化槽使用中</span><button class="btn small ghost" type="button" data-action="toast:看广告可缩短 10 分钟">加速孵化</button></div>
+    </div>
+
+    <button class="earn-card card" type="button" data-action="toast:广告入口：+300 金币">
+      ${icon('coin')}<span class="grow"><b>获取金币</b><small>看一次广告，立即获得 300 币</small></span><span class="btn small">+300</span>
+    </button>
+  </section>`;
+}
+
+/* ================= 二级页 ================= */
+function renderView(view) {
+  if (view.name === 'profile') {
+    return `<section class="page">
+      ${subHead('COACH PROFILE', '教练档案')}
+      <div class="profile-card card">
+        <div class="profile-avatar">${icon('team')}</div>
+        <h3>空接教练30</h3><p>关都 · 第 3 赛季 · 18 胜 6 负</p>
+        <div class="profile-stats">
+          <div class="profile-stat"><b>Lv.12</b><small>教练等级</small></div>
+          <div class="profile-stat"><b>428</b><small>球队战力</small></div>
+          <div class="profile-stat"><b>86</b><small>图鉴结缘</small></div>
+        </div>
+      </div>
+      ${sectionHead('档案')}
+      <div class="list-card card">
+        <button class="list-row" type="button" data-action="view:career"><span class="row-ico">${icon('career')}</span><span class="grow"><b>生涯统计</b><small>战绩、球员数据、收集进度</small></span>${icon('chevron')}</button>
+        <button class="list-row" type="button" data-action="toast:成就与徽章入口"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>成就与徽章</b><small>已解锁 12 / 36</small></span>${icon('chevron')}</button>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'train') {
+    return `<section class="page">
+      ${subHead('TRAINING', '训练', '<span class="record-pill">训练点 18</span>')}
+      <div class="training-grid">
+        <button class="training-card card" type="button" data-action="toast:基础训练：全队经验 +40"><span>${icon('spark')}</span><b>基础训练</b><small>全队获得少量经验，消耗 1 次训练。</small><span class="cost">${icon('clock')} 1 次</span></button>
+        <button class="training-card card" type="button" data-action="toast:专项训练：自选属性 +3"><span>${icon('target')}</span><b>专项训练</b><small>选择一名球员，随机属性 +3。</small><span class="cost">${icon('coin')} 260</span></button>
+        <button class="training-card card" type="button" data-action="toast:战术演练：化学反应 +2"><span>${icon('team')}</span><b>战术演练</b><small>提升首发化学反应，消耗 2 次训练。</small><span class="cost">${icon('clock')} 2 次</span></button>
+        <button class="training-card card" type="button" data-action="toast:特训：等级 +1"><span>${icon('trophy')}</span><b>特训</b><small>指定球员等级 +1，每周限 1 次。</small><span class="cost">${icon('coin')} 680</span></button>
+      </div>
+      ${sectionHead('训练点获取')}
+      <div class="list-card card">
+        <button class="list-row" type="button" data-action="toast:每日任务可获取训练点"><span class="row-ico">${icon('calendar')}</span><span class="grow"><b>每日任务</b><small>今日还可获取 2 点</small></span>${icon('chevron')}</button>
+        <button class="list-row" type="button" data-action="toast:商店可购买训练强化券"><span class="row-ico">${icon('shop')}</span><span class="grow"><b>商店购买</b><small>训练强化券 260 币</small></span>${icon('chevron')}</button>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'bag') {
+    const items = [
+      ['高级树果', '固定经验 +120', 'gift', '× 6'],
+      ['普通树果', '固定经验 +40', 'gift', '× 12'],
+      ['训练强化券', '随机属性 +3', 'spark', '× 2'],
+      ['球探报告', '刷新每日商店', 'target', '× 1'],
+    ];
+    return `<section class="page">
+      ${subHead('INVENTORY', '背包', '<span class="record-pill">22 件</span>')}
+      <div class="bag-grid">${items.map(([name, desc, ico, count]) => `<button class="bag-card card" type="button" data-action="toast:${name}：${count}"><div class="bag-ico">${icon(ico)}</div><b>${name}</b><small>${desc} · ${count}</small></button>`).join('')}</div>
+    </section>`;
+  }
+  if (view.name === 'career') {
+    return `<section class="page">
+      ${subHead('CAREER', '生涯统计')}
+      <div class="career-hero card">
+        <div class="row"><h3>空接教练30</h3><span class="record">18 胜 6 负</span></div>
+        <p>胜率 75% · 当前 3 连胜 · 最佳 7 连胜</p>
+        <div class="career-grid">
+          <div class="career-cell"><b>78.4</b><small>场均得分</small></div>
+          <div class="career-cell"><b>70.2</b><small>场均失分</small></div>
+          <div class="career-cell"><b>+8.2</b><small>净胜分</small></div>
+          <div class="career-cell"><b>3</b><small>徽章</small></div>
+        </div>
+      </div>
+      ${sectionHead('球员数据')}
+      <div class="list-card card">
+        <div class="list-row"><span class="row-ico">${icon('ball')}</span><span class="grow"><b>皮卡丘</b><small>PPG 21.6 · RPG 6.8 · APG 7.4</small></span><span class="pill">MVP</span></div>
+        <div class="list-row"><span class="row-ico">${icon('ball')}</span><span class="grow"><b>杰尼龟</b><small>PPG 16.2 · RPG 8.1 · APG 5.0</small></span><span class="pill">首发</span></div>
+        <div class="list-row"><span class="row-ico">${icon('ball')}</span><span class="grow"><b>腕力</b><small>PPG 14.8 · RPG 11.2 · BPG 1.8</small></span><span class="pill">首发</span></div>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'route') {
+    const route = [
+      ['尼比道馆', '小刚 · 岩石', 'done'], ['华蓝道馆', '小霞 · 水', 'current'],
+      ['枯叶道馆', '马志士 · 电', 'locked'], ['玉虹道馆', '莉佳 · 草', 'locked'],
+      ['浅红道馆', '阿桔 · 毒', 'locked'], ['金黄道馆', '娜姿 · 超能', 'locked'],
+      ['红莲道馆', '夏伯 · 火', 'locked'], ['常磐道馆', '坂木 · 地面', 'locked'],
+    ];
+    return `<section class="page">
+      ${subHead('ADVENTURE ROUTE', '完整路线', '<span class="record-pill">3 / 8 徽章</span>')}
+      <div class="season-card card">
+        <div class="season-top"><b>关都地区 · 第 3 赛季</b><span>当前：华蓝道馆</span></div>
+        <div class="route-map">${route.map(([name, sub, cls], i) => node(name, sub, cls, i + 1)).join('')}</div>
+      </div>
+      ${sectionHead('长期目标')}
+      <div class="list-card card">
+        <div class="list-row"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>四天王</b><small>集齐 8 枚徽章后解锁</small></span>${icon('lock')}</div>
+        <div class="list-row"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>冠军之路</b><small>击败四天王</small></span>${icon('lock')}</div>
+        <div class="list-row"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>联盟大赛</b><small>赛季最终目标</small></span>${icon('lock')}</div>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'quick') {
+    return `<section class="page">
+      ${subHead('QUICK MATCH', '快速比赛')}
+      <div class="hero-card" style="padding:0">
+        <div class="hero-inner">
+          <div class="hero-top"><span class="tag">自由对战</span><span class="hero-badge">不计战绩</span></div>
+          <div class="hero-main"><div><small>随机对手</small><h2>街球场</h2><p>5v5 · 4 分钟 · 标准规则</p></div><div class="hero-ball">${icon('ball')}</div></div>
+          <div class="hero-cta"><span>开始比赛</span>${icon('arrow')}</div>
+        </div>
+      </div>
+      ${sectionHead('比赛设置')}
+      <div class="list-card card">
+        <div class="list-row"><span class="row-ico">${icon('clock')}</span><span class="grow"><b>单节时长</b><small>4 分钟</small></span><span class="pill">标准</span></div>
+        <div class="list-row"><span class="row-ico">${icon('spark')}</span><span class="grow"><b>难度</b><small>职业</small></span><span class="pill">推荐</span></div>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'tasks') {
+    const tasks = [
+      ['完成 1 场正式比赛', '1 / 1', true],
+      ['在商店购买 2 次', '2 / 2', true],
+      ['完成 1 次训练', '0 / 1', false],
+      ['使用 1 个树果', '1 / 1', true],
+      ['赢得 1 场快速比赛', '0 / 1', false],
+    ];
+    return `<section class="page">
+      ${subHead('DAILY TASKS', '每日任务', '<span class="record-pill">3 / 5</span>')}
+      <div class="list-card card">${tasks.map(([name, prog, done]) => `<div class="list-row"><span class="row-ico" style="color:${done ? 'var(--green)' : '#666'}">${icon(done ? 'check' : 'clock')}</span><span class="grow"><b>${name}</b><small>${done ? '已完成' : `进度 ${prog}`}</small></span><span class="pill">${done ? '已领取' : '+80 币'}</span></div>`).join('')}</div>
+    </section>`;
+  }
+  if (view.name === 'daily') {
+    return `<section class="page">
+      ${subHead('DAILY CHALLENGE', '每日挑战', '<span class="record-pill">最高 18</span>')}
+      <div class="hero-card" style="padding:0">
+        <div class="hero-inner">
+          <div class="hero-top"><span class="tag">三分大赛</span><span class="hero-badge">今日 2 次</span></div>
+          <div class="hero-main"><div><small>限时挑战</small><h2>60 秒三分</h2><p>连续命中可提升倍率，最高 300 币</p></div><div class="hero-ball">${icon('target')}</div></div>
+          <div class="hero-cta"><span>开始挑战</span>${icon('arrow')}</div>
+        </div>
+      </div>
+      ${sectionHead('今日排行')}
+      <div class="list-card card">
+        <div class="list-row"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>第 1 名 · 火焰投手</b><small>24 分</small></span><span class="pill">好友</span></div>
+        <div class="list-row"><span class="row-ico">${icon('trophy')}</span><span class="grow"><b>第 2 名 · 空接教练30</b><small>18 分</small></span><span class="pill">你</span></div>
+      </div>
+    </section>`;
+  }
+  if (view.name === 'player') {
+    const p = PLAYERS.find((x) => x.dex === view.dex) || PLAYERS[0];
+    const stats = [['速度', 92], ['投射', 88], ['组织', 84], ['防守', 76], ['体能', 81]];
+    return `<section class="page">
+      ${subHead('PLAYER', '球员详情', `<span class="record-pill">${p.pos}</span>`)}
+      <div class="player-detail card">
+        <div class="player-detail-top">
+          <img src="${sprite(p.dex)}" alt="${p.name}">
+          <div><h3>${p.name}</h3><p>Lv.${p.lv} · ${p.type} · ${p.pos}</p><p style="color:var(--green);margin-top:5px">已结缘</p></div>
+          <div class="ovr-big"><b>${p.ovr}</b><small>OVR</small></div>
+        </div>
+        <div class="detail-bars">${stats.map(([name, val]) => `<div class="detail-bar"><div class="row"><b>${name}</b><span>${val}</span></div><div class="bar"><i style="width:${val}%"></i></div></div>`).join('')}</div>
+      </div>
+      ${sectionHead('操作')}
+      <div class="list-card card">
+        <button class="list-row" type="button" data-action="view:train"><span class="row-ico">${icon('spark')}</span><span class="grow"><b>训练</b><small>提升属性与等级</small></span>${icon('chevron')}</button>
+        <button class="list-row" type="button" data-action="toast:已加入首发阵容"><span class="row-ico">${icon('team')}</span><span class="grow"><b>加入首发</b><small>替换当前同位置球员</small></span>${icon('chevron')}</button>
+      </div>
+    </section>`;
+  }
+  return renderHome();
+}
+
+/* ================= 渲染与交互 ================= */
+function renderTab(tab) {
+  if (tab === 'team') return renderTeam();
+  if (tab === 'season') return renderSeason();
+  if (tab === 'dex') return renderDex();
+  if (tab === 'shop') return renderShop();
+  return renderHome();
+}
+
+function currentView() { return state.stack[state.stack.length - 1] || null; }
+
+function render() {
+  const view = currentView();
+  content.innerHTML = view ? renderView(view) : renderTab(state.tab);
+  content.scrollTop = 0;
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === state.tab));
+}
+
+function pushView(name, extra = {}) {
+  state.stack.push({ name, ...extra });
+  render();
+}
+
+function goBack() {
+  if (state.stack.length) state.stack.pop();
+  render();
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  state.stack = [];
+  render();
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+function openSheet(type) {
+  state.sheetOpen = true;
+  if (type === 'settings') {
+    sheet.innerHTML = `<div class="sheet-head"><b>设置</b><button type="button" data-action="close-sheet">${icon('close')}</button></div>
+      <div class="setting-row"><span class="grow"><b>音乐</b><small>主界面与比赛背景音乐</small></span><button class="switch on" type="button" data-action="toggle-switch"><i></i></button></div>
+      <div class="setting-row"><span class="grow"><b>音效</b><small>投篮、抢断、结算提示音</small></span><button class="switch on" type="button" data-action="toggle-switch"><i></i></button></div>
+      <div class="setting-row"><span class="grow"><b>自动换防</b><small>防守时自动切换最近球员</small></span><button class="switch on" type="button" data-action="toggle-switch"><i></i></button></div>
+      <div class="setting-row"><span class="grow"><b>比赛播报</b><small>得分与关键事件语音</small></span><button class="switch on" type="button" data-action="toggle-switch"><i></i></button></div>
+      <div class="setting-row"><span class="grow"><b>画质</b><small>当前：标准</small></span><span class="pill">标准</span></div>`;
+  } else {
+    sheet.innerHTML = `<div class="sheet-head"><b>通知</b><button type="button" data-action="close-sheet">${icon('close')}</button></div>
+      <div class="notice-row"><i class="news-dot"></i><span><b>华蓝道馆已解锁</b><small>完成 3 枚徽章目标，新的馆主挑战开放。前往赛程继续冒险。</small></span></div>
+      <div class="notice-row"><i class="news-dot" style="background:var(--orange)"></i><span><b>每日商店已刷新</b><small>今日出现稀有精灵蛋，06:42:18 后更换。</small></span></div>
+      <div class="notice-row"><i class="news-dot" style="background:var(--blue)"></i><span><b>版本更新预告</b><small>底部 Tab 界面正在制作中，当前为可点击原型。</small></span></div>`;
+  }
+  backdrop.classList.add('show');
+  sheet.classList.add('show');
+}
+
+function closeSheet() {
+  state.sheetOpen = false;
+  backdrop.classList.remove('show');
+  sheet.classList.remove('show');
+}
+
+document.addEventListener('click', (e) => {
+  const actionEl = e.target.closest('[data-action]');
+  if (actionEl) {
+    const [kind, ...rest] = actionEl.dataset.action.split(':');
+    const value = rest.join(':');
+    if (kind === 'tab') switchTab(value);
+    else if (kind === 'view') {
+      const [name, dex] = value.split(':');
+      pushView(name, dex ? { dex: Number(dex) } : {});
+    } else if (kind === 'back') goBack();
+    else if (kind === 'sheet') openSheet(value);
+    else if (kind === 'close-sheet') closeSheet();
+    else if (kind === 'toast') showToast(value);
+    else if (kind === 'toggle-switch') actionEl.classList.toggle('on');
+    else if (kind === 'dex-region') {
+      state.dexOpen = state.dexOpen === value ? '' : value;
+      render();
+    }
+    return;
+  }
+  if (e.target.closest('#sheet-backdrop')) closeSheet();
+});
+
+el('coach-avatar').innerHTML = icon('team');
+el('bell-icon').innerHTML = icon('bell');
+el('gear-icon').innerHTML = icon('gear');
+document.querySelectorAll('[data-icon]').forEach((n) => { n.innerHTML = icon(n.dataset.icon); });
+
+render();
+
+function fitStage() {
+  const scale = Math.min(window.innerWidth / 390, window.innerHeight / 844, 1);
+  el('stage').style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
