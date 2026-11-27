@@ -3,9 +3,9 @@
  * 存档：pokedunk.achv.v1（{成就id: 解锁时间戳}）。
  * 判定源：v2 生涯存档（stats/journey/mons/dex）+ 启动全量评估；比赛类成就由 settle 结算后调 evaluateMatch。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=695";
-import { writeSave } from "../storage.js?v=695";
-import { rollEggDex } from "./shop.js?v=695";
+import { getPokemon } from "../../engine/readable/play-core.js?v=696";
+import { writeSave } from "../storage.js?v=696";
+import { rollEggDex } from "./shop.js?v=696";
 
 const KEY = "pokedunk.achv.v1";
 const SAVE_KEY = "pokedunk.save.v1";

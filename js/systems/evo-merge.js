@@ -8,7 +8,7 @@
  *   - 已有同种的训练点转入返还池
  *   - 道具投入优先转移，超出上限按每点 100 币折算
  */
-import { ITEM_TYPES, ITEM_MAX, ITEM_PER_TYPE, ensureLineupSlots } from "./build.js?v=695";
+import { ITEM_TYPES, ITEM_MAX, ITEM_PER_TYPE, ensureLineupSlots } from "./build.js?v=696";
 
 const sameId = (a, b) => Number(a) === Number(b);
 

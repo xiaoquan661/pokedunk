@@ -6,20 +6,20 @@
  *   - 四天王胜利：额外 +400 币；地区冠军额外 +400 币
  * XP：胜 12+分差，按关卡 5.0/7.0/8.0 缩放；负 25（模拟失败 0）；模拟 ×0.8。
  */
-import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=695";
-import { rollGrowth } from "../../engine/growth.js?v=695";
-import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=695";
-import { monPrice } from "../systems/shop.js?v=695";
-import { ACHV } from "../systems/achv.js?v=695";
-import { bumpDaily } from "../ui/earn.js?v=695";
-import { currentMatchInfo, recordResult, grantFourKingsReward } from "./season.js?v=695";
-import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=695";
-import { offerLegendReward } from "./legend.js?v=695";
-import { syncAcquireLevel } from "../systems/acquire.js?v=695";
-import { recordSeasonStats, ensureOvrBase, computeSeasonAwards } from "../systems/awards.js?v=695";
-import { ensureCareerStats } from "../systems/career.js?v=695";
-import { levelCapOf } from "./regions.js?v=695";
-import { ensureBadgeUnlocks } from "../systems/badge-unlocks.js?v=695";
+import { xpToNext, getPokemon } from "../../engine/readable/play-core.js?v=696";
+import { rollGrowth } from "../../engine/growth.js?v=696";
+import { writeSave, addMon, hasDex, markSeen } from "../storage.js?v=696";
+import { monPrice } from "../systems/shop.js?v=696";
+import { ACHV } from "../systems/achv.js?v=696";
+import { bumpDaily } from "../ui/earn.js?v=696";
+import { currentMatchInfo, recordResult, grantFourKingsReward } from "./season.js?v=696";
+import { activeBonds, starterIds, ITEM_TYPES, LEGENDARY_DEX, growthZh, rarityOf } from "../systems/build.js?v=696";
+import { offerLegendReward } from "./legend.js?v=696";
+import { syncAcquireLevel } from "../systems/acquire.js?v=696";
+import { recordSeasonStats, ensureOvrBase, computeSeasonAwards } from "../systems/awards.js?v=696";
+import { ensureCareerStats } from "../systems/career.js?v=696";
+import { levelCapOf } from "./regions.js?v=696";
+import { ensureBadgeUnlocks } from "../systems/badge-unlocks.js?v=696";
 
 const CONTRACT_DISCOUNT = 1; // 合同按商店原价出售，不再打折
 // S31：每场胜利 35% 概率出现合同；连续 3 胜未出，下一场必出

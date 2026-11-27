@@ -4,8 +4,8 @@
  * 球员：当前赛季每位首发/替补的出场与场均数据
  * 宝可梦：图鉴、稀有度、队伍等级、属性分布
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=695";
-import { mainOVR, teamPower, rarityOf, LEGENDARY_DEX } from "./build.js?v=695";
+import { getPokemon } from "../../engine/readable/play-core.js?v=696";
+import { mainOVR, teamPower, rarityOf, LEGENDARY_DEX } from "./build.js?v=696";
 
 const n = (v) => Number(v) || 0;
 const pct = (made, att) => (att > 0 ? (made / att) * 100 : null);
