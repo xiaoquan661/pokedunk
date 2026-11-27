@@ -8,7 +8,7 @@
  * 宝宝进化来的基础形态（皮丘→皮卡丘等）仍按 Lv.1 处理。
  */
 import { EVOLUTIONS } from "../../engine/data/evolutions.js";
-import { rollGrowth } from "../../engine/growth.js?v=688";
+import { rollGrowth } from "../../engine/growth.js?v=689";
 
 const BABY_DEX = new Set([172, 173, 174, 175, 236, 238, 239, 240]);
 const BABY_EVOLVED = new Set();

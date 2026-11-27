@@ -3,7 +3,7 @@
  * 每个属性集齐 8 种点亮对应徽章，仅图鉴展示，不发资源。
  * 存档：save.typeRewards = { 属性: 点亮时间戳 }。
  */
-import { getPokemon } from "../../engine/readable/play-core.js?v=688";
+import { getPokemon } from "../../engine/readable/play-core.js?v=689";
 
 /* ---------------- 属性收集徽章：每个属性集齐 8 种点亮一枚 ---------------- */
 export const TYPE_STEP = 8;

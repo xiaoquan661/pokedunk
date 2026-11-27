@@ -5,7 +5,7 @@
  * 数据由 settle.js 在冠军结算时写入 journey.season.awards / mvp。
  * 入口：app.js 结算页检测到 r.champion 时自动打开，也提供手动按钮。
  */
-import { ICON } from "./icons.js?v=688";
+import { ICON } from "./icons.js?v=689";
 
 const AWARD_ICON = { mvp: "★", scoring: "分", dpoy: "防", smoy: "替", mip: "↑" };
 

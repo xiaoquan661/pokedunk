@@ -1,16 +1,17 @@
 /**
  * ui/settings.js —— 设置中心（pokedunk-v2，移植自旧 pokedunk settings-ui.js）
- * 页签：比赛 / 声音 / 外观 / 说明 / 存档。
+ * 页签：比赛 / 操作 / 声音 / 外观 / 存档。
+ * 「说明」已移到主页导引，由 openSettingsGuide 单独打开。
  * - 比赛：难度/节长/自动换人/防守切换/赛前演出 → localStorage pokedunk.settings（buildGymMatch 读取）
  * - 声音：音乐/音效/解说开关（v2 当前静音适配器，存偏好待接音频）
  * - 存档：重置本机偏好（不影响生涯存档）
  */
-import { gameAudio } from "../platform/audio.js?v=688";
-import { resetSave } from "../storage.js?v=688";
-import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=688";
-import { BONDS } from "../systems/build.js?v=688";
-import { EGG_TIERS } from "../systems/shop.js?v=688";
-import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=688";
+import { gameAudio } from "../platform/audio.js?v=689";
+import { resetSave } from "../storage.js?v=689";
+import { VISIBLE_THEMES, THEME_SWITCH_ENABLED, loadTheme, setTheme } from "./theme.js?v=689";
+import { BONDS } from "../systems/build.js?v=689";
+import { EGG_TIERS } from "../systems/shop.js?v=689";
+import { TYPE_CHART, TYPE_COLORS } from "../../engine/readable/play-core.js?v=689";
 
 const SET_KEY = "pokedunk.settings";
 
@@ -276,15 +277,19 @@ function renderBody(panel) {
     : tabSave();
 }
 
-/** 打开设置面板（挂在 body，关闭即销毁） */
-export function openSettings() {
-  curTab = "match"; // 每次打开回到「比赛」页签，避免上次停留的页签造成困惑
-  tuneKind = null;
-  if (document.getElementById("pj-set-style")) document.getElementById("pj-set-style").remove();
+function ensureSettingsCss() {
+  if (document.getElementById("pj-set-style")) return;
   const st = document.createElement("style");
   st.id = "pj-set-style";
   st.textContent = CSS;
   document.head.appendChild(st);
+}
+
+/** 打开设置面板（挂在 body，关闭即销毁） */
+export function openSettings() {
+  curTab = "match"; // 每次打开回到「比赛」页签，避免上次停留的页签造成困惑
+  tuneKind = null;
+  ensureSettingsCss();
 
   const wrap = document.createElement("div");
   wrap.className = "pj-scrim page-modal";
@@ -297,7 +302,6 @@ export function openSettings() {
         <button data-tab="feel">操作</button>
         <button data-tab="sound">声音</button>
         <button data-tab="look">外观</button>
-        <button data-tab="guide">说明</button>
         <button data-tab="save">存档</button>
       </div>
       <div id="pj-set-body"></div>
@@ -369,4 +373,20 @@ export function openSettings() {
   });
   (document.getElementById("stage")||document.body).appendChild(wrap);
   renderBody(wrap);
+}
+
+/** 主页「导引 → 说明」：独立规则页，不再占设置页签 */
+export function openSettingsGuide() {
+  ensureSettingsCss();
+  const wrap = document.createElement("div");
+  wrap.className = "pj-scrim page-modal";
+  wrap.style.cssText = "position:fixed;inset:0;z-index:900;background:rgba(5,8,16,.72);display:grid;place-items:center;padding:10px";
+  wrap.innerHTML = `<div class="pj-page-card"><div class="sub-page pj-page-body set-body">
+    <div class="page-head"><button class="back" data-back>‹</button><h2>说明</h2><span class="count">规则与概率</span></div>
+    ${tabGuide()}
+  </div></div>`;
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap || e.target.closest("[data-back]")) wrap.remove();
+  });
+  (document.getElementById("stage")||document.body).appendChild(wrap);
 }
